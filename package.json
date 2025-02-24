@@ -10,6 +10,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@prisma/client": "^6.4.1"
+    "@prisma/client": "^6.4.1",
+    "@supabase/supabase-js": "^2.49.1",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^11.1.0",
+    "uuidv4": "^6.2.13"
   }
 }
