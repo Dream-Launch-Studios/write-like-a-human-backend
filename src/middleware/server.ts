@@ -18,7 +18,7 @@ export const authenticateUser = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<any> => {
   const authHeader = req.headers["authorization"];
   const token = authHeader?.split(" ")[1];
 
@@ -47,19 +47,3 @@ export const authenticateUser = async (
     res.status(403).json({ error: error.message });
   }
 };
-
-// export const checkGroupMembership = async (
-//   userId: string,
-//   groupId: string
-// ): Promise<boolean> => {
-//   const count = await prisma.groupMember.count({
-//     where: {
-//       userId,
-//       groupId,
-//       group: {
-//         OR: [{ adminId: userId }, { members: { some: { userId } } }],
-//       },
-//     },
-//   });
-//   return count > 0;
-// };

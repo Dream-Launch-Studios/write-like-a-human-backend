@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const getUser = async (req: Request, res: Response) => {
+export const getUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = req.params.id;
 
@@ -32,7 +32,7 @@ export const getUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const userId = req.params.id;
 
@@ -62,7 +62,10 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUserDocuments = async (req: Request, res: Response) => {
+export const getUserDocuments = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
     const userId = req.params.id;
 
