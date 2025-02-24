@@ -6,10 +6,10 @@ import {
 } from "../controllers/userController";
 import { authenticateUser } from "../middleware/server";
 
-const router = express.Router();
+const userRouter = express.Router();
 
-router.get("/:id", authenticateUser, getUser);
-router.put("/:id", authenticateUser, updateUser);
-router.get("/:id/documents", authenticateUser, getUserDocuments);
+userRouter.get("/:id", authenticateUser, getUser);
+userRouter.put("/:id", authenticateUser, updateUser);
+userRouter.get("/:id/documents", authenticateUser, getUserDocuments);
 
-export default router;
+export default userRouter;

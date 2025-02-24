@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import prisma from "../config/config";
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
+const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -33,23 +34,23 @@ export const authenticateUser = async (
   }
 
   try {
-    console.log("🔍 Verifying JWT token...");
     const decoded = jwt.verify(token, JWT_SECRET) as {
       id: string;
       email: string;
       role: string;
     };
 
-    console.log("✅ Token Decoded:", decoded);
+    if (!decoded.id) {
+      throw new Error("Invalid token payload");
+    }
 
-    // Fetch user from database
+    // Fetch user from the database to confirm existence
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: { id: true, email: true, role: true },
     });
 
     if (!user) {
-      console.log("❌ User not found in database");
       return res.status(404).json({ error: "User not found" });
     }
 
@@ -57,6 +58,6 @@ export const authenticateUser = async (
     next();
   } catch (error: any) {
     console.log("❌ Authentication Error:", error.message);
-    return res.status(403).json({ error: "Unauthorized: Invalid token" });
+    return res.status(403).json({ error: "Invalid token" });
   }
 };

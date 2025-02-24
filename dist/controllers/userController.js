@@ -8,18 +8,31 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserDocuments = exports.updateUser = exports.getUser = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const config_1 = __importDefault(require("../config/config"));
 const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized: No user found" });
+        }
         const userId = req.params.id;
-        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) !== userId && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.role) === "STUDENT") {
+        const user = req.user;
+        console.log("🛠 Debug: req.user.id Type:", typeof user.id);
+        console.log("🛠 Debug: userId Type:", typeof userId);
+        console.log("🛠 Debug: req.user.id Value:", user.id);
+        console.log("🛠 Debug: userId Value:", userId);
+        if (user.id !== userId && user.role === "STUDENT") {
+            if (String(user.id) !== String(userId) && user.role === "STUDENT") {
+                console.log(`❌ Unauthorized: User ${user.id} tried to access ${userId}`);
+                return res.status(403).json({ error: "Unauthorized access" });
+            }
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const user = yield prisma.user.findUnique({
+        const userData = yield config_1.default.user.findUnique({
             where: { id: userId },
             select: {
                 id: true,
@@ -29,10 +42,10 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
                 createdAt: true,
             },
         });
-        if (!user) {
+        if (!userData) {
             return res.status(404).json({ error: "User not found" });
         }
-        res.status(200).json({ user });
+        res.status(200).json({ user: userData });
     }
     catch (error) {
         res.status(500).json({ error: error.message });
@@ -47,7 +60,7 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return res.status(403).json({ error: "Unauthorized access" });
         }
         const { name, email } = req.body;
-        const updatedUser = yield prisma.user.update({
+        const updatedUser = yield config_1.default.user.update({
             where: { id: userId },
             data: { name, email },
             select: {
@@ -75,7 +88,7 @@ const getUserDocuments = (req, res) => __awaiter(void 0, void 0, void 0, functio
         if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) !== userId && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.role) === "STUDENT") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const documents = yield prisma.document.findMany({
+        const documents = yield config_1.default.document.findMany({
             where: {
                 userId,
                 isLatest: true,

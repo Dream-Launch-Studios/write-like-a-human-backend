@@ -1,17 +1,33 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../config/config";
 
 export const getUser = async (req: Request, res: Response): Promise<any> => {
   try {
-    const userId = req.params.id;
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized: No user found" });
+    }
 
-    if (req.user?.id !== userId && req.user?.role === "STUDENT") {
+    const userId = req.params.id;
+    const user = req.user;
+
+    console.log("🛠 Debug: req.user.id Type:", typeof user.id);
+    console.log("🛠 Debug: userId Type:", typeof userId);
+    console.log("🛠 Debug: req.user.id Value:", user.id);
+    console.log("🛠 Debug: userId Value:", userId);
+
+    if (user.id !== userId && user.role === "STUDENT") {
+      if (String(user.id) !== String(userId) && user.role === "STUDENT") {
+        console.log(
+          `❌ Unauthorized: User ${user.id} tried to access ${userId}`
+        );
+        return res.status(403).json({ error: "Unauthorized access" });
+      }
+
       return res.status(403).json({ error: "Unauthorized access" });
     }
 
-    const user = await prisma.user.findUnique({
+    const userData = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -22,11 +38,11 @@ export const getUser = async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    if (!user) {
+    if (!userData) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json({ user });
+    res.status(200).json({ user: userData });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
