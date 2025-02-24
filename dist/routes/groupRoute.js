@@ -37,9 +37,9 @@ const express_1 = require("express");
 const groupController = __importStar(require("../controllers/groupController"));
 const groupAuth_1 = require("../middleware/groupAuth");
 const server_1 = require("../middleware/server");
-const router = (0, express_1.Router)();
+const groupRouter = (0, express_1.Router)();
 // Apply authentication middleware to all group routes
-router.use(server_1.authenticateUser);
+groupRouter.use(server_1.authenticateUser);
 // Helper function to adapt controller to Express middleware
 const adaptRoute = (controller) => {
     return (req, res, next) => {
@@ -47,17 +47,17 @@ const adaptRoute = (controller) => {
     };
 };
 // Group management routes
-router.post("/", adaptRoute(groupController.createGroup));
-router.get("/", adaptRoute(groupController.listGroups));
-router.get("/:id", groupAuth_1.checkGroupMembership, adaptRoute(groupController.getGroupDetails));
-router.put("/:id", groupAuth_1.groupAdminAuth, adaptRoute(groupController.updateGroup));
-router.delete("/:id", groupAuth_1.groupAdminAuth, adaptRoute(groupController.deleteGroup));
+groupRouter.post("/", adaptRoute(groupController.createGroup));
+groupRouter.get("/", adaptRoute(groupController.listGroups));
+groupRouter.get("/:id", groupAuth_1.checkGroupMembership, adaptRoute(groupController.getGroupDetails));
+groupRouter.put("/:id", groupAuth_1.groupAdminAuth, adaptRoute(groupController.updateGroup));
+groupRouter.delete("/:id", groupAuth_1.groupAdminAuth, adaptRoute(groupController.deleteGroup));
 // Group member management routes
-router.get("/:id/members", groupAuth_1.checkGroupMembership, adaptRoute(groupController.listGroupMembers));
-router.post("/:id/members", groupAuth_1.groupAdminAuth, adaptRoute(groupController.addGroupMember));
-router.delete("/:id/members/:userId", groupAuth_1.groupAdminAuth, adaptRoute(groupController.removeGroupMember));
+groupRouter.get("/:id/members", groupAuth_1.checkGroupMembership, adaptRoute(groupController.listGroupMembers));
+groupRouter.post("/:id/members", groupAuth_1.groupAdminAuth, adaptRoute(groupController.addGroupMember));
+groupRouter.delete("/:id/members/:userId", groupAuth_1.groupAdminAuth, adaptRoute(groupController.removeGroupMember));
 // Group document routes
-router.get("/:id/documents", groupAuth_1.checkGroupMembership, adaptRoute(groupController.getGroupDocuments));
+groupRouter.get("/:id/documents", groupAuth_1.checkGroupMembership, adaptRoute(groupController.getGroupDocuments));
 // Join group with token
-router.post("/join/:token", adaptRoute(groupController.joinGroupWithToken));
-exports.default = router;
+groupRouter.post("/join/:token", adaptRoute(groupController.joinGroupWithToken));
+exports.default = groupRouter;

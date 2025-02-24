@@ -21,19 +21,26 @@ dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { email, password, name } = req.body;
+        const { email, password, name, role } = req.body;
+        // Validate role (optional) - allow only STUDENT or TEACHER
+        const allowedRoles = ["STUDENT", "TEACHER"];
+        if (role && !allowedRoles.includes(role)) {
+            return res.status(400).json({ error: "Invalid role" });
+        }
         const existingUser = yield config_1.default.user.findUnique({ where: { email } });
         if (existingUser) {
             return res.status(400).json({ error: "User already exists" });
         }
         const salt = yield bcrypt_1.default.genSalt(10);
         const hashedPassword = yield bcrypt_1.default.hash(password, salt);
+        // If role is not provided, default to STUDENT
+        const userRole = role || "STUDENT";
         const user = yield config_1.default.user.create({
             data: {
                 email,
                 name,
                 password: hashedPassword,
-                role: "STUDENT",
+                role: userRole,
             },
         });
         res.status(201).json({

@@ -5,10 +5,10 @@ import { authenticateUser } from "../middleware/server";
 import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../types";
 
-const router = Router();
+const groupRouter = Router();
 
 // Apply authentication middleware to all group routes
-router.use(authenticateUser);
+groupRouter.use(authenticateUser);
 
 // Helper function to adapt controller to Express middleware
 const adaptRoute = (
@@ -22,41 +22,52 @@ const adaptRoute = (
 };
 
 // Group management routes
-router.post("/", adaptRoute(groupController.createGroup));
-router.get("/", adaptRoute(groupController.listGroups));
-router.get(
+groupRouter.post("/", adaptRoute(groupController.createGroup));
+groupRouter.get("/", adaptRoute(groupController.listGroups));
+groupRouter.get(
   "/:id",
   checkGroupMembership,
   adaptRoute(groupController.getGroupDetails)
 );
-router.put("/:id", groupAdminAuth, adaptRoute(groupController.updateGroup));
-router.delete("/:id", groupAdminAuth, adaptRoute(groupController.deleteGroup));
+groupRouter.put(
+  "/:id",
+  groupAdminAuth,
+  adaptRoute(groupController.updateGroup)
+);
+groupRouter.delete(
+  "/:id",
+  groupAdminAuth,
+  adaptRoute(groupController.deleteGroup)
+);
 
 // Group member management routes
-router.get(
+groupRouter.get(
   "/:id/members",
   checkGroupMembership,
   adaptRoute(groupController.listGroupMembers)
 );
-router.post(
+groupRouter.post(
   "/:id/members",
   groupAdminAuth,
   adaptRoute(groupController.addGroupMember)
 );
-router.delete(
+groupRouter.delete(
   "/:id/members/:userId",
   groupAdminAuth,
   adaptRoute(groupController.removeGroupMember)
 );
 
 // Group document routes
-router.get(
+groupRouter.get(
   "/:id/documents",
   checkGroupMembership,
   adaptRoute(groupController.getGroupDocuments)
 );
 
 // Join group with token
-router.post("/join/:token", adaptRoute(groupController.joinGroupWithToken));
+groupRouter.post(
+  "/join/:token",
+  adaptRoute(groupController.joinGroupWithToken)
+);
 
-export default router;
+export default groupRouter;

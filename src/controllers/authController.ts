@@ -8,10 +8,15 @@ import prisma from "../config/config";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
-
 export const register = async (req: Request, res: Response): Promise<any> => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
+
+    // Validate role (optional) - allow only STUDENT or TEACHER
+    const allowedRoles = ["STUDENT", "TEACHER"];
+    if (role && !allowedRoles.includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
+    }
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -21,12 +26,15 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // If role is not provided, default to STUDENT
+    const userRole = role || "STUDENT";
+
     const user = await prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
-        role: "STUDENT",
+        role: userRole,
       },
     });
 
