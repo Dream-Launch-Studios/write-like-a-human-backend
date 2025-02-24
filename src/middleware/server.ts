@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../utils/supabase";
+import jwt from "jsonwebtoken";
 import prisma from "../config/config";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
 
 declare global {
   namespace Express {
@@ -22,28 +27,36 @@ export const authenticateUser = async (
   const authHeader = req.headers["authorization"];
   const token = authHeader?.split(" ")[1];
 
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  if (!token) {
+    console.log("❌ No token provided");
+    return res.status(401).json({ error: "Unauthorized: No token provided" });
+  }
 
   try {
-    // Verify token with Supabase
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
+    console.log("🔍 Verifying JWT token...");
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      id: string;
+      email: string;
+      role: string;
+    };
 
-    if (error || !user) throw new Error("Invalid token");
+    console.log("✅ Token Decoded:", decoded);
 
-    // Get user from local database with role
-    const localUser = await prisma.user.findUnique({
-      where: { id: user.id },
+    // Fetch user from database
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
       select: { id: true, email: true, role: true },
     });
 
-    if (!localUser) throw new Error("User not found");
+    if (!user) {
+      console.log("❌ User not found in database");
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    req.user = localUser;
+    req.user = user;
     next();
   } catch (error: any) {
-    res.status(403).json({ error: error.message });
+    console.log("❌ Authentication Error:", error.message);
+    return res.status(403).json({ error: "Unauthorized: Invalid token" });
   }
 };

@@ -3,9 +3,9 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import prisma from "../config/config";
 
 dotenv.config();
-const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -30,15 +30,8 @@ export const register = async (req: Request, res: Response): Promise<any> => {
       },
     });
 
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "24h" }
-    );
-
     res.status(201).json({
       message: "User registered successfully",
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -91,8 +84,12 @@ export const getCurrentUser = async (
   res: Response
 ): Promise<any> => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: "Unauthorized: No user ID found" });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: req.user?.id },
+      where: { id: req.user.id },
       select: {
         id: true,
         email: true,
