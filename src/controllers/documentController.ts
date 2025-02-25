@@ -4,7 +4,7 @@ import { PrismaClient, Document } from "@prisma/client";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/config";
 
-const checkDocumentAccess = async (
+export const checkDocumentAccess = async (
   userId: string,
   documentId: string
 ): Promise<boolean> => {
