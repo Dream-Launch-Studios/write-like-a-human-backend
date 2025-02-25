@@ -5,7 +5,7 @@ import { AuthenticatedRequest } from "../types";
 import * as documentController from "../controllers/documentController";
 import { authenticateUser } from "../middleware/server";
 
-const router = Router();
+const documentRouter = Router();
 
 // Helper function to adapt controller to Express middleware
 const adaptRoute = (
@@ -18,13 +18,19 @@ const adaptRoute = (
   };
 };
 
-router.use(authenticateUser);
+documentRouter.use(authenticateUser);
 
-router.get("/", adaptRoute(documentController.listDocuments));
-router.post("/new", adaptRoute(documentController.createDocument));
-router.get("/:id", adaptRoute(documentController.getDocument));
-router.put("/:id/edit", adaptRoute(documentController.updateDocument));
-router.get("/:id/versions", adaptRoute(documentController.getDocumentVersions));
-router.get("/:id/analyze", adaptRoute(documentController.analyzeDocument));
+documentRouter.get("/", adaptRoute(documentController.listDocuments));
+documentRouter.post("/new", adaptRoute(documentController.createDocument));
+documentRouter.get("/:id", adaptRoute(documentController.getDocument));
+documentRouter.put("/:id/edit", adaptRoute(documentController.updateDocument));
+documentRouter.get(
+  "/:id/versions",
+  adaptRoute(documentController.getDocumentVersions)
+);
+documentRouter.get(
+  "/:id/analyze",
+  adaptRoute(documentController.analyzeDocument)
+);
 
-export default router;
+export default documentRouter;

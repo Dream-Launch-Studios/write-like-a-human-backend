@@ -8,17 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.joinGroupWithToken = exports.getGroupDocuments = exports.removeGroupMember = exports.addGroupMember = exports.listGroupMembers = exports.deleteGroup = exports.updateGroup = exports.getGroupDetails = exports.listGroups = exports.createGroup = void 0;
-const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
+const config_1 = __importDefault(require("../config/config"));
 // Helper functions
 const generateUniqueToken = () => {
     return (Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15));
 };
 const checkGroupMembership = (userId, groupId) => __awaiter(void 0, void 0, void 0, function* () {
-    const group = yield prisma.group.findFirst({
+    const group = yield config_1.default.group.findFirst({
         where: {
             id: groupId,
             OR: [{ adminId: userId }, { members: { some: { userId } } }],
@@ -35,7 +37,7 @@ const createGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const { name, description } = req.body;
         const joinToken = generateUniqueToken();
-        const group = yield prisma.group.create({
+        const group = yield config_1.default.group.create({
             data: {
                 name,
                 description,
@@ -57,7 +59,7 @@ const listGroups = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     try {
         let groups;
         if (req.user.role === "ADMIN") {
-            groups = yield prisma.group.findMany({
+            groups = yield config_1.default.group.findMany({
                 include: {
                     admin: {
                         select: {
@@ -76,7 +78,7 @@ const listGroups = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
         }
         else {
-            groups = yield prisma.group.findMany({
+            groups = yield config_1.default.group.findMany({
                 where: {
                     OR: [
                         { adminId: req.user.id },
@@ -114,7 +116,7 @@ const getGroupDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const group = (yield prisma.group.findUnique({
+        const group = (yield config_1.default.group.findUnique({
             where: { id: groupId },
             include: {
                 admin: {
@@ -152,7 +154,7 @@ const updateGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const groupId = req.params.id;
         const { name, description } = req.body;
-        const group = yield prisma.group.findUnique({
+        const group = yield config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -161,7 +163,7 @@ const updateGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to update group" });
         }
-        const updatedGroup = yield prisma.group.update({
+        const updatedGroup = yield config_1.default.group.update({
             where: { id: groupId },
             data: { name, description },
         });
@@ -178,7 +180,7 @@ exports.updateGroup = updateGroup;
 const deleteGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const groupId = req.params.id;
-        const group = yield prisma.group.findUnique({
+        const group = yield config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -187,7 +189,7 @@ const deleteGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to delete group" });
         }
-        yield prisma.group.delete({
+        yield config_1.default.group.delete({
             where: { id: groupId },
         });
         res.status(200).json({ message: "Group deleted successfully" });
@@ -204,7 +206,7 @@ const listGroupMembers = (req, res) => __awaiter(void 0, void 0, void 0, functio
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const members = yield prisma.groupMember.findMany({
+        const members = yield config_1.default.groupMember.findMany({
             where: { groupId },
             include: {
                 user: {
@@ -228,7 +230,7 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
     try {
         const groupId = req.params.id;
         const { userId } = req.body;
-        const group = yield prisma.group.findUnique({
+        const group = yield config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -237,13 +239,13 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to add members" });
         }
-        const user = yield prisma.user.findUnique({
+        const user = yield config_1.default.user.findUnique({
             where: { id: userId },
         });
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        const existingMember = yield prisma.groupMember.findUnique({
+        const existingMember = yield config_1.default.groupMember.findUnique({
             where: {
                 userId_groupId: {
                     userId,
@@ -254,7 +256,7 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (existingMember) {
             return res.status(400).json({ error: "User already in group" });
         }
-        const member = yield prisma.groupMember.create({
+        const member = yield config_1.default.groupMember.create({
             data: {
                 userId,
                 groupId,
@@ -283,7 +285,7 @@ exports.addGroupMember = addGroupMember;
 const removeGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id: groupId, userId } = req.params;
-        const group = yield prisma.group.findUnique({
+        const group = yield config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -300,7 +302,7 @@ const removeGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (userId === group.adminId) {
             return res.status(400).json({ error: "Cannot remove group admin" });
         }
-        yield prisma.groupMember.delete({
+        yield config_1.default.groupMember.delete({
             where: {
                 userId_groupId: {
                     userId,
@@ -322,7 +324,7 @@ const getGroupDocuments = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const documents = yield prisma.document.findMany({
+        const documents = yield config_1.default.document.findMany({
             where: {
                 groupId,
                 isLatest: true,
@@ -356,13 +358,13 @@ exports.getGroupDocuments = getGroupDocuments;
 const joinGroupWithToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { token } = req.params;
-        const group = yield prisma.group.findUnique({
+        const group = yield config_1.default.group.findUnique({
             where: { joinToken: token },
         });
         if (!group) {
             return res.status(404).json({ error: "Invalid or expired join token" });
         }
-        const existingMember = yield prisma.groupMember.findUnique({
+        const existingMember = yield config_1.default.groupMember.findUnique({
             where: {
                 userId_groupId: {
                     userId: req.user.id,
@@ -373,7 +375,7 @@ const joinGroupWithToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (existingMember) {
             return res.status(400).json({ error: "Already a member of this group" });
         }
-        yield prisma.groupMember.create({
+        yield config_1.default.groupMember.create({
             data: {
                 userId: req.user.id,
                 groupId: group.id,
