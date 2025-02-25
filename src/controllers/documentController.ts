@@ -2,10 +2,8 @@
 import { Request, Response } from "express";
 import { PrismaClient, Document } from "@prisma/client";
 import { AuthenticatedRequest } from "../types";
+import prisma from "../config/config";
 
-const prisma = new PrismaClient();
-
-// Helper functions
 const checkDocumentAccess = async (
   userId: string,
   documentId: string
@@ -31,7 +29,6 @@ const checkDocumentAccess = async (
   return false;
 };
 
-// Controllers
 export const listDocuments = async (
   req: AuthenticatedRequest,
   res: Response

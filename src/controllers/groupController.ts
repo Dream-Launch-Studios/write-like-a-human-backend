@@ -8,8 +8,7 @@ import {
   Document,
 } from "@prisma/client";
 import { AuthenticatedRequest } from "../types";
-
-const prisma = new PrismaClient();
+import prisma from "../config/config";
 
 // Type extensions
 interface GroupWithMembers extends Group {
