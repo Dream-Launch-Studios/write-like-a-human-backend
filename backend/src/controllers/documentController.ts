@@ -1,8 +1,8 @@
 // src/controllers/documentController.ts
 import { Request, Response } from "express";
-import { PrismaClient, Document } from "@prisma/client";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/config";
+import { Request as ExpressRequest } from "express";
 
 export const checkDocumentAccess = async (
   userId: string,
@@ -233,5 +233,75 @@ export const analyzeDocument = async (
     res.status(200).json({ analysis });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const uploadDocument = async (
+  req: AuthenticatedRequest & Request & { file?: any },
+  res: Response
+) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const { groupId, title } = req.body;
+    const file = req.file;
+
+    // Validate file
+    if (
+      !file.mimetype.match(
+        /(text|application|image)\/(plain|pdf|doc|docx|msword|jpeg|png|jpg)/
+      )
+    ) {
+      return res.status(400).json({ error: "Invalid file type" });
+    }
+
+    // Check group access if groupId is provided
+    if (groupId) {
+      const group = await prisma.group.findFirst({
+        where: {
+          id: groupId,
+          OR: [
+            // Teachers can upload to any group they manage
+            { adminId: req.user.id },
+            // Students can only upload to groups they're members of
+            ...(req.user.role === "STUDENT"
+              ? [{ members: { some: { userId: req.user.id } } }]
+              : []),
+          ],
+        },
+      });
+      if (!group) {
+        return res
+          .status(403)
+          .json({ error: "Unauthorized to upload document in this group" });
+      }
+    }
+
+    const newDocument = await prisma.document.create({
+      data: {
+        title: title || file.originalname,
+        content: "",
+        groupId: groupId || null,
+        userId: req.user.id,
+        versionNumber: 1,
+        isLatest: true,
+        fileName: file.originalname,
+        fileUrl: file.path,
+        fileType: file.mimetype,
+        fileSize: file.size,
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      document: newDocument,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
