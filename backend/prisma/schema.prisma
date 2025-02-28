@@ -81,8 +81,8 @@ model Feedback {
     user       User           @relation(fields: [userId], references: [id])
     documentId String?
     document   Document?      @relation(fields: [documentId], references: [id])
-    groupId    String
-    group      Group          @relation(fields: [groupId], references: [id])
+    groupId    String?
+    group      Group?         @relation(fields: [groupId], references: [id])
     createdAt  DateTime       @default(now())
     updatedAt  DateTime       @updatedAt
     Comment    Comment[]
