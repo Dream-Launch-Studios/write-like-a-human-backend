@@ -120,34 +120,45 @@ export const getDocument = async (req: AuthenticatedRequest, res: Response) => {
 };
 
 export const updateDocument = async (
-  req: AuthenticatedRequest,
+  req: AuthenticatedRequest & Request & { file?: any },
   res: Response
 ) => {
   try {
     const { title, content } = req.body;
-    const existingDocument = await prisma.document.findUnique({
-      where: { id: req.params.id },
-    });
+    const documentId = req.params.id;
 
-    if (!existingDocument)
-      return res.status(404).json({ error: "Document not found" });
-
-    let canEdit = false;
-    if (req.user.role === "ADMIN") canEdit = true;
-    else if (existingDocument.userId === req.user.id) canEdit = true;
-    else if (existingDocument.groupId) {
-      const group = await prisma.group.findUnique({
-        where: { id: existingDocument.groupId },
+    if (!documentId) {
+      return res.status(400).json({
+        success: false,
+        error: "Document ID is required",
       });
-      if (group?.adminId === req.user.id) canEdit = true;
     }
 
-    if (!canEdit)
-      return res.status(403).json({ error: "Unauthorized to edit document" });
+    const existingDocument = await prisma.document.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!existingDocument) {
+      return res.status(404).json({
+        success: false,
+        error: "Document not found",
+      });
+    }
+
+    // Check permissions
+    if (
+      existingDocument.userId !== req.user.id &&
+      req.user.role !== "TEACHER"
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Unauthorized to update this document",
+      });
+    }
 
     const newVersion = await prisma.$transaction([
       prisma.document.update({
-        where: { id: req.params.id },
+        where: { id: documentId },
         data: { isLatest: false },
       }),
       prisma.document.create({
@@ -163,14 +174,22 @@ export const updateDocument = async (
           fileName: title || existingDocument.fileName,
           fileUrl: existingDocument.fileUrl,
           fileType: existingDocument.fileType,
-          fileSize: Buffer.from(content || existingDocument.content).length,
+          fileSize: content
+            ? Buffer.from(content).length
+            : existingDocument.fileSize,
         },
       }),
     ]);
 
-    res.status(200).json({ document: newVersion[1] });
+    res.status(200).json({
+      success: true,
+      document: newVersion[1],
+    });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 };
 
@@ -242,7 +261,18 @@ export const uploadDocument = async (
 ) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return res.status(400).json({
+        success: false,
+        error: "No file uploaded",
+      });
+    }
+
+    // Only allow students to upload
+    if (req.user.role !== "STUDENT") {
+      return res.status(403).json({
+        success: false,
+        error: "Only students can upload documents",
+      });
     }
 
     const { groupId, title } = req.body;
@@ -254,7 +284,10 @@ export const uploadDocument = async (
         /(text|application|image)\/(plain|pdf|doc|docx|msword|jpeg|png|jpg)/
       )
     ) {
-      return res.status(400).json({ error: "Invalid file type" });
+      return res.status(400).json({
+        success: false,
+        error: "Invalid file type",
+      });
     }
 
     // Check group access if groupId is provided
@@ -262,20 +295,19 @@ export const uploadDocument = async (
       const group = await prisma.group.findFirst({
         where: {
           id: groupId,
-          OR: [
-            // Teachers can upload to any group they manage
-            { adminId: req.user.id },
-            // Students can only upload to groups they're members of
-            ...(req.user.role === "STUDENT"
-              ? [{ members: { some: { userId: req.user.id } } }]
-              : []),
-          ],
+          members: {
+            some: {
+              userId: req.user.id,
+            },
+          },
         },
       });
+
       if (!group) {
-        return res
-          .status(403)
-          .json({ error: "Unauthorized to upload document in this group" });
+        return res.status(403).json({
+          success: false,
+          error: "You must be a member of this group to upload documents",
+        });
       }
     }
 

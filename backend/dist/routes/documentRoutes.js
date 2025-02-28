@@ -32,12 +32,24 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // src/routes/documentRoutes.ts
 const express_1 = require("express");
 const documentController = __importStar(require("../controllers/documentController"));
 const server_1 = require("../middleware/server");
+const multer_1 = __importDefault(require("multer"));
 const documentRouter = (0, express_1.Router)();
+// Configure multer for file uploads
+const storage = multer_1.default.diskStorage({
+    destination: "./uploads/",
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    },
+});
+const upload = (0, multer_1.default)({ storage });
 // Helper function to adapt controller to Express middleware
 const adaptRoute = (controller) => {
     return (req, res, next) => {
@@ -47,8 +59,9 @@ const adaptRoute = (controller) => {
 documentRouter.use(server_1.authenticateUser);
 documentRouter.get("/", adaptRoute(documentController.listDocuments));
 documentRouter.post("/new", adaptRoute(documentController.createDocument));
+documentRouter.post("/upload", upload.single("file"), adaptRoute(documentController.uploadDocument));
 documentRouter.get("/:id", adaptRoute(documentController.getDocument));
-documentRouter.put("/:id/edit", adaptRoute(documentController.updateDocument));
+documentRouter.put("/:id", adaptRoute(documentController.updateDocument));
 documentRouter.get("/:id/versions", adaptRoute(documentController.getDocumentVersions));
 documentRouter.get("/:id/analyze", adaptRoute(documentController.analyzeDocument));
 exports.default = documentRouter;
