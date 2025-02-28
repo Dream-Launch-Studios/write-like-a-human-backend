@@ -1,0 +1,12 @@
+import { Response } from "express";
+import { AuthenticatedRequest } from "../types";
+export declare const createGroup: (req: AuthenticatedRequest, res: Response) => Promise<any>;
+export declare const listGroups: (req: AuthenticatedRequest, res: Response) => Promise<any>;
+export declare const getGroupDetails: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const updateGroup: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const deleteGroup: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const listGroupMembers: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const addGroupMember: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const removeGroupMember: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const getGroupDocuments: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const joinGroupWithToken: (req: AuthenticatedRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;

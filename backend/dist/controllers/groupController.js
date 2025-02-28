@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -19,17 +10,17 @@ const generateUniqueToken = () => {
     return (Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15));
 };
-const checkGroupMembership = (userId, groupId) => __awaiter(void 0, void 0, void 0, function* () {
-    const group = yield config_1.default.group.findFirst({
+const checkGroupMembership = async (userId, groupId) => {
+    const group = await config_1.default.group.findFirst({
         where: {
             id: groupId,
             OR: [{ adminId: userId }, { members: { some: { userId } } }],
         },
     });
     return !!group;
-});
+};
 // Controllers
-const createGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createGroup = async (req, res) => {
     var _a, _b;
     try {
         if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== "TEACHER" && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.role) !== "ADMIN") {
@@ -37,7 +28,7 @@ const createGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const { name, description } = req.body;
         const joinToken = generateUniqueToken();
-        const group = yield config_1.default.group.create({
+        const group = await config_1.default.group.create({
             data: {
                 name,
                 description,
@@ -53,13 +44,13 @@ const createGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.createGroup = createGroup;
-const listGroups = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const listGroups = async (req, res) => {
     try {
         let groups;
         if (req.user.role === "ADMIN") {
-            groups = yield config_1.default.group.findMany({
+            groups = await config_1.default.group.findMany({
                 include: {
                     admin: {
                         select: {
@@ -78,7 +69,7 @@ const listGroups = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             });
         }
         else {
-            groups = yield config_1.default.group.findMany({
+            groups = await config_1.default.group.findMany({
                 where: {
                     OR: [
                         { adminId: req.user.id },
@@ -107,16 +98,16 @@ const listGroups = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.listGroups = listGroups;
-const getGroupDetails = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getGroupDetails = async (req, res) => {
     try {
         const groupId = req.params.id;
-        const isMember = yield checkGroupMembership(req.user.id, groupId);
+        const isMember = await checkGroupMembership(req.user.id, groupId);
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const group = (yield config_1.default.group.findUnique({
+        const group = (await config_1.default.group.findUnique({
             where: { id: groupId },
             include: {
                 admin: {
@@ -148,13 +139,13 @@ const getGroupDetails = (req, res) => __awaiter(void 0, void 0, void 0, function
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.getGroupDetails = getGroupDetails;
-const updateGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updateGroup = async (req, res) => {
     try {
         const groupId = req.params.id;
         const { name, description } = req.body;
-        const group = yield config_1.default.group.findUnique({
+        const group = await config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -163,7 +154,7 @@ const updateGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to update group" });
         }
-        const updatedGroup = yield config_1.default.group.update({
+        const updatedGroup = await config_1.default.group.update({
             where: { id: groupId },
             data: { name, description },
         });
@@ -175,12 +166,12 @@ const updateGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.updateGroup = updateGroup;
-const deleteGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteGroup = async (req, res) => {
     try {
         const groupId = req.params.id;
-        const group = yield config_1.default.group.findUnique({
+        const group = await config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -189,7 +180,7 @@ const deleteGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to delete group" });
         }
-        yield config_1.default.group.delete({
+        await config_1.default.group.delete({
             where: { id: groupId },
         });
         res.status(200).json({ message: "Group deleted successfully" });
@@ -197,16 +188,16 @@ const deleteGroup = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.deleteGroup = deleteGroup;
-const listGroupMembers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const listGroupMembers = async (req, res) => {
     try {
         const groupId = req.params.id;
-        const isMember = yield checkGroupMembership(req.user.id, groupId);
+        const isMember = await checkGroupMembership(req.user.id, groupId);
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const members = yield config_1.default.groupMember.findMany({
+        const members = await config_1.default.groupMember.findMany({
             where: { groupId },
             include: {
                 user: {
@@ -224,13 +215,13 @@ const listGroupMembers = (req, res) => __awaiter(void 0, void 0, void 0, functio
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.listGroupMembers = listGroupMembers;
-const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const addGroupMember = async (req, res) => {
     try {
         const groupId = req.params.id;
         const { userId } = req.body;
-        const group = yield config_1.default.group.findUnique({
+        const group = await config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -239,13 +230,13 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (group.adminId !== req.user.id && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized to add members" });
         }
-        const user = yield config_1.default.user.findUnique({
+        const user = await config_1.default.user.findUnique({
             where: { id: userId },
         });
         if (!user) {
             return res.status(404).json({ error: "User not found" });
         }
-        const existingMember = yield config_1.default.groupMember.findUnique({
+        const existingMember = await config_1.default.groupMember.findUnique({
             where: {
                 userId_groupId: {
                     userId,
@@ -256,7 +247,7 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (existingMember) {
             return res.status(400).json({ error: "User already in group" });
         }
-        const member = yield config_1.default.groupMember.create({
+        const member = await config_1.default.groupMember.create({
             data: {
                 userId,
                 groupId,
@@ -280,12 +271,12 @@ const addGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.addGroupMember = addGroupMember;
-const removeGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const removeGroupMember = async (req, res) => {
     try {
         const { id: groupId, userId } = req.params;
-        const group = yield config_1.default.group.findUnique({
+        const group = await config_1.default.group.findUnique({
             where: { id: groupId },
         });
         if (!group) {
@@ -302,7 +293,7 @@ const removeGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, functi
         if (userId === group.adminId) {
             return res.status(400).json({ error: "Cannot remove group admin" });
         }
-        yield config_1.default.groupMember.delete({
+        await config_1.default.groupMember.delete({
             where: {
                 userId_groupId: {
                     userId,
@@ -315,16 +306,16 @@ const removeGroupMember = (req, res) => __awaiter(void 0, void 0, void 0, functi
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.removeGroupMember = removeGroupMember;
-const getGroupDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getGroupDocuments = async (req, res) => {
     try {
         const groupId = req.params.id;
-        const isMember = yield checkGroupMembership(req.user.id, groupId);
+        const isMember = await checkGroupMembership(req.user.id, groupId);
         if (!isMember && req.user.role !== "ADMIN") {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const documents = yield config_1.default.document.findMany({
+        const documents = await config_1.default.document.findMany({
             where: {
                 groupId,
                 isLatest: true,
@@ -353,18 +344,18 @@ const getGroupDocuments = (req, res) => __awaiter(void 0, void 0, void 0, functi
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.getGroupDocuments = getGroupDocuments;
-const joinGroupWithToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const joinGroupWithToken = async (req, res) => {
     try {
         const { token } = req.params;
-        const group = yield config_1.default.group.findUnique({
+        const group = await config_1.default.group.findUnique({
             where: { joinToken: token },
         });
         if (!group) {
             return res.status(404).json({ error: "Invalid or expired join token" });
         }
-        const existingMember = yield config_1.default.groupMember.findUnique({
+        const existingMember = await config_1.default.groupMember.findUnique({
             where: {
                 userId_groupId: {
                     userId: req.user.id,
@@ -375,7 +366,7 @@ const joinGroupWithToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (existingMember) {
             return res.status(400).json({ error: "Already a member of this group" });
         }
-        yield config_1.default.groupMember.create({
+        await config_1.default.groupMember.create({
             data: {
                 userId: req.user.id,
                 groupId: group.id,
@@ -393,5 +384,5 @@ const joinGroupWithToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.joinGroupWithToken = joinGroupWithToken;

@@ -11,9 +11,9 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/api/auth", Authrouter);
-app.use("/api/users", userRouter);
-app.use("/api/groups", groupRouter);
+app.use("/api/auth", Authrouter); //completed
+app.use("/api/users", userRouter); //completed
+app.use("/api/groups", groupRouter); //completed
 app.use("/api/documents", documentRouter);
 app.use("/api/feedbacks", feedbackRouter);
 app.use("/api/comments", commentRouter);

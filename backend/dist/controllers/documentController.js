@@ -1,21 +1,12 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.analyzeDocument = exports.getDocumentVersions = exports.updateDocument = exports.getDocument = exports.createDocument = exports.listDocuments = exports.checkDocumentAccess = void 0;
 const config_1 = __importDefault(require("../config/config"));
-const checkDocumentAccess = (userId, documentId) => __awaiter(void 0, void 0, void 0, function* () {
-    const document = yield config_1.default.document.findUnique({
+const checkDocumentAccess = async (userId, documentId) => {
+    const document = await config_1.default.document.findUnique({
         where: { id: documentId },
         include: { group: true },
     });
@@ -24,7 +15,7 @@ const checkDocumentAccess = (userId, documentId) => __awaiter(void 0, void 0, vo
     if (document.userId === userId)
         return true;
     if (document.groupId) {
-        const group = yield config_1.default.group.findFirst({
+        const group = await config_1.default.group.findFirst({
             where: {
                 id: document.groupId,
                 OR: [{ adminId: userId }, { members: { some: { userId } } }],
@@ -33,11 +24,11 @@ const checkDocumentAccess = (userId, documentId) => __awaiter(void 0, void 0, vo
         return !!group;
     }
     return false;
-});
+};
 exports.checkDocumentAccess = checkDocumentAccess;
-const listDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const listDocuments = async (req, res) => {
     try {
-        const documents = yield config_1.default.document.findMany({
+        const documents = await config_1.default.document.findMany({
             where: {
                 userId: req.user.id,
                 isLatest: true,
@@ -53,13 +44,13 @@ const listDocuments = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.listDocuments = listDocuments;
-const createDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createDocument = async (req, res) => {
     try {
         const { title, content, groupId } = req.body;
         if (groupId) {
-            const group = yield config_1.default.group.findFirst({
+            const group = await config_1.default.group.findFirst({
                 where: {
                     id: groupId,
                     OR: [
@@ -74,7 +65,7 @@ const createDocument = (req, res) => __awaiter(void 0, void 0, void 0, function*
                     .json({ error: "Unauthorized to create document in this group" });
             }
         }
-        const newDocument = yield config_1.default.document.create({
+        const newDocument = await config_1.default.document.create({
             data: {
                 title,
                 content,
@@ -93,11 +84,11 @@ const createDocument = (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.createDocument = createDocument;
-const getDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getDocument = async (req, res) => {
     try {
-        const document = yield config_1.default.document.findUnique({
+        const document = await config_1.default.document.findUnique({
             where: { id: req.params.id },
             include: {
                 user: { select: { id: true, name: true } },
@@ -107,7 +98,7 @@ const getDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (!document)
             return res.status(404).json({ error: "Document not found" });
         if (req.user.role !== "ADMIN" &&
-            !(yield (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
+            !(await (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
             return res.status(403).json({ error: "Unauthorized access" });
         }
         res.status(200).json({ document });
@@ -115,12 +106,12 @@ const getDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.getDocument = getDocument;
-const updateDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updateDocument = async (req, res) => {
     try {
         const { title, content } = req.body;
-        const existingDocument = yield config_1.default.document.findUnique({
+        const existingDocument = await config_1.default.document.findUnique({
             where: { id: req.params.id },
         });
         if (!existingDocument)
@@ -131,7 +122,7 @@ const updateDocument = (req, res) => __awaiter(void 0, void 0, void 0, function*
         else if (existingDocument.userId === req.user.id)
             canEdit = true;
         else if (existingDocument.groupId) {
-            const group = yield config_1.default.group.findUnique({
+            const group = await config_1.default.group.findUnique({
                 where: { id: existingDocument.groupId },
             });
             if ((group === null || group === void 0 ? void 0 : group.adminId) === req.user.id)
@@ -139,7 +130,7 @@ const updateDocument = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         if (!canEdit)
             return res.status(403).json({ error: "Unauthorized to edit document" });
-        const newVersion = yield config_1.default.$transaction([
+        const newVersion = await config_1.default.$transaction([
             config_1.default.document.update({
                 where: { id: req.params.id },
                 data: { isLatest: false },
@@ -165,20 +156,20 @@ const updateDocument = (req, res) => __awaiter(void 0, void 0, void 0, function*
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.updateDocument = updateDocument;
-const getDocumentVersions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getDocumentVersions = async (req, res) => {
     try {
-        const document = yield config_1.default.document.findUnique({
+        const document = await config_1.default.document.findUnique({
             where: { id: req.params.id },
         });
         if (!document)
             return res.status(404).json({ error: "Document not found" });
         if (req.user.role !== "ADMIN" &&
-            !(yield (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
+            !(await (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const versions = yield config_1.default.document.findMany({
+        const versions = await config_1.default.document.findMany({
             where: {
                 OR: [
                     { parentDocumentId: document.parentDocumentId || document.id },
@@ -192,20 +183,20 @@ const getDocumentVersions = (req, res) => __awaiter(void 0, void 0, void 0, func
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.getDocumentVersions = getDocumentVersions;
-const analyzeDocument = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const analyzeDocument = async (req, res) => {
     try {
-        const document = yield config_1.default.document.findUnique({
+        const document = await config_1.default.document.findUnique({
             where: { id: req.params.id },
         });
         if (!document)
             return res.status(404).json({ error: "Document not found" });
         if (req.user.role !== "ADMIN" &&
-            !(yield (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
+            !(await (0, exports.checkDocumentAccess)(req.user.id, req.params.id))) {
             return res.status(403).json({ error: "Unauthorized access" });
         }
-        const analysis = yield config_1.default.feedback.findMany({
+        const analysis = await config_1.default.feedback.findMany({
             where: { documentId: req.params.id },
             include: { user: { select: { id: true, name: true } } },
             orderBy: { createdAt: "desc" },
@@ -215,5 +206,5 @@ const analyzeDocument = (req, res) => __awaiter(void 0, void 0, void 0, function
     catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
+};
 exports.analyzeDocument = analyzeDocument;
