@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadDocument = exports.analyzeDocument = exports.getDocumentVersions = exports.updateDocument = exports.getDocument = exports.createDocument = exports.listDocuments = exports.checkDocumentAccess = void 0;
 const config_1 = __importDefault(require("../config/config"));
+const fs_1 = require("fs");
+const pdf_parse_1 = __importDefault(require("pdf-parse"));
 const checkDocumentAccess = async (userId, documentId) => {
     const document = await config_1.default.document.findUnique({
         where: { id: documentId },
@@ -238,6 +240,19 @@ const uploadDocument = async (req, res) => {
         }
         const { groupId, title } = req.body;
         const file = req.file;
+        // Extract text from PDF if file is PDF
+        let content = "";
+        if (file.mimetype === "application/pdf") {
+            try {
+                const dataBuffer = (0, fs_1.readFileSync)(file.path);
+                const pdfData = await (0, pdf_parse_1.default)(dataBuffer);
+                content = pdfData.text;
+            }
+            catch (error) {
+                console.error("PDF parsing error:", error);
+                content = ""; // Fallback to empty content if parsing fails
+            }
+        }
         // Validate file
         if (!file.mimetype.match(/(text|application|image)\/(plain|pdf|doc|docx|msword|jpeg|png|jpg)/)) {
             return res.status(400).json({
@@ -267,7 +282,7 @@ const uploadDocument = async (req, res) => {
         const newDocument = await config_1.default.document.create({
             data: {
                 title: title || file.originalname,
-                content: "",
+                content: content,
                 groupId: groupId || null,
                 userId: req.user.id,
                 versionNumber: 1,

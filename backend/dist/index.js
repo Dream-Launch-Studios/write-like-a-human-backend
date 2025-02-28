@@ -16,7 +16,7 @@ app.use(express_1.default.json());
 app.use("/api/auth", authRoutes_1.default); //completed
 app.use("/api/users", userRoutes_1.default); //completed
 app.use("/api/groups", groupRoute_1.default); //completed
-app.use("/api/documents", documentRoutes_1.default);
+app.use("/api/documents", documentRoutes_1.default); //completed almost
 app.use("/api/feedbacks", feedbackRoutes_1.default);
 app.use("/api/comments", commentRoutes_1.default);
 app.use("/api/analyze", analysisRoutes_1.default);

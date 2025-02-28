@@ -14,7 +14,7 @@ app.use(express.json());
 app.use("/api/auth", Authrouter); //completed
 app.use("/api/users", userRouter); //completed
 app.use("/api/groups", groupRouter); //completed
-app.use("/api/documents", documentRouter);
+app.use("/api/documents", documentRouter); //completed almost
 app.use("/api/feedbacks", feedbackRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/analyze", analysisRouter);

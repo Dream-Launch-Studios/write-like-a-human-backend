@@ -3,6 +3,8 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/config";
 import { Request as ExpressRequest } from "express";
+import { readFileSync } from "fs";
+import pdf from "pdf-parse";
 
 export const checkDocumentAccess = async (
   userId: string,
@@ -278,6 +280,19 @@ export const uploadDocument = async (
     const { groupId, title } = req.body;
     const file = req.file;
 
+    // Extract text from PDF if file is PDF
+    let content = "";
+    if (file.mimetype === "application/pdf") {
+      try {
+        const dataBuffer = readFileSync(file.path);
+        const pdfData = await pdf(dataBuffer);
+        content = pdfData.text;
+      } catch (error) {
+        console.error("PDF parsing error:", error);
+        content = ""; // Fallback to empty content if parsing fails
+      }
+    }
+
     // Validate file
     if (
       !file.mimetype.match(
@@ -314,7 +329,7 @@ export const uploadDocument = async (
     const newDocument = await prisma.document.create({
       data: {
         title: title || file.originalname,
-        content: "",
+        content: content,
         groupId: groupId || null,
         userId: req.user.id,
         versionNumber: 1,
