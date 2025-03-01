@@ -12,7 +12,7 @@ async function testAIAnalysis() {
   console.log("\n=== Testing OpenAI Analysis ===");
 
   const inputText = `
-    Gumroad is an e-commerce platform that allows creators to sell products directly to their audience. The platform was founded by Sahil Lavingia in 2011 and is based in San Francisco, California. Gumroad enables creators to sell digital products, such as e-books, music, videos, software, and physical goods. The platform provides creators with tools to create custom landing pages, track sales, and process payments. Gumroad's primary focus is serving independent creators, such as writers, musicians, and designers, who want to sell their products without going through intermediaries.
+    Gumroad is an e-commerce platform that allows creators to sell products directly to their audience. The platform was founded by Sahil Lavingia in 2011 and is based in San Francisco, California. Gumroad enables creators to sell digital products, such as e-books, music, videos, software, and physical goods. The platform provides creators with tools to create custom landing pages, track sales, and process payments.Gumroad's primary focus is serving independent creators, such as writers, musicians, and designers, who want to sell their products without going through intermediaries.
   `;
 
   console.log("Input Text:", inputText.trim(), "\n");

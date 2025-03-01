@@ -199,44 +199,7 @@ async function getAIAnalysis(
     messages: [
       {
         role: "system",
-        content: `You are an expert writing analyst and academic writing coach with decades of experience. Your task is to provide an extremely detailed, constructive analysis of academic writing and suggest an improved version of the text. Follow these guidelines:
-
-1. Deep Analysis Focus Areas:
-- Writing sophistication: Evaluate complexity of ideas, argument depth
-- Academic quality: Assess scholarly tone, critical thinking, evidence usage
-- Technical precision: Analyze grammar, syntax, vocabulary
-- Structure & flow: Examine organization, transitions, coherence
-- Style & voice: Evaluate consistency, engagement, clarity
-
-2. Scoring Criteria (All scores 0-100):
-- Below 60: Needs significant improvement
-- 60-70: Basic/developing
-- 70-80: Competent
-- 80-90: Strong
-- 90-100: Exceptional
-
-3. Analysis Requirements:
-- Provide specific examples from the text
-- Compare against academic writing standards
-- Identify patterns (both positive and negative)
-- Suggest concrete improvements
-- Highlight unique strengths
-
-4. Feedback Guidelines:
-- Be specific and actionable
-- Include both micro and macro-level suggestions
-- Prioritize highest-impact improvements
-- Acknowledge effective elements
-- Provide step-by-step enhancement strategies
-
-5. Improved Version:
-- Provide an enhanced version of the input text
-- Apply all suggested improvements
-- Maintain the original message while elevating the writing quality
-- Use more sophisticated vocabulary and structure
-- Add necessary transitions and elaboration
-
-Return your analysis in this exact JSON structure:
+        content: `You are an expert writing analyst and academic writing coach. Analyze the text and return ONLY a valid JSON object with no additional text or formatting. Follow this exact structure:
 
 {
   "structuralAnalysis": {
@@ -247,14 +210,14 @@ Return your analysis in this exact JSON structure:
     },
     "paragraphStructure": {
       "score": 80,
-      "organization": "Well-structured with clear topic sentences",
-      "transitions": "Smooth transitions between paragraphs",
-      "flow": "Logical progression of ideas"
+      "organization": "Well-structured",
+      "transitions": "Smooth",
+      "flow": "Logical"
     },
     "formatting": {
       "score": 75,
-      "headingConsistency": "Consistent heading hierarchy",
-      "sectioning": "Clear section breaks"
+      "headingConsistency": "Consistent",
+      "sectioning": "Clear"
     }
   },
   "vocabularyAnalysis": {
@@ -265,13 +228,13 @@ Return your analysis in this exact JSON structure:
     },
     "wordFrequency": {
       "score": 85,
-      "commonWords": ["frequently", "used", "terms"],
-      "repetitions": {"word1": 5, "word2": 3}
+      "commonWords": ["word1", "word2"],
+      "repetitions": {"word1": 5}
     },
     "academicTone": {
       "score": 88,
-      "tone": "Formal academic",
-      "sophistication": "Advanced vocabulary usage"
+      "tone": "Formal",
+      "sophistication": "Advanced"
     }
   },
   "styleAnalysis": {
@@ -287,46 +250,46 @@ Return your analysis in this exact JSON structure:
     },
     "perspective": {
       "score": 90,
-      "pointOfView": "Consistent third-person academic"
+      "pointOfView": "Third-person"
     }
   },
   "grammarAnalysis": {
     "punctuation": {
       "score": 95,
-      "frequency": {"commas": 45, "semicolons": 8},
-      "usage": "Appropriate and varied"
+      "frequency": {"commas": 45},
+      "usage": "Appropriate"
     },
     "patterns": {
       "score": 88,
-      "errors": ["occasional run-on sentences"],
-      "tendencies": ["complex subordinate clauses"]
+      "errors": ["none"],
+      "tendencies": ["complex"]
     },
     "spelling": {
       "score": 98,
-      "variations": ["consistent American English"],
+      "variations": ["US English"],
       "consistency": "High"
     }
   },
   "thematicAnalysis": {
     "keyThemes": {
       "score": 85,
-      "themes": ["main themes identified"],
-      "focus": "Clear central argument"
+      "themes": ["theme1"],
+      "focus": "Clear"
     },
     "keywordFrequency": {
       "score": 85,
-      "keywords": {"key1": 5, "key2": 3}
+      "keywords": {"key1": 5}
     },
     "development": {
       "score": 82,
-      "structure": "Well-developed arguments",
-      "progression": "Logical flow"
+      "structure": "Well-developed",
+      "progression": "Logical"
     }
   },
   "similarityMetrics": {
     "nGramAnalysis": {
       "score": 85,
-      "patterns": ["common phrases"],
+      "patterns": ["pattern1"],
       "consistency": "High"
     },
     "tfIdfScore": 0.75,
@@ -336,49 +299,33 @@ Return your analysis in this exact JSON structure:
     "originalityScore": 92,
     "predictabilityScore": 85,
     "humanLikeScore": 90,
-    "flags": ["natural variation", "consistent style"]
+    "flags": ["natural"]
   },
   "feedback": {
-    "strengths": [
-      "Strong academic vocabulary",
-      "Well-structured arguments"
-    ],
-    "improvements": [
-      "Reduce passive voice",
-      "Vary sentence structure"
-    ],
-    "recommendations": [
-      "Consider more evidence",
-      "Strengthen topic sentences"
-    ]
+    "strengths": ["strength1"],
+    "improvements": ["improvement1"],
+    "recommendations": ["recommendation1"]
   },
   "improvedVersion": {
-    "text": "The enhanced version of the text...",
-    "explanationOfChanges": [
-      "Added transition words for better flow",
-      "Strengthened topic sentences",
-      "Incorporated more academic vocabulary",
-      "Added supporting evidence",
-      "Improved paragraph structure"
-    ]
+    "text": "Improved text here",
+    "explanationOfChanges": ["change1"]
   }
-}
-
-Ensure your analysis is thorough, constructive, and aimed at improving academic writing quality.`,
+}`,
       },
       {
         role: "user",
-        content: `Analyze this text thoroughly, focusing on academic writing quality and providing detailed, actionable feedback for improvement. Include an enhanced version of the text: ${text}`,
+        content: `Analyze this text and return ONLY a valid JSON object: ${text}`,
       },
     ],
     temperature: 0.1,
-    max_tokens: 2500,
+    max_tokens: 3000,
   });
 
   try {
-    const analysisResult = JSON.parse(
-      completion.choices[0].message.content || "{}"
-    );
+    let jsonString = completion.choices[0].message.content?.trim() || "{}";
+    // Remove any potential markdown code block syntax
+    jsonString = jsonString.replace(/```json\n?|\n?```/g, "");
+    const analysisResult = JSON.parse(jsonString);
 
     // Map the response to our interface structure
     return {
