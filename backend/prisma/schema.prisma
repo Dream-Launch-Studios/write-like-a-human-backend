@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-    id          String        @id @default(cuid())
-    email       String        @unique
-    name        String?
-    password    String
-    role        UserRole      @default(STUDENT)
-    feedbacks   Feedback[]
-    comments    Comment[]
-    documents   Document[]
-    groups      GroupMember[]
-    ownedGroups Group[]       @relation("GroupAdmin")
-    createdAt   DateTime      @default(now())
-    updatedAt   DateTime      @updatedAt
+    id              String           @id @default(cuid())
+    email           String           @unique
+    name            String?
+    password        String
+    role            UserRole         @default(STUDENT)
+    feedbacks       Feedback[]
+    comments        Comment[]
+    documents       Document[]
+    groups          GroupMember[]
+    ownedGroups     Group[]          @relation("GroupAdmin")
+    wordSuggestions WordSuggestion[]
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
 }
 
 model Group {
@@ -63,12 +64,13 @@ model Document {
     createdAt        DateTime @default(now())
     updatedAt        DateTime @updatedAt
 
-    parent    Document?  @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
-    versions  Document[] @relation("DocumentVersions")
-    group     Group?     @relation(fields: [groupId], references: [id])
-    user      User       @relation(fields: [userId], references: [id])
-    feedbacks Feedback[]
-    comments  Comment[]
+    parent          Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
+    versions        Document[]       @relation("DocumentVersions")
+    group           Group?           @relation(fields: [groupId], references: [id])
+    user            User             @relation(fields: [userId], references: [id])
+    feedbacks       Feedback[]
+    comments        Comment[]
+    wordSuggestions WordSuggestion[]
 }
 
 model Feedback {
@@ -99,6 +101,26 @@ model Comment {
     feedback   Feedback? @relation(fields: [feedbackId], references: [id])
     createdAt  DateTime  @default(now())
     updatedAt  DateTime  @updatedAt
+}
+
+model WordSuggestion {
+    id            String    @id @default(cuid())
+    documentId    String
+    document      Document  @relation(fields: [documentId], references: [id])
+    userId        String // User who accepts/rejects the suggestion
+    user          User      @relation(fields: [userId], references: [id])
+    originalWord  String // Original word like "hi"
+    suggestedWord String // AI suggested word like "hey"
+    position      Int // Position index in the document
+    startOffset   Int // Start character position
+    endOffset     Int // End character position
+    highlighted   Boolean   @default(true) // Whether to highlight this suggestion in UI
+    isAccepted    Boolean? // null = pending, true = accepted, false = rejected
+    context       String? // Surrounding text for context (e.g., "I am sahil Revankar")
+    aiConfidence  Float? // AI's confidence in this suggestion
+    acceptedAt    DateTime? // When the suggestion was accepted (if it was)
+    createdAt     DateTime  @default(now()) // When the suggestion was created
+    updatedAt     DateTime  @updatedAt
 }
 
 enum UserRole {

@@ -38,3 +38,5 @@ AI vs. Human Writing Detection
 Overall Text Length & Word Count
 • Total Word Count – Growth or reduction in writing length.
 • Sentence Count – Number of sentences compared across pieces.
+
+i ahve to add before-after-remark a model for differnt spelling
