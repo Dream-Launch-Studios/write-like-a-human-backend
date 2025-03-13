@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/config";
 import { Request as ExpressRequest } from "express";
-import { readFileSync } from "fs";
+import { promises as fsPromises } from "fs";
 import pdf from "pdf-parse";
 
 export const checkDocumentAccess = async (
@@ -280,19 +280,6 @@ export const uploadDocument = async (
     const { groupId, title } = req.body;
     const file = req.file;
 
-    // Extract text from PDF if file is PDF
-    let content = "";
-    if (file.mimetype === "application/pdf") {
-      try {
-        const dataBuffer = readFileSync(file.path);
-        const pdfData = await pdf(dataBuffer);
-        content = pdfData.text;
-      } catch (error) {
-        console.error("PDF parsing error:", error);
-        content = ""; // Fallback to empty content if parsing fails
-      }
-    }
-
     // Validate file
     if (
       !file.mimetype.match(
@@ -303,6 +290,31 @@ export const uploadDocument = async (
         success: false,
         error: "Invalid file type",
       });
+    }
+
+    // Extract text from PDF if file is PDF
+    let content = "";
+    if (file.mimetype === "application/pdf") {
+      try {
+        // Read file asynchronously
+        const dataBuffer = await fsPromises.readFile(file.path);
+        const pdfData = await pdf(dataBuffer);
+        content = pdfData.text;
+
+        if (!content || content.trim() === "") {
+          return res.status(400).json({
+            success: false,
+            error:
+              "Could not extract text from PDF. The file might be scanned or protected.",
+          });
+        }
+      } catch (error: any) {
+        console.error("PDF parsing error:", error);
+        return res.status(400).json({
+          success: false,
+          error: `Failed to parse PDF: ${error.message}`,
+        });
+      }
     }
 
     // Check group access if groupId is provided
@@ -326,6 +338,7 @@ export const uploadDocument = async (
       }
     }
 
+    // Create the document
     const newDocument = await prisma.document.create({
       data: {
         title: title || file.originalname,
@@ -346,6 +359,7 @@ export const uploadDocument = async (
       document: newDocument,
     });
   } catch (error: any) {
+    console.error("Document upload error:", error);
     res.status(500).json({
       success: false,
       error: error.message,
