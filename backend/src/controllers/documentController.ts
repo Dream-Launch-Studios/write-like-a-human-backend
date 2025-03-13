@@ -1,4 +1,3 @@
-// src/controllers/documentController.ts
 import { Request, Response } from "express";
 import { AuthenticatedRequest } from "../types";
 import prisma from "../config/config";
