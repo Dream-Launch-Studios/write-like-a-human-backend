@@ -240,25 +240,35 @@ const uploadDocument = async (req, res) => {
         }
         const { groupId, title } = req.body;
         const file = req.file;
-        // Extract text from PDF if file is PDF
-        let content = "";
-        if (file.mimetype === "application/pdf") {
-            try {
-                const dataBuffer = (0, fs_1.readFileSync)(file.path);
-                const pdfData = await (0, pdf_parse_1.default)(dataBuffer);
-                content = pdfData.text;
-            }
-            catch (error) {
-                console.error("PDF parsing error:", error);
-                content = ""; // Fallback to empty content if parsing fails
-            }
-        }
         // Validate file
         if (!file.mimetype.match(/(text|application|image)\/(plain|pdf|doc|docx|msword|jpeg|png|jpg)/)) {
             return res.status(400).json({
                 success: false,
                 error: "Invalid file type",
             });
+        }
+        // Extract text from PDF if file is PDF
+        let content = "";
+        if (file.mimetype === "application/pdf") {
+            try {
+                // Read file asynchronously
+                const dataBuffer = await fs_1.promises.readFile(file.path);
+                const pdfData = await (0, pdf_parse_1.default)(dataBuffer);
+                content = pdfData.text;
+                if (!content || content.trim() === "") {
+                    return res.status(400).json({
+                        success: false,
+                        error: "Could not extract text from PDF. The file might be scanned or protected.",
+                    });
+                }
+            }
+            catch (error) {
+                console.error("PDF parsing error:", error);
+                return res.status(400).json({
+                    success: false,
+                    error: `Failed to parse PDF: ${error.message}`,
+                });
+            }
         }
         // Check group access if groupId is provided
         if (groupId) {
@@ -279,6 +289,7 @@ const uploadDocument = async (req, res) => {
                 });
             }
         }
+        // Create the document
         const newDocument = await config_1.default.document.create({
             data: {
                 title: title || file.originalname,
@@ -299,6 +310,7 @@ const uploadDocument = async (req, res) => {
         });
     }
     catch (error) {
+        console.error("Document upload error:", error);
         res.status(500).json({
             success: false,
             error: error.message,

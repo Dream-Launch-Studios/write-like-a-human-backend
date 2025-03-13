@@ -110,6 +110,7 @@ export const getDocument = async (req: AuthenticatedRequest, res: Response) => {
     if (!document) return res.status(404).json({ error: "Document not found" });
     if (
       req.user.role !== "ADMIN" &&
+      // req.user.role !== "TEACHER" &&
       !(await checkDocumentAccess(req.user.id, req.params.id))
     ) {
       return res.status(403).json({ error: "Unauthorized access" });
@@ -207,6 +208,7 @@ export const getDocumentVersions = async (
     if (!document) return res.status(404).json({ error: "Document not found" });
     if (
       req.user.role !== "ADMIN" &&
+      // req.user.role !== "TEACHER" &&
       !(await checkDocumentAccess(req.user.id, req.params.id))
     ) {
       return res.status(403).json({ error: "Unauthorized access" });
