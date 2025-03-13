@@ -37,12 +37,22 @@ const express_1 = require("express");
 const analysisController = __importStar(require("../controllers/analysisController"));
 const server_1 = require("../middleware/server");
 const analysisRouter = (0, express_1.Router)();
+/**
+ * Helper function to wrap controller methods for error handling
+ */
 const adaptRoute = (controller) => {
     return (req, res, next) => {
         return Promise.resolve(controller(req, res)).catch(next);
     };
 };
+// Apply authentication middleware to all routes
 analysisRouter.use(server_1.authenticateUser);
+// Text analysis routes
 analysisRouter.post("/text", adaptRoute(analysisController.analyzeRawText));
+// Document analysis routes
 analysisRouter.get("/document/:id", adaptRoute(analysisController.analyzeDocument));
+analysisRouter.post("/document/compare", adaptRoute(analysisController.compareDocumentVersions));
+analysisRouter.post("/document/:id/suggestions", adaptRoute(analysisController.generateDocumentSuggestions));
+// Feedback routes
+analysisRouter.post("/feedback", adaptRoute(analysisController.saveFeedback));
 exports.default = analysisRouter;

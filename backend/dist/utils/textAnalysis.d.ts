@@ -1,4 +1,7 @@
-interface AnalysisResult {
+/**
+ * Comprehensive text analysis interface based on README specifications
+ */
+interface TextAnalysis {
     structuralComparison: {
         sentenceComplexity: {
             score: number;
@@ -110,6 +113,7 @@ interface AnalysisResult {
     overallMetrics: {
         wordCount: number;
         sentenceCount: number;
+        paragraphCount: number;
         growthMetrics?: {
             wordCountChange: number;
             complexityChange: number;
@@ -120,6 +124,37 @@ interface AnalysisResult {
         improvements: string[];
         recommendations: string[];
     };
+    improvedVersion: {
+        text: string;
+        explanationOfChanges: string[];
+    };
 }
-export declare function analyzeText(text: string): Promise<AnalysisResult>;
+/**
+ * Analyze text according to README specifications and return comprehensive feedback
+ */
+export declare function analyzeText(text: string): Promise<TextAnalysis>;
+/**
+ * Compare two texts and generate growth metrics
+ */
+export declare function compareTexts(originalText: string, newText: string): Promise<TextAnalysis>;
+/**
+ * Analyze a document from the database
+ */
+export declare function analyzeDocumentById(documentId: string, prisma: any): Promise<TextAnalysis>;
+/**
+ * Generate word-level suggestions for a document
+ */
+export declare function generateWordSuggestions(documentId: string, userId: string, prisma: any): Promise<{
+    documentId: string;
+    userId: string;
+    originalWord: any;
+    suggestedWord: any;
+    position: number;
+    startOffset: number;
+    endOffset: any;
+    context: any;
+    aiConfidence: any;
+    highlighted: boolean;
+    isAccepted: null;
+}[]>;
 export {};

@@ -7,18 +7,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface TextMetrics {
-  wordCount: number;
-  sentenceCount: number;
-  avgWordsPerSentence: number;
-  complexWords: number;
-  complexityScore: number;
-  typeTokenRatio: number;
-  passiveVoiceCount: number;
-  readabilityScore: number;
-}
-
-interface AnalysisResult {
+/**
+ * Comprehensive text analysis interface based on README specifications
+ */
+interface TextAnalysis {
   structuralComparison: {
     sentenceComplexity: {
       score: number;
@@ -130,6 +122,7 @@ interface AnalysisResult {
   overallMetrics: {
     wordCount: number;
     sentenceCount: number;
+    paragraphCount: number;
     growthMetrics?: {
       wordCountChange: number;
       complexityChange: number;
@@ -146,18 +139,28 @@ interface AnalysisResult {
   };
 }
 
-export async function analyzeText(text: string): Promise<AnalysisResult> {
+/**
+ * Analyze text according to README specifications and return comprehensive feedback
+ */
+export async function analyzeText(text: string): Promise<TextAnalysis> {
   try {
-    // Basic text cleaning
-    const cleanText = text.trim().replace(/\s+/g, " ");
+    // Basic text cleaning and metrics calculation
+    const cleanText = text.trim();
     const words = cleanText.split(/\s+/);
     const sentences = cleanText.split(/[.!?]+\s/).filter(Boolean);
+    const paragraphs = cleanText.split(/\n\s*\n/).filter(Boolean);
 
     // Calculate basic metrics
-    const metrics = calculateTextMetrics(cleanText);
+    const metrics = calculateBasicMetrics(cleanText);
 
     // Get AI analysis
-    const aiAnalysis = await getAIAnalysis(cleanText);
+    const aiAnalysis = await getAITextAnalysis(cleanText);
+
+    // Create improved version
+    const improvedVersion = await generateImprovedVersion(
+      cleanText,
+      aiAnalysis
+    );
 
     // Combine all analyses
     return {
@@ -165,7 +168,9 @@ export async function analyzeText(text: string): Promise<AnalysisResult> {
       overallMetrics: {
         wordCount: words.length,
         sentenceCount: sentences.length,
+        paragraphCount: paragraphs.length,
       },
+      improvedVersion,
     };
   } catch (error) {
     console.error("Analysis error:", error);
@@ -173,302 +178,405 @@ export async function analyzeText(text: string): Promise<AnalysisResult> {
   }
 }
 
-function calculateTextMetrics(text: string): TextMetrics {
+/**
+ * Calculate basic text metrics
+ */
+function calculateBasicMetrics(text: string) {
   const words = text.split(/\s+/);
   const sentences = text.split(/[.!?]+\s/).filter(Boolean);
   const uniqueWords = new Set(words.map((w) => w.toLowerCase()));
 
+  // Count punctuation
+  const punctuationCount: Record<string, number> = {};
+  const punctuationRegex = /[.,;:!?()[\]{}""'']/g;
+  const matches = text.match(punctuationRegex) || [];
+
+  matches.forEach((mark) => {
+    punctuationCount[mark] = (punctuationCount[mark] || 0) + 1;
+  });
+
+  // Estimate passive voice
+  const passiveRegex =
+    /\b(am|is|are|was|were|be|been|being)\s+(\w+ed|built|done|made|created|written|found|sold)\b/gi;
+  const passiveMatches = text.match(passiveRegex) || [];
+
   return {
     wordCount: words.length,
     sentenceCount: sentences.length,
-    avgWordsPerSentence: words.length / sentences.length,
-    complexWords: words.filter((w) => w.length > 6).length,
-    complexityScore:
-      (words.filter((w) => w.length > 6).length / words.length) * 100,
-    typeTokenRatio: uniqueWords.size / words.length,
-    passiveVoiceCount: countPassiveVoice(text),
-    readabilityScore: calculateReadabilityScore(text),
+    avgWordsPerSentence: words.length / Math.max(1, sentences.length),
+    complexWords: words.filter((w) => w.length > 7).length,
+    typeTokenRatio: uniqueWords.size / Math.max(1, words.length),
+    passiveVoiceCount: passiveMatches.length,
+    punctuationFrequency: punctuationCount,
   };
 }
 
-async function getAIAnalysis(
+/**
+ * Get AI-powered analysis of text
+ */
+async function getAITextAnalysis(
   text: string
-): Promise<Omit<AnalysisResult, "metrics" | "overallMetrics">> {
-  const completion = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo-16k",
-    messages: [
-      {
-        role: "system",
-        content: `You are an expert writing analyst and academic writing coach. Analyze the text and return ONLY a valid JSON object with no additional text or formatting. Follow this exact structure:
-
-{
-  "structuralAnalysis": {
-    "sentenceComplexity": {
-      "score": 85,
-      "avgLength": 15.5,
-      "structures": {"simple": 40, "compound": 35, "complex": 25}
+): Promise<Omit<TextAnalysis, "improvedVersion">> {
+  const prompt = `
+  You are an expert writing analyst. Analyze the following text comprehensively and return a JSON object with your analysis.
+  
+  TEXT TO ANALYZE:
+  ${text}
+  
+  Return ONLY a JSON object with no additional text. Follow this exact structure:
+  {
+    "structuralComparison": {
+      "sentenceComplexity": {
+        "score": [0-100 score],
+        "avgLength": [average words per sentence],
+        "structures": {
+          "simple": [percentage],
+          "compound": [percentage],
+          "complex": [percentage]
+        }
+      },
+      "paragraphStructure": {
+        "score": [0-100 score],
+        "organization": [brief assessment],
+        "transitions": [brief assessment],
+        "flow": [brief assessment]
+      },
+      "formatting": {
+        "score": [0-100 score],
+        "headingConsistency": [brief assessment],
+        "sectioning": [brief assessment]
+      }
     },
-    "paragraphStructure": {
-      "score": 80,
-      "organization": "Well-structured",
-      "transitions": "Smooth",
-      "flow": "Logical"
+    "vocabularyChoice": {
+      "lexicalDiversity": {
+        "score": [0-100 score],
+        "typeTokenRatio": [ratio value 0-1],
+        "uniqueWords": [count]
+      },
+      "wordFrequency": {
+        "score": [0-100 score],
+        "commonWords": [array of 5 most common words],
+        "repetitions": [object with words repeated more than 3 times]
+      },
+      "academicLanguage": {
+        "score": [0-100 score],
+        "tone": [brief assessment],
+        "sophistication": [brief assessment]
+      }
     },
-    "formatting": {
-      "score": 75,
-      "headingConsistency": "Consistent",
-      "sectioning": "Clear"
+    "writingStyle": {
+      "readabilityScores": {
+        "fleschKincaid": [score],
+        "smog": [score],
+        "overall": [0-100 score]
+      },
+      "voiceAnalysis": {
+        "score": [0-100 score],
+        "passiveCount": [count],
+        "activeCount": [count]
+      },
+      "perspective": {
+        "score": [0-100 score],
+        "pointOfView": [1st/2nd/3rd person]
+      },
+      "descriptiveLanguage": {
+        "score": [0-100 score],
+        "dialogueUsage": [brief assessment],
+        "techniques": [array of techniques used]
+      }
+    },
+    "grammarMechanics": {
+      "punctuation": {
+        "score": [0-100 score],
+        "frequency": [object with count of each punctuation],
+        "usage": [brief assessment]
+      },
+      "grammarPatterns": {
+        "score": [0-100 score],
+        "errors": [array of common errors],
+        "tendencies": [array of grammatical tendencies]
+      },
+      "spelling": {
+        "score": [0-100 score],
+        "variations": [array of spelling variations],
+        "consistency": [brief assessment]
+      }
+    },
+    "thematicElements": {
+      "keyThemes": {
+        "score": [0-100 score],
+        "themes": [array of main themes],
+        "focus": [brief assessment]
+      },
+      "keywordFrequency": {
+        "score": [0-100 score],
+        "keywords": [object with keyword frequency]
+      },
+      "argumentDevelopment": {
+        "score": [0-100 score],
+        "structure": [brief assessment],
+        "progression": [brief assessment]
+      }
+    },
+    "similarityMetrics": {
+      "nGramAnalysis": {
+        "score": [0-100 score],
+        "patterns": [array of common patterns],
+        "consistency": [brief assessment]
+      },
+      "tfIdfScore": [0-1 score],
+      "jaccardSimilarity": [0-1 score]
+    },
+    "aiDetection": {
+      "originalityScore": [0-100 score],
+      "predictabilityScore": [0-100 score],
+      "humanLikeScore": [0-100 score],
+      "flags": [array of flags if detected]
+    },
+    "feedback": {
+      "strengths": [array of 3-5 strengths],
+      "weaknesses": [array of 3-5 areas for improvement],
+      "recommendations": [array of 3-5 specific recommendations]
     }
-  },
-  "vocabularyAnalysis": {
-    "lexicalDiversity": {
-      "score": 90,
-      "typeTokenRatio": 0.75,
-      "uniqueWords": 450
-    },
-    "wordFrequency": {
-      "score": 85,
-      "commonWords": ["word1", "word2"],
-      "repetitions": {"word1": 5}
-    },
-    "academicTone": {
-      "score": 88,
-      "tone": "Formal",
-      "sophistication": "Advanced"
-    }
-  },
-  "styleAnalysis": {
-    "readability": {
-      "score": 82,
-      "fleschKincaid": 12.5,
-      "smog": 11.8
-    },
-    "voice": {
-      "score": 85,
-      "passiveCount": 12,
-      "activeCount": 45
-    },
-    "perspective": {
-      "score": 90,
-      "pointOfView": "Third-person"
-    }
-  },
-  "grammarAnalysis": {
-    "punctuation": {
-      "score": 95,
-      "frequency": {"commas": 45},
-      "usage": "Appropriate"
-    },
-    "patterns": {
-      "score": 88,
-      "errors": ["none"],
-      "tendencies": ["complex"]
-    },
-    "spelling": {
-      "score": 98,
-      "variations": ["US English"],
-      "consistency": "High"
-    }
-  },
-  "thematicAnalysis": {
-    "keyThemes": {
-      "score": 85,
-      "themes": ["theme1"],
-      "focus": "Clear"
-    },
-    "keywordFrequency": {
-      "score": 85,
-      "keywords": {"key1": 5}
-    },
-    "development": {
-      "score": 82,
-      "structure": "Well-developed",
-      "progression": "Logical"
-    }
-  },
-  "similarityMetrics": {
-    "nGramAnalysis": {
-      "score": 85,
-      "patterns": ["pattern1"],
-      "consistency": "High"
-    },
-    "tfIdfScore": 0.75,
-    "jaccardSimilarity": 0.8
-  },
-  "aiDetection": {
-    "originalityScore": 92,
-    "predictabilityScore": 85,
-    "humanLikeScore": 90,
-    "flags": ["natural"]
-  },
-  "feedback": {
-    "strengths": ["strength1"],
-    "improvements": ["improvement1"],
-    "recommendations": ["recommendation1"]
-  },
-  "improvedVersion": {
-    "text": "Improved text here",
-    "explanationOfChanges": ["change1"]
   }
-}`,
-      },
-      {
-        role: "user",
-        content: `Analyze this text and return ONLY a valid JSON object: ${text}`,
-      },
-    ],
-    temperature: 0.1,
-    max_tokens: 3000,
-  });
+  `;
 
   try {
-    let jsonString = completion.choices[0].message.content?.trim() || "{}";
-    // Remove any potential markdown code block syntax
-    jsonString = jsonString.replace(/```json\n?|\n?```/g, "");
-    const analysisResult = JSON.parse(jsonString);
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert writing analyst producing JSON output only.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
 
-    // Map the response to our interface structure
-    return {
-      structuralComparison: {
-        sentenceComplexity: {
-          score: analysisResult.structuralAnalysis.sentenceComplexity.score,
-          avgLength:
-            analysisResult.structuralAnalysis.sentenceComplexity.avgLength,
-          structures:
-            analysisResult.structuralAnalysis.sentenceComplexity.structures,
-        },
-        paragraphStructure: {
-          score: analysisResult.structuralAnalysis.paragraphStructure.score,
-          organization:
-            analysisResult.structuralAnalysis.paragraphStructure.organization,
-          transitions:
-            analysisResult.structuralAnalysis.paragraphStructure.transitions,
-          flow: analysisResult.structuralAnalysis.paragraphStructure.flow,
-        },
-        formatting: {
-          score: analysisResult.structuralAnalysis.formatting.score,
-          headingConsistency:
-            analysisResult.structuralAnalysis.formatting.headingConsistency,
-          sectioning: analysisResult.structuralAnalysis.formatting.sectioning,
-        },
-      },
-      vocabularyChoice: {
-        lexicalDiversity: {
-          score: analysisResult.vocabularyAnalysis.lexicalDiversity.score,
-          typeTokenRatio:
-            analysisResult.vocabularyAnalysis.lexicalDiversity.typeTokenRatio,
-          uniqueWords:
-            analysisResult.vocabularyAnalysis.lexicalDiversity.uniqueWords,
-        },
-        wordFrequency: {
-          score: analysisResult.vocabularyAnalysis.wordFrequency.score,
-          commonWords:
-            analysisResult.vocabularyAnalysis.wordFrequency.commonWords,
-          repetitions:
-            analysisResult.vocabularyAnalysis.wordFrequency.repetitions,
-        },
-        academicLanguage: {
-          score: analysisResult.vocabularyAnalysis.academicTone.score,
-          tone: analysisResult.vocabularyAnalysis.academicTone.tone,
-          sophistication:
-            analysisResult.vocabularyAnalysis.academicTone.sophistication,
-        },
-      },
-      writingStyle: {
-        readabilityScores: {
-          fleschKincaid: analysisResult.styleAnalysis.readability.fleschKincaid,
-          smog: analysisResult.styleAnalysis.readability.smog,
-          overall: analysisResult.styleAnalysis.readability.score,
-        },
-        voiceAnalysis: {
-          score: analysisResult.styleAnalysis.voice.score,
-          passiveCount: analysisResult.styleAnalysis.voice.passiveCount,
-          activeCount: analysisResult.styleAnalysis.voice.activeCount,
-        },
-        perspective: {
-          score: analysisResult.styleAnalysis.perspective.score,
-          pointOfView: analysisResult.styleAnalysis.perspective.pointOfView,
-        },
-        descriptiveLanguage: {
-          score: 0,
-          dialogueUsage: "",
-          techniques: [],
-        },
-      },
-      grammarMechanics: {
-        punctuation: {
-          score: analysisResult.grammarAnalysis.punctuation.score,
-          frequency: analysisResult.grammarAnalysis.punctuation.frequency,
-          usage: analysisResult.grammarAnalysis.punctuation.usage,
-        },
-        grammarPatterns: {
-          score: analysisResult.grammarAnalysis.patterns.score,
-          errors: analysisResult.grammarAnalysis.patterns.errors,
-          tendencies: analysisResult.grammarAnalysis.patterns.tendencies,
-        },
-        spelling: {
-          score: analysisResult.grammarAnalysis.spelling.score,
-          variations: analysisResult.grammarAnalysis.spelling.variations,
-          consistency: analysisResult.grammarAnalysis.spelling.consistency,
-        },
-      },
-      thematicElements: {
-        keyThemes: {
-          score: analysisResult.thematicAnalysis.keyThemes.score,
-          themes: analysisResult.thematicAnalysis.keyThemes.themes,
-          focus: analysisResult.thematicAnalysis.keyThemes.focus,
-        },
-        keywordFrequency: {
-          score: analysisResult.thematicAnalysis.keywordFrequency.score,
-          keywords: analysisResult.thematicAnalysis.keywordFrequency.keywords,
-        },
-        argumentDevelopment: {
-          score: analysisResult.thematicAnalysis.development.score,
-          structure: analysisResult.thematicAnalysis.development.structure,
-          progression: analysisResult.thematicAnalysis.development.progression,
-        },
-      },
-      similarityMetrics: {
-        nGramAnalysis: {
-          score: analysisResult.similarityMetrics.nGramAnalysis.score,
-          patterns: analysisResult.similarityMetrics.nGramAnalysis.patterns,
-          consistency:
-            analysisResult.similarityMetrics.nGramAnalysis.consistency,
-        },
-        tfIdfScore: analysisResult.similarityMetrics.tfIdfScore,
-        jaccardSimilarity: analysisResult.similarityMetrics.jaccardSimilarity,
-      },
-      aiDetection: {
-        originalityScore: analysisResult.aiDetection.originalityScore,
-        predictabilityScore: analysisResult.aiDetection.predictabilityScore,
-        humanLikeScore: analysisResult.aiDetection.humanLikeScore,
-        flags: analysisResult.aiDetection.flags,
-      },
-      feedback: {
-        strengths: analysisResult.feedback.strengths,
-        improvements: analysisResult.feedback.improvements,
-        recommendations: analysisResult.feedback.recommendations,
-      },
-      improvedVersion: {
-        text: analysisResult.improvedVersion.text,
-        explanationOfChanges:
-          analysisResult.improvedVersion.explanationOfChanges,
-      },
-    };
+    const jsonString = completion.choices[0].message.content?.trim() || "{}";
+    return JSON.parse(jsonString);
   } catch (error) {
-    console.error("JSON parsing error:", error);
-    throw new Error("Failed to parse AI analysis response");
+    console.error("AI analysis error:", error);
+    throw new Error("Failed to complete AI analysis");
   }
 }
 
-function countPassiveVoice(text: string): number {
-  // Implement passive voice detection
-  return 0;
+/**
+ * Generate an improved version of the text with explanations of changes
+ */
+async function generateImprovedVersion(
+  originalText: string,
+  analysis: any
+): Promise<TextAnalysis["improvedVersion"]> {
+  const prompt = `
+  You are an expert writing coach. Based on the analysis of the following text, provide an improved version 
+  that addresses the weaknesses while maintaining the strengths. Also provide a list explaining the changes made.
+  
+  ORIGINAL TEXT:
+  ${originalText}
+  
+  ANALYSIS:
+  Strengths: ${JSON.stringify(analysis.feedback.strengths)}
+  Weaknesses: ${JSON.stringify(analysis.feedback.weaknesses)}
+  
+  Return ONLY a JSON object with no additional text using this structure:
+  {
+    "text": "The improved version of the text",
+    "explanationOfChanges": ["Change 1 explanation", "Change 2 explanation", ...]
+  }
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert writing coach producing JSON output only.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.4,
+      max_tokens: 4000,
+    });
+
+    const jsonString = completion.choices[0].message.content?.trim() || "{}";
+    return JSON.parse(jsonString);
+  } catch (error) {
+    console.error("Improved version generation error:", error);
+    throw new Error("Failed to generate improved version");
+  }
 }
 
-function calculateReadabilityScore(text: string): number {
-  // Implement readability scoring
-  return 0;
+/**
+ * Compare two texts and generate growth metrics
+ */
+export async function compareTexts(
+  originalText: string,
+  newText: string
+): Promise<TextAnalysis> {
+  // Analyze both texts
+  const originalAnalysis = await analyzeText(originalText);
+  const newAnalysis = await analyzeText(newText);
+
+  // Calculate growth metrics
+  const wordCountChange =
+    newAnalysis.overallMetrics.wordCount -
+    originalAnalysis.overallMetrics.wordCount;
+  const complexityChange =
+    newAnalysis.structuralComparison.sentenceComplexity.score -
+    originalAnalysis.structuralComparison.sentenceComplexity.score;
+
+  // Add growth metrics to the new analysis
+  return {
+    ...newAnalysis,
+    overallMetrics: {
+      ...newAnalysis.overallMetrics,
+      growthMetrics: {
+        wordCountChange,
+        complexityChange,
+      },
+    },
+  };
 }
 
-// Additional helper functions for specific analyses
+/**
+ * Analyze a document from the database
+ */
+export async function analyzeDocumentById(
+  documentId: string,
+  prisma: any
+): Promise<TextAnalysis> {
+  // Fetch document from database
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+  });
+
+  if (!document) {
+    throw new Error("Document not found");
+  }
+
+  // Analyze the document content
+  return analyzeText(document.content);
+}
+
+/**
+ * Generate word-level suggestions for a document
+ */
+export async function generateWordSuggestions(
+  documentId: string,
+  userId: string,
+  prisma: any
+) {
+  // Fetch document
+  const document = await prisma.document.findUnique({
+    where: { id: documentId },
+  });
+
+  if (!document) {
+    throw new Error("Document not found");
+  }
+
+  const words = document.content.split(/\s+/);
+  const suggestions = [];
+
+  // Use AI to generate word-level suggestions
+  const prompt = `
+  You are an expert writing coach. For the following text, identify 5-10 words that could be improved 
+  or replaced with better alternatives. Consider academic tone, precision, and clarity.
+  
+  TEXT:
+  ${document.content}
+  
+  For each word you identify, provide:
+  1. The original word
+  2. Your suggested replacement
+  3. The confidence in your suggestion (0-1)
+  4. A brief explanation for why this is better
+  
+  Return ONLY a JSON array of objects with these properties.
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an expert writing coach producing JSON output only.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+      max_tokens: 2000,
+    });
+
+    const jsonString = completion.choices[0].message.content?.trim() || "[]";
+    const wordSuggestions = JSON.parse(jsonString);
+
+    // Process each suggestion and find its position in the text
+    for (const suggestion of wordSuggestions) {
+      const { originalWord, suggestedWord, confidence, explanation } =
+        suggestion;
+
+      // Find word positions
+      let currentPosition = 0;
+      const content = document.content;
+
+      const regex = new RegExp(`\\b${originalWord}\\b`, "g");
+      let match;
+
+      while ((match = regex.exec(content)) !== null) {
+        const startOffset = match.index;
+        const endOffset = startOffset + originalWord.length;
+        const contextStart = Math.max(0, startOffset - 15);
+        const contextEnd = Math.min(content.length, endOffset + 15);
+        const context = content.substring(contextStart, contextEnd);
+
+        // Create the suggestion
+        suggestions.push({
+          documentId,
+          userId,
+          originalWord,
+          suggestedWord,
+          position: currentPosition,
+          startOffset,
+          endOffset,
+          context,
+          aiConfidence: confidence,
+          highlighted: true,
+          isAccepted: null,
+        });
+
+        currentPosition++;
+      }
+    }
+
+    // Save suggestions to database
+    await prisma.wordSuggestion.createMany({
+      data: suggestions,
+    });
+
+    return suggestions;
+  } catch (error) {
+    console.error("Word suggestions error:", error);
+    throw new Error("Failed to generate word suggestions");
+  }
+}
