@@ -15,10 +15,13 @@ model User {
     role            UserRole         @default(STUDENT)
     feedbacks       Feedback[]
     comments        Comment[]
+    isEmailVerified Boolean          @default(false)
     documents       Document[]
     groups          GroupMember[]
     ownedGroups     Group[]          @relation("GroupAdmin")
     wordSuggestions WordSuggestion[]
+    assignments     Assignment[]     @relation("AssignmentCreator")
+    submissions     Submission[]
     createdAt       DateTime         @default(now())
     updatedAt       DateTime         @updatedAt
 }
@@ -33,10 +36,11 @@ model Group {
     members     GroupMember[]
     documents   Document[]
     feedbacks   Feedback[]
+    assignments Assignment[]
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
 }
-    
+
 model GroupMember {
     id       String   @id @default(cuid())
     userId   String
@@ -71,23 +75,84 @@ model Document {
     feedbacks       Feedback[]
     comments        Comment[]
     wordSuggestions WordSuggestion[]
+    aiAnalysis      AIAnalysis?
+    submissions     Submission[]
+}
+
+model AIAnalysis {
+    id                  String            @id @default(cuid())
+    documentId          String            @unique
+    document            Document          @relation(fields: [documentId], references: [id])
+    overallAiScore      Float // 0-1 score indicating likelihood of AI generation
+    humanWrittenPercent Float
+    aiGeneratedPercent  Float
+    analysisDate        DateTime          @default(now())
+    sections            DocumentSection[]
+    textMetrics         TextMetrics?
+    updatedAt           DateTime          @updatedAt
+}
+
+model DocumentSection {
+    id            String     @id @default(cuid())
+    aiAnalysisId  String
+    aiAnalysis    AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+    startOffset   Int // Start position in the document
+    endOffset     Int // End position in the document
+    content       String // The text of this section
+    isAiGenerated Boolean // Whether this section is AI-generated
+    aiConfidence  Float // AI detection confidence (0-1)
+    suggestions   String? // Suggestions to improve authenticity
+    createdAt     DateTime   @default(now())
+    updatedAt     DateTime   @updatedAt
+}
+
+model Assignment {
+    id           String       @id @default(cuid())
+    title        String
+    description  String
+    dueDate      DateTime?
+    documentUrl  String? // Optional URL for question paper or instructions
+    documentName String? // Optional name for the referenced document
+    documentType String? // Optional file type (PDF, DOCX, etc.)
+    creatorId    String
+    creator      User         @relation("AssignmentCreator", fields: [creatorId], references: [id])
+    groupId      String
+    group        Group        @relation(fields: [groupId], references: [id])
+    submissions  Submission[]
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+}
+
+model Submission {
+    id           String           @id @default(cuid())
+    documentId   String
+    document     Document         @relation(fields: [documentId], references: [id])
+    assignmentId String
+    assignment   Assignment       @relation(fields: [assignmentId], references: [id])
+    userId       String
+    user         User             @relation(fields: [userId], references: [id])
+    status       SubmissionStatus @default(DRAFT)
+    submittedAt  DateTime?
+    createdAt    DateTime         @default(now())
+    updatedAt    DateTime         @updatedAt
 }
 
 model Feedback {
-    id         String         @id @default(cuid())
-    content    String
-    aiScore    Float? // AI confidence score
-    status     FeedbackStatus @default(PENDING)
-    response   String?
-    userId     String
-    user       User           @relation(fields: [userId], references: [id])
-    documentId String?
-    document   Document?      @relation(fields: [documentId], references: [id])
-    groupId    String?
-    group      Group?         @relation(fields: [groupId], references: [id])
-    createdAt  DateTime       @default(now())
-    updatedAt  DateTime       @updatedAt
-    Comment    Comment[]
+    id              String           @id @default(cuid())
+    content         String
+    aiScore         Float? // AI confidence score
+    status          FeedbackStatus   @default(PENDING)
+    response        String?
+    feedbackMetrics FeedbackMetrics?
+    userId          String
+    user            User             @relation(fields: [userId], references: [id])
+    documentId      String?
+    document        Document?        @relation(fields: [documentId], references: [id])
+    groupId         String?
+    group           Group?           @relation(fields: [groupId], references: [id])
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    comments        Comment[]
 }
 
 model Comment {
@@ -133,4 +198,88 @@ enum FeedbackStatus {
     PENDING
     ANALYZED
     REVIEWED
+}
+
+model TextMetrics {
+    id           String     @id @default(cuid())
+    aiAnalysisId String     @unique
+    aiAnalysis   AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+
+    // Word and Structure Metrics
+    totalWordCount        Int
+    sentenceCount         Int
+    averageSentenceLength Float
+    readabilityScore      Float? // Flesch-Kincaid or similar
+
+    // Vocabulary Metrics
+    lexicalDiversity      Float? // Type-Token Ratio or MTLD
+    uniqueWordCount       Int?
+    academicLanguageScore Float? // Measure of formal/academic language
+
+    // Style Metrics
+    passiveVoicePercentage Float?
+    firstPersonPercentage  Float?
+    thirdPersonPercentage  Float?
+
+    // Grammar & Mechanics
+    punctuationDensity Float? // Frequency of punctuation
+    grammarErrorCount  Int?
+    spellingErrorCount Int?
+
+    // Additional AI Detection Metrics
+    predictabilityScore Float? // How formulaic the writing is
+    nGramUniqueness     Float? // Uniqueness of phrase patterns
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model FeedbackMetrics {
+    id         String   @id @default(cuid())
+    feedbackId String   @unique
+    feedback   Feedback @relation(fields: [feedbackId], references: [id])
+
+    // Structural Comparison
+    sentenceLengthChange    Float? // % change in avg sentence length
+    paragraphStructureScore Float? // Assessment of paragraph organization
+    headingConsistencyScore Float? // Consistency in formatting
+
+    // Vocabulary Metrics
+    lexicalDiversityChange Float? // Change in vocabulary diversity
+    wordRepetitionScore    Float? // Assessment of word repetition
+    formalityShift         Float? // Change in formality level
+
+    // Style Metrics
+    readabilityChange        Float? // Change in readability scores
+    voiceConsistencyScore    Float? // Consistency in active/passive voice
+    perspectiveShift         Float? // Change in narrative perspective
+    descriptiveLanguageScore Float? // Quality of descriptive language
+
+    // Grammar & Mechanics
+    punctuationChangeScore Float? // Changes in punctuation patterns
+    grammarPatternScore    Float? // Consistency in grammar patterns
+    spellingVariationScore Float? // Consistency in spelling
+
+    // Topic & Thematic Elements
+    thematicConsistencyScore Float? // Consistency in themes
+    keywordFrequencyChange   Float? // Change in keyword usage
+    argumentDevelopmentScore Float? // Quality of argument development
+
+    // Similarity Metrics
+    nGramSimilarityScore   Float? // Similarity in phrase patterns
+    tfIdfSimilarityScore   Float? // Term frequency similarity
+    jaccardSimilarityScore Float? // Word overlap measure
+
+    // AI Detection
+    originalityShiftScore Float? // Changes in originality
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum SubmissionStatus {
+    DRAFT
+    SUBMITTED
+    GRADED
+    RETURNED
 }
