@@ -125,13 +125,20 @@ Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> 
         //         message: 'Invalid authorization format'
         //     });
         // }
-        const { id, name, email, role = "STUDENT" } = req.body
+        const { id, name, email, role = "STUDENT", secret } = req.body
         console.log(`🍎 got this body ->`, req.body)
 
-        if (!id || !name || !email) {
+        if (!id || !name || !email || !secret) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields'
+            });
+        }
+
+        if (secret !== process.env.SUPABASE_JWT_SECRET) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid secret'
             });
         }
 
@@ -429,11 +436,19 @@ Authrouter.patch("/update-user", async (req: Request, res: Response): Promise<an
 Authrouter.patch("/verify-email", async (req: Request, res: Response): Promise<any> => {
     console.log(`👆👆👆👆👆 Route called: /verify-email`);
     try {
-        const { id } = req.body
-        if (!id) {
+        const { id, secret } = req.body
+        if (!id || !secret) {
             return res.status(400).json({
                 success: false,
-                message: 'Missing required fields - id'
+                message: 'Missing required fields - id or secret'
+            });
+        }
+
+
+        if (secret !== process.env.SUPABASE_JWT_SECRET) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid secret'
             });
         }
         // // Get token from authorization header
