@@ -4,11 +4,20 @@ import { groupAdminAuth, checkGroupMembership } from "../middleware/groupAuth";
 import { authenticateUser } from "../middleware/server";
 import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../types";
+import { authMiddleware } from "../middleware/auth";
 
 const groupRouter = Router();
 
+
+groupRouter.get('/test', authMiddleware, async (req: Request, res: Response) => {
+  console.log(`🩸🩸🩸🩸req.user`)
+  console.log(req.user)
+  res.send({ok: "ok"})
+})
+
+
 // Apply authentication middleware to all group routes
-groupRouter.use(authenticateUser);
+// groupRouter.use(authenticateUser);
 
 // Helper function to adapt controller to Express middleware
 const adaptRoute = (
@@ -20,6 +29,7 @@ const adaptRoute = (
     );
   };
 };
+
 
 // Group management routes
 groupRouter.post("/", adaptRoute(groupController.createGroup));
@@ -69,5 +79,7 @@ groupRouter.post(
   "/join/:token",
   adaptRoute(groupController.joinGroupWithToken)
 );
+
+
 
 export default groupRouter;
