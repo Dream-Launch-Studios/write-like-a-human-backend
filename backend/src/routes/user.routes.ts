@@ -11,7 +11,7 @@ router.get(
     '/',
     authMiddleware,
     adminMiddleware,
-    validate(listUsersSchema, 'query'),
+    validate(listUsersSchema),
     userController.getUsers
 );
 
@@ -19,7 +19,7 @@ router.get(
 router.get(
     '/:id',
     authMiddleware,
-    validate(getUserByIdSchema, 'params'),
+    validate(getUserByIdSchema),
     userController.getUserById
 );
 
@@ -28,7 +28,7 @@ router.patch(
     '/:id/role',
     authMiddleware,
     adminMiddleware,
-    validate(updateUserRoleSchema, 'body'),
+    validate(updateUserRoleSchema),
     userController.updateUserRole
 );
 

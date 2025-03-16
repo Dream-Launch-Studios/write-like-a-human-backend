@@ -45,7 +45,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
         // ID is already validated by middleware
         const { id } = req.params;
 
-        // Check authorization - users can only view themselves unless admin
+        // Check authorization - users can only view themselves unless admin    
         if (req.user.role !== 'ADMIN' && req.user.id !== id) {
             const response: ApiResponse = {
                 success: false,

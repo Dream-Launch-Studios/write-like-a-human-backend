@@ -3,28 +3,31 @@ import { AnyZodObject, ZodError } from 'zod';
 import { ApiResponse } from '../types/response';
 
 /**
- * Validation source in the request
- */
-type ValidationSource = 'body' | 'query' | 'params' | 'headers' | 'cookies';
-
-/**
- * Middleware factory for validating request data against Zod schemas
+ * Middleware for validating request data against Zod schemas
  * 
- * @param schema Zod schema to validate against
- * @param source Which part of the request to validate (default: 'body')
+ * @param schema Zod schema with request parts (body, params, query, etc.)
  */
-export const validate = (schema: AnyZodObject, source: ValidationSource = 'body') => {
+export const validate = (schema: AnyZodObject) => {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            // Get data from the specified request source
-            const data = req[source];
+            // Create an object with all request parts that might need validation
+            const data = {
+                body: req.body,
+                params: req.params,
+                query: req.query,
+                headers: req.headers,
+                cookies: req.cookies
+            };
 
             // Validate the data against the schema
             const validatedData = await schema.parseAsync(data);
 
-            // Replace the request data with the validated data
-            // This ensures type correctness and any transformations are applied
-            req[source] = validatedData;
+            // Update the request with validated data
+            if (validatedData.body) req.body = validatedData.body;
+            if (validatedData.params) req.params = validatedData.params;
+            if (validatedData.query) req.query = validatedData.query;
+            if (validatedData.headers) req.headers = validatedData.headers;
+            if (validatedData.cookies) req.cookies = validatedData.cookies;
 
             // Continue to the next middleware or route handler
             next();
