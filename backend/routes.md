@@ -3,9 +3,11 @@
 ## Authentication Routes
 
 ### POST /api/auth/register
+
 Register a new user with Supabase.
 
 **Request Body:**
+
 ```json
 {
   "email": "string",
@@ -15,6 +17,7 @@ Register a new user with Supabase.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -32,9 +35,11 @@ Register a new user with Supabase.
 ```
 
 ### POST /api/auth/login
+
 Log in an existing user.
 
 **Request Body:**
+
 ```json
 {
   "email": "string",
@@ -43,6 +48,7 @@ Log in an existing user.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -58,9 +64,11 @@ Log in an existing user.
 ```
 
 ### GET /api/auth/me
+
 Get current user information.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -77,9 +85,11 @@ Get current user information.
 ```
 
 ### POST /api/auth/sync-user
+
 Sync Supabase user with database.
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -88,6 +98,7 @@ Sync Supabase user with database.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -105,9 +116,11 @@ Sync Supabase user with database.
 ```
 
 ### PATCH /api/auth/verify-email
+
 Update email verification status.
 
 **Request Body:**
+
 ```json
 {
   "targetUserId": "string", // Optional, if not provided uses authenticated user
@@ -116,6 +129,7 @@ Update email verification status.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -133,9 +147,11 @@ Update email verification status.
 ```
 
 ### PATCH /api/auth/update-user
+
 Update user profile information.
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -146,6 +162,7 @@ Update user profile information.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -165,14 +182,17 @@ Update user profile information.
 ## User Management Routes
 
 ### GET /api/users
+
 List users (admin only).
 
 **Query Parameters:**
+
 - `page`: number (default: 1)
 - `limit`: number (default: 10)
 - `role`: string (optional filter by role)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -196,9 +216,11 @@ List users (admin only).
 ```
 
 ### GET /api/users/:id
+
 Get specific user details.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -215,9 +237,11 @@ Get specific user details.
 ```
 
 ### PATCH /api/users/:id/role
+
 Update user role (admin only).
 
 **Request Body:**
+
 ```json
 {
   "role": "TEACHER"
@@ -225,6 +249,7 @@ Update user role (admin only).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -242,15 +267,18 @@ Update user role (admin only).
 ## Document Routes
 
 ### POST /api/documents
+
 Upload a new document.
 
 **Request Body:**
+
 - Form data with `file` field containing the document
 - Additional fields:
   - `title`: string
   - `groupId`: string (optional)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -270,14 +298,17 @@ Upload a new document.
 ```
 
 ### GET /api/documents
+
 List user's documents.
 
 **Query Parameters:**
+
 - `page`: number (default: 1)
 - `limit`: number (default: 10)
 - `groupId`: string (optional)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -306,9 +337,11 @@ List user's documents.
 ```
 
 ### GET /api/documents/:id
+
 Get a specific document.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -335,9 +368,11 @@ Get a specific document.
 ```
 
 ### PATCH /api/documents/:id
+
 Update a document.
 
 **Request Body:**
+
 ```json
 {
   "title": "string",
@@ -346,6 +381,7 @@ Update a document.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -359,9 +395,11 @@ Update a document.
 ```
 
 ### DELETE /api/documents/:id
+
 Delete a document.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -370,14 +408,17 @@ Delete a document.
 ```
 
 ### POST /api/documents/:id/versions
+
 Create a new version of a document.
 
 **Request Body:**
+
 - Form data with `file` field containing the updated document
 - Additional fields:
   - `title`: string (optional, will use original title if not provided)
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -394,9 +435,11 @@ Create a new version of a document.
 ```
 
 ### GET /api/documents/:id/versions
+
 List document versions.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -422,9 +465,11 @@ List document versions.
 ## AI Analysis Routes
 
 ### POST /api/documents/:id/analyze
+
 Analyze a document for AI content.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -434,9 +479,11 @@ Analyze a document for AI content.
 ```
 
 ### GET /api/documents/:id/analysis
+
 Get AI analysis results.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -452,9 +499,11 @@ Get AI analysis results.
 ```
 
 ### GET /api/documents/:id/sections
+
 Get document sections with AI detection.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -482,9 +531,11 @@ Get document sections with AI detection.
 ```
 
 ### GET /api/documents/:id/metrics
+
 Get document text metrics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -512,9 +563,11 @@ Get document text metrics.
 ## Feedback Routes
 
 ### POST /api/documents/:id/feedback
+
 Create feedback for a document.
 
 **Request Body:**
+
 ```json
 {
   "content": "string",
@@ -523,6 +576,7 @@ Create feedback for a document.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -539,9 +593,11 @@ Create feedback for a document.
 ```
 
 ### GET /api/documents/:id/feedback
+
 Get feedback for a document.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -562,9 +618,11 @@ Get feedback for a document.
 ```
 
 ### PATCH /api/feedback/:id
+
 Update feedback.
 
 **Request Body:**
+
 ```json
 {
   "content": "string",
@@ -574,6 +632,7 @@ Update feedback.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -589,9 +648,11 @@ Update feedback.
 ```
 
 ### DELETE /api/feedback/:id
+
 Delete feedback.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -600,9 +661,11 @@ Delete feedback.
 ```
 
 ### GET /api/feedback/:id/metrics
+
 Get feedback metrics.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -636,17 +699,20 @@ Get feedback metrics.
 ## Comment Routes
 
 ### POST /api/documents/:id/comments
+
 Add a comment to a document.
 
 **Request Body:**
+
 ```json
 {
   "content": "string",
-  "feedbackId": "string" // Optional
+  "feedbackId": "string" // Optional, only if commenting on feedback
 }
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -655,17 +721,19 @@ Add a comment to a document.
     "id": "string",
     "content": "string",
     "userId": "string",
-    "documentId": "string",
-    "feedbackId": "string",
+    "documentId": "string", // This is the specific document version ID
+    "feedbackId": "string", // Only present if commenting on feedback
     "createdAt": "2025-03-14T00:00:00.000Z"
   }
 }
 ```
 
 ### GET /api/documents/:id/comments
+
 Get comments for a document.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -687,9 +755,11 @@ Get comments for a document.
 ```
 
 ### PATCH /api/comments/:id
+
 Update a comment.
 
 **Request Body:**
+
 ```json
 {
   "content": "string"
@@ -697,6 +767,7 @@ Update a comment.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -710,9 +781,11 @@ Update a comment.
 ```
 
 ### DELETE /api/comments/:id
+
 Delete a comment.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -723,9 +796,11 @@ Delete a comment.
 ## Word Suggestion Routes
 
 ### POST /api/documents/:id/suggestions
+
 Add word suggestions for a document.
 
 **Request Body:**
+
 ```json
 {
   "suggestions": [
@@ -743,6 +818,7 @@ Add word suggestions for a document.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -761,9 +837,11 @@ Add word suggestions for a document.
 ```
 
 ### GET /api/documents/:id/suggestions
+
 Get word suggestions for a document.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -786,9 +864,11 @@ Get word suggestions for a document.
 ```
 
 ### PATCH /api/suggestions/:id
+
 Accept or reject a word suggestion.
 
 **Request Body:**
+
 ```json
 {
   "isAccepted": true
@@ -796,6 +876,7 @@ Accept or reject a word suggestion.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -811,9 +892,11 @@ Accept or reject a word suggestion.
 ## Group Routes
 
 ### POST /api/groups
+
 Create a new group.
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -822,6 +905,7 @@ Create a new group.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -838,9 +922,11 @@ Create a new group.
 ```
 
 ### GET /api/groups
+
 List groups (for current user).
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -858,9 +944,11 @@ List groups (for current user).
 ```
 
 ### GET /api/groups/:id
+
 Get group details.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -882,9 +970,11 @@ Get group details.
 ```
 
 ### PATCH /api/groups/:id
+
 Update group information.
 
 **Request Body:**
+
 ```json
 {
   "name": "string",
@@ -893,6 +983,7 @@ Update group information.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -907,9 +998,11 @@ Update group information.
 ```
 
 ### DELETE /api/groups/:id
+
 Delete a group.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -918,9 +1011,11 @@ Delete a group.
 ```
 
 ### POST /api/groups/join/:token
+
 Join a group with token.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -934,9 +1029,11 @@ Join a group with token.
 ```
 
 ### GET /api/groups/:id/members
+
 List group members.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -957,9 +1054,11 @@ List group members.
 ```
 
 ### POST /api/groups/:id/members
+
 Add a member to a group.
 
 **Request Body:**
+
 ```json
 {
   "email": "string"
@@ -967,6 +1066,7 @@ Add a member to a group.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -985,9 +1085,11 @@ Add a member to a group.
 ```
 
 ### DELETE /api/groups/:id/members/:userId
+
 Remove a member from a group.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -998,9 +1100,11 @@ Remove a member from a group.
 ## Assignment Routes
 
 ### POST /api/groups/:id/assignments
+
 Create an assignment for a group.
 
 **Request Body:**
+
 ```json
 {
   "title": "string",
@@ -1013,6 +1117,7 @@ Create an assignment for a group.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1033,9 +1138,11 @@ Create an assignment for a group.
 ```
 
 ### GET /api/groups/:id/assignments
+
 List assignments for a group.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1059,9 +1166,11 @@ List assignments for a group.
 ```
 
 ### GET /api/assignments/:id
+
 Get assignment details.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1090,9 +1199,11 @@ Get assignment details.
 ```
 
 ### PATCH /api/assignments/:id
+
 Update an assignment.
 
 **Request Body:**
+
 ```json
 {
   "title": "string",
@@ -1105,6 +1216,7 @@ Update an assignment.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1120,9 +1232,11 @@ Update an assignment.
 ```
 
 ### DELETE /api/assignments/:id
+
 Delete an assignment.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1133,14 +1247,17 @@ Delete an assignment.
 ## Submission Routes
 
 ### POST /api/assignments/:id/submissions
+
 Submit an assignment.
 
 **Request Body:**
+
 - Form data with `file` field containing the document
 - Additional fields:
   - `title`: string
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1162,9 +1279,11 @@ Submit an assignment.
 ```
 
 ### GET /api/assignments/:id/submissions
+
 List submissions for an assignment.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1191,9 +1310,11 @@ List submissions for an assignment.
 ```
 
 ### GET /api/submissions/:id
+
 Get submission details.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -1226,9 +1347,11 @@ Get submission details.
 ```
 
 ### PATCH /api/submissions/:id/status
+
 Update submission status.
 
 **Request Body:**
+
 ```json
 {
   "status": "GRADED"
@@ -1236,6 +1359,7 @@ Update submission status.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,

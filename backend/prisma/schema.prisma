@@ -8,22 +8,28 @@ datasource db {
 }
 
 model User {
-    id              String           @id
-    email           String           @unique
-    name            String?
-    password        String?
-    role            UserRole         @default(STUDENT)
-    feedbacks       Feedback[]
-    comments        Comment[]
-    isEmailVerified Boolean          @default(false)
-    documents       Document[]
-    groups          GroupMember[]
-    ownedGroups     Group[]          @relation("GroupAdmin")
-    wordSuggestions WordSuggestion[]
-    assignments     Assignment[]     @relation("AssignmentCreator")
-    submissions     Submission[]
-    createdAt       DateTime         @default(now())
-    updatedAt       DateTime         @updatedAt
+    id                 String             @id
+    email              String             @unique
+    name               String?
+    password           String?
+    role               UserRole           @default(STUDENT)
+    feedbacks          Feedback[]
+    comments           Comment[]
+    isEmailVerified    Boolean            @default(false)
+    accountCreatedWith AccountCreatedWith @default(EMAIL)
+    documents          Document[]
+    groups             GroupMember[]
+    ownedGroups        Group[]            @relation("GroupAdmin")
+    wordSuggestions    WordSuggestion[]
+    assignments        Assignment[]       @relation("AssignmentCreator")
+    submissions        Submission[]
+    createdAt          DateTime           @default(now())
+    updatedAt          DateTime           @updatedAt
+}
+
+enum AccountCreatedWith {
+    EMAIL
+    GOOGLE
 }
 
 model Group {

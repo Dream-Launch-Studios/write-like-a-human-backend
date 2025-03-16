@@ -3,6 +3,7 @@ import { getCurrentUser, login, register } from "../controllers/authController";
 import { authenticateUser } from "../middleware/server";
 import { createClient } from '@supabase/supabase-js';
 import prisma from "../config/config";
+import { UserRole } from "@prisma/client";
 
 const Authrouter = express.Router();
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -125,10 +126,10 @@ Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> 
         //         message: 'Invalid authorization format'
         //     });
         // }
-        const { id, name, email, role = "STUDENT", secret } = req.body
+        const { id, name, email, role, secret, } = req.body
         console.log(`🍎 got this body ->`, req.body)
 
-        if (!id || !name || !email || !secret) {
+        if (!id || !name || !email || !secret || !role) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields'
@@ -139,6 +140,13 @@ Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> 
             return res.status(401).json({
                 success: false,
                 message: 'Invalid secret'
+            });
+        }
+
+        if (role === UserRole.ADMIN) {
+            return res.status(400).json({
+                success: false,
+                message: 'Admin role is not allowed to register from api!'
             });
         }
 
@@ -185,7 +193,7 @@ Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> 
                     name: name || '',
                     password: '',
                     isEmailVerified: false,
-                    role: role as 'STUDENT' | 'TEACHER' | 'ADMIN'
+                    role: role as UserRole
                 }
             });
             console.log('✅ User created in database:', newUser.id);
