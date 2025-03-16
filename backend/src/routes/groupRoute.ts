@@ -4,15 +4,15 @@ import { groupAdminAuth, checkGroupMembership } from "../middleware/groupAuth";
 import { authenticateUser } from "../middleware/server";
 import { Request, Response, NextFunction } from "express";
 import { AuthenticatedRequest } from "../types";
-import { authMiddleware } from "../middleware/auth";
+import { adminMiddleware, authMiddleware, studentMiddleware, teacherMiddleware } from "../middleware/auth.middleware";
 
 const groupRouter = Router();
 
 
-groupRouter.get('/test', authMiddleware, async (req: Request, res: Response) => {
+groupRouter.get('/test', authMiddleware, studentMiddleware, async (req: Request, res: Response) => {
   console.log(`🩸🩸🩸🩸req.user`)
   console.log(req.user)
-  res.send({ok: "ok"})
+  res.send({ user: req.user })
 })
 
 

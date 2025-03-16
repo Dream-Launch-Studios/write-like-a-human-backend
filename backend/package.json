@@ -31,7 +31,8 @@
     "pdf-parse": "^1.1.1",
     "tsx": "^4.19.3",
     "uuid": "^11.1.0",
-    "uuidv4": "^6.2.13"
+    "uuidv4": "^6.2.13",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",

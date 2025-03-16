@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createClient } from '@supabase/supabase-js';
-import prisma from '../config/config';
+import { PrismaClient } from '@prisma/client';
+import { ApiResponse } from '../types/response';
 
 declare global {
     namespace Express {
@@ -10,9 +11,11 @@ declare global {
     }
 }
 
+const prisma = new PrismaClient();
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
 
 export const authMiddleware = async (
     req: Request,
@@ -21,116 +24,110 @@ export const authMiddleware = async (
 ): Promise<void> => {
     try {
         const authHeader = req.headers.authorization;
-        console.log(`authHeader 🤜 ${authHeader}`)
-
         if (!authHeader) {
-            res.status(401).json({
+            const response: ApiResponse = {
                 success: false,
                 message: 'Missing authorization header'
-            });
+            };
+            res.status(401).json(response);
             return;
         }
 
         const token = authHeader.split(' ')[1];
         if (!token) {
-            res.status(401).json({
+            const response: ApiResponse = {
                 success: false,
                 message: 'Invalid authorization format'
-            });
+            };
+            res.status(401).json(response);
             return;
         }
 
-        // Try to get user ID from token
         let userId;
 
         try {
-            // First attempt: Verify with Supabase
-            const { data, error } = await supabaseAdmin.auth.getUser(token);
+            // Decode the token directly without verifying with Supabase
+            const decodedToken = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+            userId = decodedToken.sub;
 
-            if (error) {
-                console.error('Supabase verification error:', error);
-                // If Supabase verification fails, try decoding the token manually
-                const decodedToken = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-                userId = decodedToken.sub;
-
-                if (!userId) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'Invalid token - cannot identify user'
-                    });
-                    return;
-                }
-
-                console.log('Using decoded user ID from token:', userId);
-            } else {
-                userId = data.user.id;
+            if (!userId) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: 'Invalid token - cannot identify user'
+                };
+                res.status(401).json(response);
+                return;
             }
+
+            console.log('Using decoded user ID from token:', userId);
         } catch (tokenError) {
             console.error('Token processing error:', tokenError);
-            res.status(401).json({
+            const response: ApiResponse = {
                 success: false,
                 message: 'Invalid token format'
-            });
+            };
+            res.status(401).json(response);
             return;
         }
 
-        // Get user from database
+        // Query our database directly for the user
         const user = await prisma.user.findUnique({
             where: { id: userId }
         });
 
-        console.log(`userId 👊 ${userId}`)
-
         if (!user) {
-            res.status(404).json({
+            const response: ApiResponse = {
                 success: false,
                 message: 'User not found in database'
-            });
+            };
+            res.status(404).json(response);
             return;
         }
 
         req.user = user;
         next();
-
     } catch (error) {
         console.error('Auth middleware error:', error);
-        res.status(500).json({
+        const response: ApiResponse = {
             success: false,
             message: 'Server error during authentication'
-        });
+        };
+        res.status(500).json(response);
     }
 };
+
 
 export const roleMiddleware = (roles: string | string[]) => {
     return (req: Request, res: Response, next: NextFunction): void => {
         try {
-            // Ensure user exists (auth middleware should run first)
             if (!req.user) {
-                res.status(401).json({
+                const response: ApiResponse = {
                     success: false,
                     message: 'Authentication required'
-                });
+                };
+                res.status(401).json(response);
                 return;
             }
 
             const allowedRoles = Array.isArray(roles) ? roles : [roles];
 
             if (!allowedRoles.includes(req.user.role)) {
-                res.status(403).json({
+                const response: ApiResponse = {
                     success: false,
                     message: `Access denied. Required role: ${allowedRoles.join(' or ')}`
-                });
+                };
+                res.status(403).json(response);
                 return;
             }
 
             next();
-
         } catch (error) {
             console.error('Role middleware error:', error);
-            res.status(500).json({
+            const response: ApiResponse = {
                 success: false,
                 message: 'Server error during role verification'
-            });
+            };
+            res.status(500).json(response);
         }
     };
 };

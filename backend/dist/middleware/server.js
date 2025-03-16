@@ -10,6 +10,17 @@ const client_1 = require("@prisma/client");
 dotenv_1.default.config();
 const prisma = new client_1.PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET;
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       user?: {
+//         id: string;
+//         email: string;
+//         role: string;
+//       };
+//     }
+//   }
+// }
 const authenticateUser = async (req, res, next) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader === null || authHeader === void 0 ? void 0 : authHeader.split(" ")[1];
