@@ -13,6 +13,7 @@ import documentRoutes from "./routes/document.routes";
 import analysisRoutes from "./routes/analysis.routes";
 import feedbackRoutes from "./routes/feedback.routes";
 import commentRoutes from "./routes/comment.routes";
+import wordSuggestionRoutes from "./routes/word-suggestion.routes";
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/word-suggestions", wordSuggestionRoutes);
 
 app.use("/api/groups", groupRouter); //completed
 // app.use("/api/feedbacks", feedbackRouter);
