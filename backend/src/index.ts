@@ -15,6 +15,7 @@ import commentRoutes from "./routes/comment.routes";
 import wordSuggestionRoutes from "./routes/word-suggestion.routes";
 import groupRoutes from "./routes/group.routes";
 import assignmentRoutes from "./routes/assignment.routes";
+import submissionRoutes from "./routes/submission.routes";
 
 const app = express();
 app.use(cors());
@@ -29,6 +30,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/word-suggestions", wordSuggestionRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/assignments", assignmentRoutes);
+app.use("/api/submissions", submissionRoutes); 
 
 
 // app.use("/api/groups", groupRouter); //completed
