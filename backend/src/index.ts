@@ -4,7 +4,7 @@ import Authrouter from "./routes/authRoutes";
 import groupRouter from "./routes/groupRoute";
 // import documentRouter from "./routes/documentRoutes";
 // import feedbackRouter from "./routes/feedbackRoutes";
-import commentRouter from "./routes/commentRoutes";
+// import commentRouter from "./routes/commentRoutes";
 // import analysisRouter from "./routes/analysisRoutes";
 import cors from "cors";
 
@@ -12,6 +12,7 @@ import userRoutes from "./routes/user.routes";
 import documentRoutes from "./routes/document.routes";
 import analysisRoutes from "./routes/analysis.routes";
 import feedbackRoutes from "./routes/feedback.routes";
+import commentRoutes from "./routes/comment.routes";
 
 const app = express();
 app.use(cors());
@@ -22,10 +23,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use("/api/comments", commentRoutes);
 
 app.use("/api/groups", groupRouter); //completed
 // app.use("/api/feedbacks", feedbackRouter);
-app.use("/api/comments", commentRouter);
+// app.use("/api/comments", commentRouter);
 // app.use("/api/users", userRouter); //completed
 // app.use("/api/documents", documentRouter); //completed almost
 // app.use("/api/analyze", analysisRouter);
