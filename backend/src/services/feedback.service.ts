@@ -1,8 +1,12 @@
-import { PrismaClient, FeedbackStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import {
     CreateFeedbackData,
+    FeedbackMetricsData,
     UpdateFeedbackData
 } from '../types/feedback.types';
+import { sleep } from '../utils';
+import { openai } from '../lib/openai';
+import { getDocumentById } from './document.service';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +24,8 @@ export const createFeedback = async (data: CreateFeedbackData) => {
             groupId: data.groupId
         }
     });
+
+    await generateFeedbackMetrics(feedback.id);
 
     return feedback;
 };
@@ -190,52 +196,196 @@ export const createFeedbackMetrics = async (
  * This would typically be called when a teacher provides feedback
  * and we want to analyze how the document changed
  */
+// export const generateFeedbackMetrics = async (feedbackId: string) => {
+//     try {
+//         await sleep(5000)
+//         // Get the feedback
+//         const feedback = await prisma.feedback.findUnique({
+//             where: { id: feedbackId },
+//             include: {
+//                 document: true
+//             }
+//         });
+
+//         if (!feedback || !feedback.document) {
+//             return null;
+//         }
+
+//         // This is a placeholder for a more complex implementation
+//         // In a real system, this would compare the original document
+//         // with subsequent versions to generate metrics
+
+//         // For now, we'll create some dummy metrics
+//         const dummyMetrics = {
+//             sentenceLengthChange: Math.random() * 10 - 5,
+//             paragraphStructureScore: Math.random(),
+//             headingConsistencyScore: Math.random(),
+//             lexicalDiversityChange: Math.random() * 0.2,
+//             wordRepetitionScore: Math.random(),
+//             formalityShift: Math.random() * 0.4 - 0.2,
+//             readabilityChange: Math.random() * 20 - 10,
+//             voiceConsistencyScore: Math.random(),
+//             perspectiveShift: Math.random() * 0.2 - 0.1,
+//             descriptiveLanguageScore: Math.random(),
+//             punctuationChangeScore: Math.random() * 0.2 - 0.1,
+//             grammarPatternScore: Math.random(),
+//             spellingVariationScore: Math.random(),
+//             thematicConsistencyScore: Math.random(),
+//             keywordFrequencyChange: Math.random() * 0.4 - 0.2,
+//             argumentDevelopmentScore: Math.random(),
+//             nGramSimilarityScore: Math.random(),
+//             tfIdfSimilarityScore: Math.random(),
+//             jaccardSimilarityScore: Math.random(),
+//             originalityShiftScore: Math.random() * 0.5
+//         };
+
+//         // Create the metrics
+//         await updateFeedback(feedbackId, { status: "REVIEWED" });
+
+//         const feedbackMetrics = await createFeedbackMetrics(feedbackId, dummyMetrics);
+//         await updateFeedback(feedbackId, { status: "ANALYZED" });
+//         return feedbackMetrics
+//     } catch (error) {
+//         console.error(`Error generating feedback metrics for ${feedbackId}:`, error);
+//         return null;
+//     }
+// };
+
+
+
+/**
+ * Generate feedback metrics by analyzing document content and feedback
+ */
 export const generateFeedbackMetrics = async (feedbackId: string) => {
     try {
         // Get the feedback
         const feedback = await prisma.feedback.findUnique({
             where: { id: feedbackId },
             include: {
-                document: true
+                document: {
+                    select: {
+                        id: true,
+                        title: true,
+                        content: true,
+                        parentDocumentId: true,
+                        versionNumber: true
+                    }
+                }
             }
         });
 
         if (!feedback || !feedback.document) {
+            console.error(`Feedback ${feedbackId} not found or has no document`);
             return null;
         }
 
-        // This is a placeholder for a more complex implementation
-        // In a real system, this would compare the original document
-        // with subsequent versions to generate metrics
+        // Update status to show processing
+        await updateFeedback(feedbackId, { status: "PENDING" });
 
-        // For now, we'll create some dummy metrics
-        const dummyMetrics = {
-            sentenceLengthChange: Math.random() * 10 - 5,
-            paragraphStructureScore: Math.random(),
-            headingConsistencyScore: Math.random(),
-            lexicalDiversityChange: Math.random() * 0.2,
-            wordRepetitionScore: Math.random(),
-            formalityShift: Math.random() * 0.4 - 0.2,
-            readabilityChange: Math.random() * 20 - 10,
-            voiceConsistencyScore: Math.random(),
-            perspectiveShift: Math.random() * 0.2 - 0.1,
-            descriptiveLanguageScore: Math.random(),
-            punctuationChangeScore: Math.random() * 0.2 - 0.1,
-            grammarPatternScore: Math.random(),
-            spellingVariationScore: Math.random(),
-            thematicConsistencyScore: Math.random(),
-            keywordFrequencyChange: Math.random() * 0.4 - 0.2,
-            argumentDevelopmentScore: Math.random(),
-            nGramSimilarityScore: Math.random(),
-            tfIdfSimilarityScore: Math.random(),
-            jaccardSimilarityScore: Math.random(),
-            originalityShiftScore: Math.random() * 0.5
+        let documentContent = feedback.document.content;
+        console.log(`📃 document content:`)
+        console.log(documentContent)
+
+        // If this is a newer version, get the parent document to compare
+        let previousDocumentContent = "";
+        if (feedback.document.parentDocumentId && feedback.document.versionNumber > 1) {
+            const parentDocument = await getDocumentById(feedback.document.parentDocumentId);
+            if (parentDocument) {
+                previousDocumentContent = parentDocument.content;
+            }
+        }
+
+        // Prepare the payload for OpenAI analysis
+        const prompt = {
+            role: "system",
+            content: `Analyze the following document and feedback to generate detailed metrics about writing style, structure, and authenticity. 
+            
+The metrics should reflect changes between document versions (if available) and the impact of the feedback.
+
+For each metric, provide a specific numerical score between 0 and 1, where appropriate, or percentage changes where measuring differences.
+
+Document Title: ${feedback.document.title}
+Feedback Content: ${feedback.content}
+
+${previousDocumentContent ? "Previous Document Content: " + previousDocumentContent : ""}
+Current Document Content: ${documentContent}
+
+Provide a structured analysis with the following metrics:
+1. structuralComparison (sentenceLengthChange, paragraphStructureScore, headingConsistencyScore)
+2. vocabularyMetrics (lexicalDiversityChange, wordRepetitionScore, formalityShift)
+3. styleMetrics (readabilityChange, voiceConsistencyScore, perspectiveShift, descriptiveLanguageScore)
+4. grammarAndMechanics (punctuationChangeScore, grammarPatternScore, spellingVariationScore)
+5. topicThematicElements (thematicConsistencyScore, keywordFrequencyChange, argumentDevelopmentScore) 
+6. similarityMetrics (nGramSimilarityScore, tfIdfSimilarityScore, jaccardSimilarityScore)
+7. aIDetection (originalityShiftScore)
+
+Format the response as a JSON object without explanations, just the metric values.`,
         };
 
-        // Create the metrics
-        return await createFeedbackMetrics(feedbackId, dummyMetrics);
+        // Call the OpenAI API
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini-2024-07-18",
+            messages: [prompt as any],
+            response_format: { type: "json_object" },
+            temperature: 0.3,
+        });
+
+        // Parse the AI response to get the metrics
+        const metricsResponse = JSON.parse(response.choices[0].message.content || "{}");
+        console.log(`🦶🦶🦶🦶🦶 metricsResponse from ai`)
+        console.log(metricsResponse)
+
+        // Map the AI response to our metrics format
+        const metrics: FeedbackMetricsData = {
+            // Structural Comparison
+            sentenceLengthChange: metricsResponse?.structuralComparison?.sentenceLengthChange ?? 0,
+            paragraphStructureScore: metricsResponse?.structuralComparison?.paragraphStructureScore ?? 0,
+            headingConsistencyScore: metricsResponse?.structuralComparison?.headingConsistencyScore ?? 0,
+
+            // Vocabulary Metrics
+            lexicalDiversityChange: metricsResponse.lexicalDiversityChange || 0,
+            wordRepetitionScore: metricsResponse.wordRepetitionScore || 0,
+            formalityShift: metricsResponse.formalityShift || 0,
+
+            // Style Metrics
+            readabilityChange: metricsResponse?.vocabularyMetrics?.readabilityChange || 0,
+            voiceConsistencyScore: metricsResponse?.vocabularyMetrics?.voiceConsistencyScore || 0,
+            perspectiveShift: metricsResponse?.vocabularyMetrics?.perspectiveShift || 0,
+            descriptiveLanguageScore: metricsResponse?.vocabularyMetrics?.descriptiveLanguageScore || 0,
+
+            // Grammar & Mechanics
+            punctuationChangeScore: metricsResponse?.grammarAndMechanics?.punctuationChangeScore || 0,
+            grammarPatternScore: metricsResponse?.grammarAndMechanics?.grammarPatternScore || 0,
+            spellingVariationScore: metricsResponse?.grammarAndMechanics?.spellingVariationScore || 0,
+
+            // Topic & Thematic Elements
+            thematicConsistencyScore: metricsResponse?.topicThematicElements?.thematicConsistencyScore || 0,
+            keywordFrequencyChange: metricsResponse?.topicThematicElements?.keywordFrequencyChange || 0,
+            argumentDevelopmentScore: metricsResponse?.topicThematicElements?.argumentDevelopmentScore || 0,
+
+            // Similarity Metrics
+            nGramSimilarityScore: metricsResponse?.similarityMetrics?.nGramSimilarityScore || 0,
+            tfIdfSimilarityScore: metricsResponse?.similarityMetrics?.tfIdfSimilarityScore || 0,
+            jaccardSimilarityScore: metricsResponse?.similarityMetrics?.jaccardSimilarityScore || 0,
+
+            // AI Detection
+            originalityShiftScore: metricsResponse?.aIDetection?.originalityShiftScore || 0,
+        };
+
+        // Mark the feedback as reviewed
+        await updateFeedback(feedbackId, { status: "REVIEWED" });
+
+        // Create the metrics in the database
+        const feedbackMetrics = await createFeedbackMetrics(feedbackId, metrics);
+
+        // Update the feedback status to analyzed
+        await updateFeedback(feedbackId, { status: "ANALYZED" });
+
+        return feedbackMetrics;
     } catch (error) {
         console.error(`Error generating feedback metrics for ${feedbackId}:`, error);
+        // If there's an error, update the feedback status
+        await updateFeedback(feedbackId, { status: "PENDING" });
         return null;
     }
 };

@@ -1,12 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import OpenAI from 'openai';
+import { c } from '../lib/openai';
 import { AnalysisResult, DocumentSection, TextMetricsData } from '../types/analysis.types';
 import { calculateReadabilityScore, calculateTextMetrics } from '../utils/text-analysis';
 
 const prisma = new PrismaClient();
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
 
 /**
  * Get analysis by document ID

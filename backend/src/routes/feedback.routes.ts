@@ -21,7 +21,7 @@ router.post(
     '/documents/:id/feedback',
     validate(createFeedbackSchema),
     feedbackController.createFeedback
-);
+); 
 
 // Get all feedback for a document
 router.get(
@@ -32,7 +32,7 @@ router.get(
 
 // Get a specific feedback by ID
 router.get(
-    '/feedback/:id',
+    '/:id',
     validate(getFeedbackSchema),
     feedbackController.getFeedback
 );
@@ -53,7 +53,7 @@ router.delete(
 
 // Get feedback metrics
 router.get(
-    '/feedback/:id/metrics',
+    '/:id/metrics',
     validate(getFeedbackMetricsSchema),
     feedbackController.getFeedbackMetrics
 );

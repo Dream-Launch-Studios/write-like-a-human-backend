@@ -17,21 +17,21 @@ export const createFeedbackSchema = z.object({
 // Schema for getting feedback for a document
 export const getDocumentFeedbackSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid document ID' })
+        id: z.string().cuid({ message: 'Invalid document ID' })
     })
 });
 
 // Schema for getting a specific feedback
 export const getFeedbackSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid feedback ID' })
+        id: z.string().cuid({ message: 'Invalid feedback ID' })
     })
 });
 
 // Schema for updating feedback
 export const updateFeedbackSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid feedback ID' })
+        id: z.string().cuid({ message: 'Invalid feedback ID' })
     }),
     body: z.object({
         content: z.string().min(1, { message: 'Feedback content is required' }).optional(),
@@ -45,20 +45,20 @@ export const updateFeedbackSchema = z.object({
 // Schema for deleting feedback
 export const deleteFeedbackSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid feedback ID' })
+        id: z.string().cuid({ message: 'Invalid feedback ID' })
     })
 });
 
 // Schema for getting feedback metrics
 export const getFeedbackMetricsSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid feedback ID' })
+        id: z.string().cuid({ message: 'Invalid feedback ID' })
     })
 });
 
 // Schema for generating feedback metrics
 export const generateFeedbackMetricsSchema = z.object({
     params: z.object({
-        id: z.string().uuid({ message: 'Invalid feedback ID' })
+        id: z.string().cuid({ message: 'Invalid feedback ID' })
     })
 });
