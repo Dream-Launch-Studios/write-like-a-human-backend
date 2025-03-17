@@ -33,7 +33,7 @@ export const uploadMiddleware = multer({
 });
 
 // Post-upload validation middleware
-export const validatePdfMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const validatePdfMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         if (!req.file) {
             return next();
