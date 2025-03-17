@@ -26,12 +26,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const groupController = __importStar(require("../controllers/groupController"));
 const groupAuth_1 = require("../middleware/groupAuth");
-const auth_1 = require("../middleware/auth");
+const auth_middleware_1 = require("../middleware/auth.middleware");
 const groupRouter = (0, express_1.Router)();
-groupRouter.get('/test', auth_1.authMiddleware, async (req, res) => {
+groupRouter.get('/test', auth_middleware_1.authMiddleware, auth_middleware_1.studentMiddleware, async (req, res) => {
     console.log(`🩸🩸🩸🩸req.user`);
     console.log(req.user);
-    res.send({ ok: "ok" });
+    res.send({ user: req.user });
 });
 // Apply authentication middleware to all group routes
 // groupRouter.use(authenticateUser);

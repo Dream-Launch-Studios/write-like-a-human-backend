@@ -1,27 +1,25 @@
-import { PrismaClient } from '@prisma/client';
-import { openai } from '../lib/openai';
-import { AnalysisResult, DocumentSection, TextMetricsData } from '../types/analysis.types';
-import { calculateReadabilityScore, calculateTextMetrics } from '../utils/text-analysis';
-
-const prisma = new PrismaClient();
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initiateAnalysis = exports.getTextMetrics = exports.getDocumentSections = exports.getAnalysisByDocumentId = void 0;
+const client_1 = require("@prisma/client");
+const text_analysis_1 = require("../utils/text-analysis");
+const prisma = new client_1.PrismaClient();
 /**
  * Get analysis by document ID
  */
-export const getAnalysisByDocumentId = async (documentId: string) => {
+const getAnalysisByDocumentId = async (documentId) => {
     const analysis = await prisma.aIAnalysis.findUnique({
         where: {
             documentId
         }
     });
-
     return analysis;
 };
-
+exports.getAnalysisByDocumentId = getAnalysisByDocumentId;
 /**
  * Get document sections from analysis
  */
-export const getDocumentSections = async (documentId: string) => {
+const getDocumentSections = async (documentId) => {
     const analysis = await prisma.aIAnalysis.findUnique({
         where: {
             documentId
@@ -30,14 +28,13 @@ export const getDocumentSections = async (documentId: string) => {
             sections: true
         }
     });
-
-    return analysis?.sections || [];
+    return (analysis === null || analysis === void 0 ? void 0 : analysis.sections) || [];
 };
-
+exports.getDocumentSections = getDocumentSections;
 /**
  * Get text metrics for a document
  */
-export const getTextMetrics = async (documentId: string) => {
+const getTextMetrics = async (documentId) => {
     const analysis = await prisma.aIAnalysis.findUnique({
         where: {
             documentId
@@ -46,16 +43,15 @@ export const getTextMetrics = async (documentId: string) => {
             textMetrics: true
         }
     });
-
-    return analysis?.textMetrics || null;
+    return (analysis === null || analysis === void 0 ? void 0 : analysis.textMetrics) || null;
 };
-
+exports.getTextMetrics = getTextMetrics;
 /**
  * Initiate analysis of a document
  * This function starts the analysis process and returns immediately
  * The actual analysis runs in the background
  */
-export const initiateAnalysis = async (document: any) => {
+const initiateAnalysis = async (document) => {
     // Create a new analysis record in processing state
     const analysis = await prisma.aIAnalysis.create({
         data: {
@@ -66,7 +62,6 @@ export const initiateAnalysis = async (document: any) => {
             analysisDate: new Date()
         }
     });
-
     // Run the analysis in the background
     // In a production environment, this would typically be a job queue
     console.log('⌚ Starting analysis for document', document.id);
@@ -74,17 +69,15 @@ export const initiateAnalysis = async (document: any) => {
         console.error(`Analysis failed for document ${document.id}:`, error);
     });
     console.log('⌚ Analysis complete for document', document.id);
-
     return analysis;
 };
-
+exports.initiateAnalysis = initiateAnalysis;
 /**
  * Perform the actual analysis using OpenAI
  */
-const performAnalysis = async (document: any, analysisId: string) => {
+const performAnalysis = async (document, analysisId) => {
     try {
         const documentContent = document.content;
-
         // Check if document content is empty
         if (!documentContent || documentContent.trim() === '') {
             await updateAnalysisStatus(analysisId, {
@@ -94,22 +87,17 @@ const performAnalysis = async (document: any, analysisId: string) => {
             });
             return;
         }
-
         // 1. First, calculate basic text metrics
-        const textMetrics = calculateTextMetrics(documentContent);
-
+        const textMetrics = (0, text_analysis_1.calculateTextMetrics)(documentContent);
         // 2. Split document into sections for analysis
         const sections = splitIntoSections(documentContent);
-
         // 3. Analyze each section for AI content
         const analyzePromises = sections.map(section => analyzeSection(section.content));
         const sectionResults = await Promise.all(analyzePromises);
-
         // 4. Calculate overall scores
         const overallAiScore = calculateOverallScore(sectionResults);
         const aiGeneratedPercent = overallAiScore * 100;
         const humanWrittenPercent = 100 - aiGeneratedPercent;
-
         // 5. Save analysis results to database
         await prisma.$transaction(async (tx) => {
             // Update main analysis record
@@ -121,7 +109,6 @@ const performAnalysis = async (document: any, analysisId: string) => {
                     aiGeneratedPercent
                 }
             });
-
             // Create text metrics record
             await tx.textMetrics.create({
                 data: {
@@ -143,12 +130,10 @@ const performAnalysis = async (document: any, analysisId: string) => {
                     nGramUniqueness: textMetrics.nGramUniqueness
                 }
             });
-
             // Create section records
             for (let i = 0; i < sections.length; i++) {
                 const section = sections[i];
                 const result = sectionResults[i];
-
                 await tx.documentSection.create({
                     data: {
                         aiAnalysisId: analysisId,
@@ -162,8 +147,8 @@ const performAnalysis = async (document: any, analysisId: string) => {
                 });
             }
         });
-
-    } catch (error) {
+    }
+    catch (error) {
         console.error(`Analysis failed for document ${document.id}:`, error);
         // Update analysis record with failure status
         await updateAnalysisStatus(analysisId, {
@@ -174,75 +159,67 @@ const performAnalysis = async (document: any, analysisId: string) => {
         throw error;
     }
 };
-
 /**
  * Update analysis status
  */
-const updateAnalysisStatus = async (analysisId: string, data: any) => {
+const updateAnalysisStatus = async (analysisId, data) => {
     await prisma.aIAnalysis.update({
         where: { id: analysisId },
         data
     });
 };
-
 /**
  * Split document into sections for analysis
  */
-const splitIntoSections = (content: string): { startOffset: number; endOffset: number; content: string }[] => {
+const splitIntoSections = (content) => {
     // Simple approach: split by paragraphs
     const paragraphs = content.split(/\n\s*\n/);
-
     const sections = [];
     let currentOffset = 0;
-
     for (const paragraph of paragraphs) {
         const trimmedParagraph = paragraph.trim();
         if (trimmedParagraph) {
             // Find the actual offset in the original text to handle whitespace correctly
             const startOffset = content.indexOf(trimmedParagraph, currentOffset);
             const endOffset = startOffset + trimmedParagraph.length;
-
             sections.push({
                 startOffset,
                 endOffset,
                 content: trimmedParagraph
             });
-
             currentOffset = endOffset;
         }
     }
-
     // If the sections are too small, combine them
     const combinedSections = [];
     let currentSection = null;
     const MAX_SECTION_LENGTH = 1000; // Characters
-
     for (const section of sections) {
         if (!currentSection) {
-            currentSection = { ...section };
-        } else if (currentSection.content.length + section.content.length <= MAX_SECTION_LENGTH) {
+            currentSection = Object.assign({}, section);
+        }
+        else if (currentSection.content.length + section.content.length <= MAX_SECTION_LENGTH) {
             // Combine sections if they're small
             currentSection.endOffset = section.endOffset;
             currentSection.content += '\n\n' + section.content;
-        } else {
+        }
+        else {
             // Section would be too large, finalize the current one and start a new one
             combinedSections.push(currentSection);
-            currentSection = { ...section };
+            currentSection = Object.assign({}, section);
         }
     }
-
     // Add the last section if it exists
     if (currentSection) {
         combinedSections.push(currentSection);
     }
-
     return combinedSections;
 };
-
 /**
  * Analyze a section of text for AI-generated content using OpenAI
  */
-const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; confidence: number; suggestions: string }> => {
+const analyzeSection = async (text) => {
+    var _a, _b;
     try {
         const prompt = `
     You are an AI content detector analyzing the following text for signs of AI generation. Your task is to:
@@ -263,7 +240,6 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
       "suggestions": string
     }
     `;
-
         const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini-2024-07-18',
             messages: [
@@ -272,9 +248,7 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
             ],
             response_format: { type: 'json_object' }
         });
-
-        const resultText = response.choices[0]?.message?.content || '';
-
+        const resultText = ((_b = (_a = response.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content) || '';
         try {
             const result = JSON.parse(resultText);
             return {
@@ -282,7 +256,8 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
                 confidence: result.confidence,
                 suggestions: result.suggestions
             };
-        } catch (jsonError) {
+        }
+        catch (jsonError) {
             console.error('Failed to parse AI response as JSON:', jsonError);
             // Fallback response
             return {
@@ -291,7 +266,8 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
                 suggestions: 'Could not generate suggestions due to processing error.'
             };
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.error('Error analyzing section with OpenAI:', error);
         // Fallback response
         return {
@@ -301,19 +277,16 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
         };
     }
 };
-
 /**
  * Calculate overall AI score from section results
  */
-const calculateOverallScore = (sectionResults: { isAiGenerated: boolean; confidence: number; suggestions: string }[]): number => {
+const calculateOverallScore = (sectionResults) => {
     if (sectionResults.length === 0) {
         return 0;
     }
-
     // Calculate weighted average based on confidence
     const totalConfidence = sectionResults.reduce((sum, result) => {
         return sum + (result.isAiGenerated ? result.confidence : 1 - result.confidence);
     }, 0);
-
     return totalConfidence / sectionResults.length;
 };
