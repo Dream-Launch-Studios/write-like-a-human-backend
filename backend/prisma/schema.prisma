@@ -240,7 +240,7 @@ model TextMetrics {
     updatedAt DateTime @updatedAt
 }
 
-model FeedbackMetrics {
+model   FeedbackMetrics {
     id         String   @id @default(cuid())
     feedbackId String   @unique
     feedback   Feedback @relation(fields: [feedbackId], references: [id])
