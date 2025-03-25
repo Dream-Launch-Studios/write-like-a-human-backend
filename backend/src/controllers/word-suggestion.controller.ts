@@ -16,7 +16,6 @@ export const generateWordSuggestionsController = async (req: Request, res: Respo
         const { id: documentId } = req.params;
         const userId = req.user.id;
 
-        // Step 1: Generate suggestions using OpenAI
         const aiSuggestions = await generateAIWordSuggestions(documentId);
 
         if (!aiSuggestions || aiSuggestions.length === 0) {
@@ -27,11 +26,10 @@ export const generateWordSuggestionsController = async (req: Request, res: Respo
             });
         }
 
-        // Step 2: Save the generated suggestions to the database
         const createdSuggestions = await batchCreateWordSuggestions({
             documentId,
             userId,
-            suggestions: aiSuggestions,
+            suggestions: aiSuggestions, 
         });
 
         const response: ApiResponse = {

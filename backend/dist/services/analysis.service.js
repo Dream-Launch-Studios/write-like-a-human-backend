@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initiateAnalysis = exports.getTextMetrics = exports.getDocumentSections = exports.getAnalysisByDocumentId = void 0;
 const client_1 = require("@prisma/client");
+const openai_1 = require("../lib/openai");
 const text_analysis_1 = require("../utils/text-analysis");
 const prisma = new client_1.PrismaClient();
 /**
@@ -240,7 +241,7 @@ const analyzeSection = async (text) => {
       "suggestions": string
     }
     `;
-        const response = await openai.chat.completions.create({
+        const response = await openai_1.openai.chat.completions.create({
             model: 'gpt-4o-mini-2024-07-18',
             messages: [
                 { role: 'system', content: 'You are an AI detector assistant that analyzes text to determine if it was AI-generated or human-written.' },

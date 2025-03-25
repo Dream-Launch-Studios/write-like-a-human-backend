@@ -30,6 +30,14 @@ export declare const listDocuments: ({ userId, page, limit, groupId }: DocumentF
         id: string;
         createdAt: Date;
         userId: string;
+        groupId: string | null;
+        title: string;
+        versionNumber: number;
+        isLatest: boolean;
+        fileName: string;
+        fileUrl: string;
+        fileType: string;
+        fileSize: number;
         group: {
             name: string;
             id: string;
@@ -39,14 +47,6 @@ export declare const listDocuments: ({ userId, page, limit, groupId }: DocumentF
             joinToken: string;
             adminId: string;
         } | null;
-        groupId: string | null;
-        title: string;
-        versionNumber: number;
-        isLatest: boolean;
-        fileName: string;
-        fileUrl: string;
-        fileType: string;
-        fileSize: number;
     }[];
     pagination: {
         total: number;

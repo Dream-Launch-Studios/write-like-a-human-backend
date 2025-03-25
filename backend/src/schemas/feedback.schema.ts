@@ -8,10 +8,10 @@ export const createFeedbackSchema = z.object({
     params: z.object({
         id: z.string().cuid({ message: 'Invalid document ID' })
     }),
-    body: z.object({
-        content: z.string().min(1, { message: 'Feedback content is required' }),
-        status: feedbackStatusEnum.optional().default('PENDING')
-    })
+    // body: z.object({
+    //     content: z.string().min(1, { message: 'Feedback content is required' }),
+    //     status: feedbackStatusEnum.optional().default('PENDING')
+    // })
 });
 
 // Schema for getting feedback for a document

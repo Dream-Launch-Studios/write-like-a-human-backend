@@ -4,7 +4,6 @@ import {
     FeedbackMetricsData,
     UpdateFeedbackData
 } from '../types/feedback.types';
-import { sleep } from '../utils';
 import { openai } from '../lib/openai';
 import { getDocumentById } from './document.service';
 
@@ -17,8 +16,8 @@ export const createFeedback = async (data: CreateFeedbackData) => {
     // Create the feedback
     const feedback = await prisma.feedback.create({
         data: {
-            content: data.content,
-            status: data.status || 'PENDING',
+            content: data?.content || "",
+            status: data?.status || 'PENDING',
             userId: data.userId,
             documentId: data.documentId,
             groupId: data.groupId
@@ -298,14 +297,13 @@ export const generateFeedbackMetrics = async (feedbackId: string) => {
         // Prepare the payload for OpenAI analysis
         const prompt = {
             role: "system",
-            content: `Analyze the following document and feedback to generate detailed metrics about writing style, structure, and authenticity. 
+            content: `Analyze the following document to generate detailed metrics about writing style, structure, and authenticity. 
             
 The metrics should reflect changes between document versions (if available) and the impact of the feedback.
 
 For each metric, provide a specific numerical score between 0 and 1, where appropriate, or percentage changes where measuring differences.
 
 Document Title: ${feedback.document.title}
-Feedback Content: ${feedback.content}
 
 ${previousDocumentContent ? "Previous Document Content: " + previousDocumentContent : ""}
 Current Document Content: ${documentContent}

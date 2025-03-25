@@ -15,7 +15,6 @@ import {
 
 const router = express.Router();
 
-// Apply authentication middleware to all document routes
 router.use(authMiddleware);
 
 // Upload a new document

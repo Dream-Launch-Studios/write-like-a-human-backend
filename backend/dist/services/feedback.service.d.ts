@@ -7,12 +7,12 @@ export declare const createFeedback: (data: CreateFeedbackData) => Promise<{
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     groupId: string | null;
     content: string;
-    aiScore: number | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 }>;
 /**
  * Get all feedback for a document
@@ -27,12 +27,12 @@ export declare const getDocumentFeedback: (documentId: string) => Promise<({
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     groupId: string | null;
     content: string;
-    aiScore: number | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 })[]>;
 /**
  * Get feedback by ID
@@ -52,12 +52,12 @@ export declare const getFeedbackById: (id: string) => Promise<({
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     groupId: string | null;
     content: string;
-    aiScore: number | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 }) | null>;
 /**
  * Update feedback
@@ -67,12 +67,12 @@ export declare const updateFeedback: (id: string, data: UpdateFeedbackData) => P
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     groupId: string | null;
     content: string;
-    aiScore: number | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 } | null>;
 /**
  * Delete feedback

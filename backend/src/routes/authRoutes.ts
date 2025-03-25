@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 import { getCurrentUser, login, register } from "../controllers/authController";
-import { authenticateUser } from "../middleware/server";
 import { createClient } from '@supabase/supabase-js';
 import prisma from "../config/config";
 import { UserRole } from "@prisma/client";
+import { authMiddleware } from "../middleware/auth.middleware";
 
 const Authrouter = express.Router();
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 Authrouter.post("/register", register);
 Authrouter.post("/login", login);
-Authrouter.get("/me", authenticateUser, getCurrentUser);
+Authrouter.get("/me", authMiddleware, getCurrentUser);
 
 // Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> => {
 //     console.log(`👆👆👆👆👆 Route called: /sync-user`);

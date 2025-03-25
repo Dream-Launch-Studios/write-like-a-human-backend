@@ -9,7 +9,7 @@ import { ApiResponse } from '../types/response';
 export const createFeedback = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id: documentId } = req.params;
-        const { content, status = 'PENDING' } = req.body;
+        // const { content, status = 'PENDING' } = req.body;
 
         // Get document from service
         const document = await documentService.getDocumentById(documentId);
@@ -49,8 +49,8 @@ export const createFeedback = async (req: Request, res: Response): Promise<void>
 
         // Create feedback
         const feedback = await feedbackService.createFeedback({
-            content,
-            status,
+            content: "",
+            status: "PENDING",
             userId: req.user.id,
             documentId,
             groupId: document.groupId

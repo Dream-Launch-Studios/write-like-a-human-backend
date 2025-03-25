@@ -13,31 +13,26 @@ import {
 
 const router = express.Router();
 
-// Apply authentication middleware to all feedback routes
 router.use(authMiddleware);
 
-// Create feedback for a document
 router.post(
     '/documents/:id/feedback',
     validate(createFeedbackSchema),
     feedbackController.createFeedback
 ); 
 
-// Get all feedback for a document
 router.get(
     '/documents/:id/feedback',
     validate(getDocumentFeedbackSchema),
     feedbackController.getDocumentFeedback
 );
 
-// Get a specific feedback by ID
 router.get(
     '/:id',
     validate(getFeedbackSchema),
     feedbackController.getFeedback
 );
 
-// Update feedback
 router.patch(
     '/feedback/:id',
     validate(updateFeedbackSchema),

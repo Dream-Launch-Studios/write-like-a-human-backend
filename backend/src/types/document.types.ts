@@ -1,3 +1,5 @@
+import { DocumentCreatedWith } from "@prisma/client";
+
 /**
  * Interface for document filtering parameters
  */
@@ -20,6 +22,7 @@ export interface DocumentFilter {
     fileSize: number;
     userId: string;
     groupId?: string | null;
+    createdWith?: DocumentCreatedWith 
   }
   
   /**

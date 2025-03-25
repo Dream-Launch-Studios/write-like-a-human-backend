@@ -11,16 +11,16 @@ export declare const createFeedbackSchema: z.ZodObject<{
         content: z.ZodString;
         status: z.ZodDefault<z.ZodOptional<z.ZodEnum<["PENDING", "ANALYZED", "REVIEWED"]>>>;
     }, "strip", z.ZodTypeAny, {
-        content: string;
         status: "PENDING" | "ANALYZED" | "REVIEWED";
+        content: string;
     }, {
         content: string;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        content: string;
         status: "PENDING" | "ANALYZED" | "REVIEWED";
+        content: string;
     };
     params: {
         id: string;
@@ -81,26 +81,26 @@ export declare const updateFeedbackSchema: z.ZodObject<{
         status: z.ZodOptional<z.ZodEnum<["PENDING", "ANALYZED", "REVIEWED"]>>;
         response: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }>, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     };
     params: {
@@ -108,8 +108,8 @@ export declare const updateFeedbackSchema: z.ZodObject<{
     };
 }, {
     body: {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     };
     params: {

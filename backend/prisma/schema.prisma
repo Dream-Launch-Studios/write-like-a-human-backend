@@ -59,20 +59,21 @@ model GroupMember {
 }
 
 model Document {
-    id               String   @id @default(cuid())
+    id               String              @id @default(cuid())
     title            String
-    content          String   @default("")
+    content          String              @default("")
+    createdWith      DocumentCreatedWith @default(UPLOAD)
     parentDocumentId String?
-    versionNumber    Int      @default(1)
-    isLatest         Boolean  @default(true)
+    versionNumber    Int                 @default(1)
+    isLatest         Boolean             @default(true)
     fileName         String
     fileUrl          String
     fileType         String
     fileSize         Int
     groupId          String?
     userId           String
-    createdAt        DateTime @default(now())
-    updatedAt        DateTime @updatedAt
+    createdAt        DateTime            @default(now())
+    updatedAt        DateTime            @updatedAt
 
     parent          Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
     versions        Document[]       @relation("DocumentVersions")
@@ -83,6 +84,11 @@ model Document {
     wordSuggestions WordSuggestion[]
     aiAnalysis      AIAnalysis?
     submissions     Submission[]
+}
+
+enum DocumentCreatedWith {
+    PASTE
+    UPLOAD
 }
 
 model AIAnalysis {
@@ -240,7 +246,7 @@ model TextMetrics {
     updatedAt DateTime @updatedAt
 }
 
-model   FeedbackMetrics {
+model FeedbackMetrics {
     id         String   @id @default(cuid())
     feedbackId String   @unique
     feedback   Feedback @relation(fields: [feedbackId], references: [id])

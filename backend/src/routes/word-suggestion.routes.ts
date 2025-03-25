@@ -10,10 +10,8 @@ import { generateWordSuggestionsSchema, getWordSuggestionsSchema, updateWordSugg
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authMiddleware);
 
-// Document word suggestions
 router.post(
     '/documents/:id/suggestions',
     validate(generateWordSuggestionsSchema),
@@ -26,7 +24,6 @@ router.get(
     getDocumentWordSuggestionsController
 );
 
-// Word suggestion management
 router.patch(
     '/suggestions/:id',
     validate(updateWordSuggestionSchema),

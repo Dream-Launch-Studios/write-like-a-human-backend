@@ -11,7 +11,6 @@ import {
 
 const router = express.Router();
 
-// Apply authentication middleware to all analysis routes
 router.use(authMiddleware);
 
 // Analyze a document for AI content

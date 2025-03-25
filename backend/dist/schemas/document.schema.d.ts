@@ -31,9 +31,9 @@ export declare const listDocumentsSchema: z.ZodObject<{
         limit: number;
         groupId?: string | undefined;
     }, {
-        groupId?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
+        groupId?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     query: {
@@ -43,9 +43,9 @@ export declare const listDocumentsSchema: z.ZodObject<{
     };
 }, {
     query: {
-        groupId?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
+        groupId?: string | undefined;
     };
 }>;
 export declare const getDocumentSchema: z.ZodObject<{

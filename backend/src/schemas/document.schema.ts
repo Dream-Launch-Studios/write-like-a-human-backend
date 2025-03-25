@@ -4,9 +4,10 @@ import { z } from 'zod';
 export const createDocumentSchema = z.object({
     body: z.object({
         title: z.string().optional(),
-        groupId: z.string().uuid({ message: 'Invalid group ID' }).optional()
+        pastedContent: z.string().optional(),
+        groupId: z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        createdWith: z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional()
     })
-    // Note: file validation is handled by uploadMiddleware
 });
 
 // Schema for listing documents with pagination

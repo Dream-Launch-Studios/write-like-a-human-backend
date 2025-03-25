@@ -58,8 +58,6 @@ export const analyzeDocument = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        // Start the analysis process
-        // We'll use a background job approach to handle long-running analysis
         const analysisJob = await analysisService.initiateAnalysis(document);
 
         const response: ApiResponse = {

@@ -23,10 +23,14 @@ export const createDocument = async (data: CreateDocumentData) => {
             userId: data.userId,
             groupId: data.groupId,
             versionNumber: 1,
-            isLatest: true
+            createdWith: data.createdWith,
+            isLatest: true,
+
         }
     });
 
+    // analyze the document
+ 
     return document;
 };
 
