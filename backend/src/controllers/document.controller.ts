@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import * as documentService from '../services/document.service';
 import * as pdfService from '../services/pdf.service';
 import { ApiResponse } from '../types/response';
+import { uploadFileToSupabase } from '../utils/supabase'; // Adjust the import path as needed
+
 
 /**
  * Upload and create a new document
@@ -154,6 +156,7 @@ export const convertPdfToHtml = async (req: Request, res: Response): Promise<voi
  * Create a document from a PDF converted to HTML
  * Combines PDF to HTML conversion with document creation
  */
+
 export const createDocumentFromHtml = async (req: Request, res: Response): Promise<void> => {
     try {
         // Check if file was uploaded
@@ -194,19 +197,36 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
             return;
         }
 
-        // Get document data from validated request
-        // @ts-ignore
-        const { title = req.file.originalname, groupId } = req.body;
+        // Upload file to Supabase storage
+        const uploadResult = await uploadFileToSupabase(
+            pdfBuffer,
+            req.file.originalname,
+            req.file.mimetype,
+            req.user.id
+        );
 
-        // Create document in the database with HTML content
+        // Handle upload failure
+        if (!uploadResult.success) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'Failed to upload file to storage',
+                error: uploadResult.error
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        // Get document data from validated request
+        const title = req.body.title || req.file.originalname;
+        const groupId = req.body.groupId;
+
+        // Create document in the database with HTML content and file URL
         const document = await documentService.createDocument({
             title,
             content: htmlContent, // Store HTML content instead of plain text
             contentFormat: 'HTML', // Add this field to your document model
-            // @ts-ignore
             fileName: req.file.originalname,
-            fileUrl: '', // Not storing the file, just the content
-            // @ts-ignore
+            fileUrl: uploadResult.fileUrl ?? "", // Now storing the file URL from Supabase
             fileType: req.file.mimetype,
             fileSize: req.file.size,
             userId: req.user.id,
@@ -220,6 +240,7 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
                 id: document.id,
                 title: document.title,
                 fileName: document.fileName,
+                fileUrl: document.fileUrl, // Include the file URL in the response
                 createdAt: document.createdAt,
                 contentFormat: 'html'
             }
@@ -238,6 +259,8 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
         res.status(500).json(response);
     }
 };
+
+
 
 /**
  * Convert a document file to HTML
