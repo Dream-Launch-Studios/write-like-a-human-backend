@@ -341,15 +341,15 @@ Format the response as a JSON object without explanations, just the metric value
             headingConsistencyScore: metricsResponse?.structuralComparison?.headingConsistencyScore ?? 0,
 
             // Vocabulary Metrics
-            lexicalDiversityChange: metricsResponse.lexicalDiversityChange || 0,
-            wordRepetitionScore: metricsResponse.wordRepetitionScore || 0,
-            formalityShift: metricsResponse.formalityShift || 0,
+            lexicalDiversityChange: metricsResponse?.vocabularyMetrics?.lexicalDiversityChange || 0,
+            wordRepetitionScore: metricsResponse?.vocabularyMetrics?.wordRepetitionScore || 0,
+            formalityShift: metricsResponse?.vocabularyMetrics?.formalityShift || 0,
 
             // Style Metrics
-            readabilityChange: metricsResponse?.vocabularyMetrics?.readabilityChange || 0,
-            voiceConsistencyScore: metricsResponse?.vocabularyMetrics?.voiceConsistencyScore || 0,
-            perspectiveShift: metricsResponse?.vocabularyMetrics?.perspectiveShift || 0,
-            descriptiveLanguageScore: metricsResponse?.vocabularyMetrics?.descriptiveLanguageScore || 0,
+            readabilityChange: metricsResponse?.styleMetrics?.readabilityChange || 0,
+            voiceConsistencyScore: metricsResponse?.styleMetrics?.voiceConsistencyScore || 0,
+            perspectiveShift: metricsResponse?.styleMetrics?.perspectiveShift || 0,
+            descriptiveLanguageScore: metricsResponse?.styleMetrics?.descriptiveLanguageScore || 0,
 
             // Grammar & Mechanics
             punctuationChangeScore: metricsResponse?.grammarAndMechanics?.punctuationChangeScore || 0,
@@ -368,6 +368,7 @@ Format the response as a JSON object without explanations, just the metric value
 
             // AI Detection
             originalityShiftScore: metricsResponse?.aIDetection?.originalityShiftScore || 0,
+            
         };
 
         // Mark the feedback as reviewed

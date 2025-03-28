@@ -72,6 +72,7 @@ model Document {
     fileSize         Int
     groupId          String?
     userId           String
+    contentFormat    ContentFormat       @default(HTML)
     createdAt        DateTime            @default(now())
     updatedAt        DateTime            @updatedAt
 
@@ -294,4 +295,9 @@ enum SubmissionStatus {
     SUBMITTED
     GRADED
     RETURNED
+}
+
+enum ContentFormat {
+    HTML
+    TEXT
 }

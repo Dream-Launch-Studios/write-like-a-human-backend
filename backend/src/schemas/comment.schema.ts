@@ -9,7 +9,7 @@ export const createDocumentCommentSchema = z.object({
         feedbackId: z.string().optional().nullable(),
     }),
     params: z.object({
-        id: z.string().min(1, 'Document ID is required'),
+        id: z.string().cuid({ message: 'Invalid document ID' }),
     }),
 });
 
@@ -21,16 +21,16 @@ export const updateCommentSchema = z.object({
         content: z.string().min(1, 'Comment content is required'),
     }),
     params: z.object({
-        id: z.string().min(1, 'Comment ID is required'),
+        id: z.string().cuid({ message: 'Invalid Comment ID' }),
     }),
 });
 
 /**
  * Schema for deleting a comment
- */
+*/
 export const deleteCommentSchema = z.object({
     params: z.object({
-        id: z.string().min(1, 'Comment ID is required'),
+        id: z.string().cuid({ message: 'Invalid Comment ID' }),
     }),
 });
 
@@ -39,9 +39,9 @@ export const deleteCommentSchema = z.object({
  */
 export const getDocumentCommentsSchema = z.object({
     params: z.object({
-        id: z.string().min(1, 'Document ID is required'),
+        id: z.string().cuid({ message: 'Invalid Document ID' }),
     }),
     query: z.object({
-        feedbackId: z.string().optional(),
+        feedbackId: z.string().cuid({ message: 'Invalid feedback ID' }).optional(),
     }).optional(),
 });

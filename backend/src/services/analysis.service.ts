@@ -12,7 +12,7 @@ export const getAnalysisByDocumentId = async (documentId: string) => {
     const analysis = await prisma.aIAnalysis.findUnique({
         where: {
             documentId
-        }
+        },
     });
 
     return analysis;

@@ -6,7 +6,8 @@ export const createDocumentSchema = z.object({
         title: z.string().optional(),
         pastedContent: z.string().optional(),
         groupId: z.string().uuid({ message: 'Invalid group ID' }).optional(),
-        createdWith: z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional()
+        createdWith: z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
+        contentFormat: z.enum(['HTML', 'TEXT']).default("HTML").optional(),
     })
 });
 

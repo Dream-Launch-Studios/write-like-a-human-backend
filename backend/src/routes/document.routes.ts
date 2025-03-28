@@ -15,14 +15,20 @@ import {
 
 const router = express.Router();
 
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
-// Upload a new document
 router.post(
     '/',
     uploadMiddleware.single('file'),
     validate(createDocumentSchema),
     documentController.createDocument
+);
+
+router.post(
+    '/convert-pdf-to-html',
+    uploadMiddleware.single('file'),
+    validate(createDocumentSchema),
+    documentController.convertPdfToHtml
 );
 
 // List user's documents

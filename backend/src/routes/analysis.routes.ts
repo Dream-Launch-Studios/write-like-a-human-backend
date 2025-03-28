@@ -33,7 +33,7 @@ router.get(
     validate(getSectionsSchema),
     analysisController.getDocumentSections
 );
-
+    
 // Get document text metrics
 router.get(
     '/documents/:id/metrics',

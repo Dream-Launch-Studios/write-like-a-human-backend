@@ -25,12 +25,13 @@ export const createDocument = async (data: CreateDocumentData) => {
             versionNumber: 1,
             createdWith: data.createdWith,
             isLatest: true,
+            contentFormat: data.contentFormat
 
         }
     });
 
     // analyze the document
- 
+
     return document;
 };
 
