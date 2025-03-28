@@ -26,7 +26,7 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
         try {
             // content = await pdfService.extractTextFromPdf(pdfBuffer);
             content = await pdfService.extractHtmlFromPdf(pdfBuffer);
-            
+
             console.log(`📃 PDF content: ${content}`);
         } catch (pdfError) {
             console.error('PDF processing error:', pdfError);
@@ -238,6 +238,102 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
         res.status(500).json(response);
     }
 };
+
+/**
+ * Convert a document file to HTML
+ * Supports PDF and DOCX formats
+ * For use in rich text editors
+ */
+export const convertDocumentToHtml = async (req: Request, res: Response): Promise<void> => {
+    try {
+        // Check if file was uploaded
+        if (!req.file) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'No file uploaded'
+            };
+            res.status(400).json(response);
+            return;
+        }
+
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+
+        // Check if supported file type
+        if (mimeType !== 'application/pdf' &&
+            mimeType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            const response: ApiResponse = {
+                success: false,
+                message: 'Unsupported file type. Only PDF and DOCX are supported.'
+            };
+            res.status(422).json(response);
+            return;
+        }
+
+        // Validate the document based on type
+        let isValid = false;
+        if (mimeType === 'application/pdf') {
+            isValid = await pdfService.validatePdf(fileBuffer);
+        } else {
+            isValid = await pdfService.validateDocx(fileBuffer);
+        }
+
+        if (!isValid) {
+            const response: ApiResponse = {
+                success: false,
+                message: `Invalid ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} file`
+            };
+            res.status(422).json(response);
+            return;
+        }
+
+        try {
+            // Extract HTML content using the appropriate method based on file type
+            const htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
+
+            // Get metadata if PDF
+            let pageCount = 0;
+            if (mimeType === 'application/pdf') {
+                const metadata = await pdfService.getPdfMetadata(fileBuffer);
+                pageCount = metadata.pageCount;
+            }
+
+            const response: ApiResponse = {
+                success: true,
+                message: `${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} converted to HTML successfully`,
+                data: {
+                    html: htmlContent,
+                    pageCount,
+                    fileName: req.file.originalname,
+                    fileSize: req.file.size,
+                    fileType: mimeType
+                }
+            };
+
+            res.status(200).json(response);
+        } catch (conversionError) {
+            console.error('Document conversion error:', conversionError);
+            const response: ApiResponse = {
+                success: false,
+                message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
+                error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
+            };
+            res.status(422).json(response);
+            return;
+        }
+    } catch (error) {
+        console.error('Error in document to HTML conversion:', error);
+
+        const response: ApiResponse = {
+            success: false,
+            message: 'Failed to convert document to HTML',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+
+        res.status(500).json(response);
+    }
+};
+
 
 /**
  * List documents for the current user

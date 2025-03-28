@@ -1,9 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import pdfParse from 'pdf-parse';
 import { PDFExtract, PDFExtractOptions } from 'pdf.js-extract';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import mammoth from 'mammoth';
 
 const pdfExtract = new PDFExtract();
 
@@ -12,9 +10,7 @@ const pdfExtract = new PDFExtract();
  */
 export const extractTextFromPdf = async (pdfBuffer: Buffer): Promise<string> => {
     try {
-        // Parse the PDF content
         const data = await pdfParse(pdfBuffer);
-        // Return the extracted text
         return data.text;
     } catch (error) {
         console.error('Error extracting text from PDF:', error);
@@ -27,7 +23,6 @@ export const extractTextFromPdf = async (pdfBuffer: Buffer): Promise<string> => 
  */
 export const validatePdf = async (pdfBuffer: Buffer): Promise<boolean> => {
     try {
-        // Try to load the PDF document to verify it's valid
         await PDFDocument.load(pdfBuffer);
         return true;
     } catch (error) {
@@ -35,6 +30,20 @@ export const validatePdf = async (pdfBuffer: Buffer): Promise<boolean> => {
         return false;
     }
 };
+
+/**
+ * Validate that a buffer is a valid DOCX
+ */
+export const validateDocx = async (docxBuffer: Buffer): Promise<boolean> => {
+    try {
+        const result = await mammoth.extractRawText({ buffer: docxBuffer });
+        return result && typeof result.value === 'string';
+    } catch (error) {
+        console.error('Invalid DOCX:', error);
+        return false;
+    }
+};
+
 
 /**
  * Get PDF metadata
@@ -62,16 +71,9 @@ export const getPdfMetadata = async (pdfBuffer: Buffer) => {
  */
 export const extractHtmlFromPdf = async (pdfBuffer: Buffer): Promise<string> => {
     try {
-        // Create options object for pdf-extract
         const options: PDFExtractOptions = {};
-
-        // Extract the PDF data directly from the buffer
         const data = await pdfExtract.extractBuffer(pdfBuffer, options);
-
-        // Process the extracted data into minimal HTML
         let html = '';
-
-        // Process each page
         for (let i = 0; i < data.pages.length; i++) {
             const page = data.pages[i];
 
@@ -135,3 +137,58 @@ function escapeHtml(text: string): string {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+
+
+/**
+ * Extract HTML content from a DOCX buffer
+ * Returns the document content as HTML
+ */
+export const extractHtmlFromDocx = async (docxBuffer: Buffer): Promise<string> => {
+    try {
+        // Use mammoth to convert DOCX to HTML
+        const result = await mammoth.convertToHtml({ buffer: docxBuffer });
+
+        // Return the HTML content
+        return result.value;
+    } catch (error) {
+        console.error('Error extracting HTML from DOCX:', error);
+        throw new Error('Failed to extract HTML from DOCX');
+    }
+};
+
+/**
+ * Extract text content from a DOCX buffer
+ */
+export const extractTextFromDocx = async (docxBuffer: Buffer): Promise<string> => {
+    try {
+        // Use mammoth to extract text from DOCX
+        const result = await mammoth.extractRawText({ buffer: docxBuffer });
+
+        // Return the text content
+        return result.value;
+    } catch (error) {
+        console.error('Error extracting text from DOCX:', error);
+        throw new Error('Failed to extract text from DOCX');
+    }
+};
+
+/**
+ * Determine document type and extract HTML content
+ * Supports PDF and DOCX formats
+ */
+export const extractHtmlFromDocument = async (buffer: Buffer, mimeType: string): Promise<string> => {
+    try {
+        // Check the document type based on mime type
+        if (mimeType === 'application/pdf') {
+            return await extractHtmlFromPdf(buffer);
+        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            return await extractHtmlFromDocx(buffer);
+        } else {
+            throw new Error(`Unsupported document type: ${mimeType}`);
+        }
+    } catch (error) {
+        console.error('Error extracting HTML from document:', error);
+        throw new Error('Failed to extract HTML from document');
+    }
+};
