@@ -24,7 +24,9 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
         let content: string;
 
         try {
-            content = await pdfService.extractTextFromPdf(pdfBuffer);
+            // content = await pdfService.extractTextFromPdf(pdfBuffer);
+            content = await pdfService.extractHtmlFromPdf(pdfBuffer);
+            
             console.log(`📃 PDF content: ${content}`);
         } catch (pdfError) {
             console.error('PDF processing error:', pdfError);
