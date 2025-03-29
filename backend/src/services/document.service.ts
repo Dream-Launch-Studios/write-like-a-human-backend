@@ -215,14 +215,74 @@ export const deleteDocument = async (id: string) => {
 /**
  * Create a new version of a document
  */
+// export const createDocumentVersion = async (data: CreateVersionData) => {
+//     // Get parent document to determine version number
+//     const parentDocument = await prisma.document.findUnique({
+//         where: { id: data.parentDocumentId }
+//     });
+
+//     if (!parentDocument) {
+//         throw new Error('Parent document not found');
+//     }
+
+//     // Start a transaction to update the parent and create the new version
+//     return await prisma.$transaction(async (tx) => {
+//         // 1. Set all previous versions (including parent) to not be the latest
+//         await tx.document.updateMany({
+//             where: {
+//                 OR: [   
+//                     { id: data.parentDocumentId },
+//                     { parentDocumentId: data.parentDocumentId }
+//                 ]
+//             },
+//             data: {
+//                 isLatest: false
+//             }
+//         });
+
+//         // 2. Create the new version
+//         const newVersion = await tx.document.create({
+//             data: {
+//                 title: data.title,
+//                 content: data.content,
+//                 fileName: data.fileName,
+//                 fileUrl: data.fileUrl,
+//                 fileType: data.fileType,
+//                 fileSize: data.fileSize,
+//                 userId: data.userId,
+//                 groupId: data.groupId,
+//                 parentDocumentId: data.parentDocumentId,
+//                 versionNumber: parentDocument.versionNumber + 1,
+//                 isLatest: true
+//             }
+//         });
+
+//         return newVersion;
+//     });
+// };
+
+
+
+/**
+ * Create a new version of a document
+ */
 export const createDocumentVersion = async (data: CreateVersionData) => {
-    // Get parent document to determine version number
-    const parentDocument = await prisma.document.findUnique({
-        where: { id: data.parentDocumentId }
+    // Find the latest version of the document
+    const latestVersion = await prisma.document.findFirst({
+        where: {
+            OR: [
+                { id: data.parentDocumentId },
+                { parentDocumentId: data.parentDocumentId }
+            ],
+            isLatest: true
+        },
+        orderBy: {
+            versionNumber: 'desc'
+        }
     });
 
-    if (!parentDocument) {
-        throw new Error('Parent document not found');
+    if (!latestVersion) {
+        throw new Error('Document not found');
     }
 
     // Start a transaction to update the parent and create the new version
@@ -240,7 +300,7 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
             }
         });
 
-        // 2. Create the new version
+        // 2. Create the new version with an incremented version number
         const newVersion = await tx.document.create({
             data: {
                 title: data.title,
@@ -252,7 +312,7 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
                 userId: data.userId,
                 groupId: data.groupId,
                 parentDocumentId: data.parentDocumentId,
-                versionNumber: parentDocument.versionNumber + 1,
+                versionNumber: latestVersion.versionNumber + 1,
                 isLatest: true
             }
         });
@@ -260,6 +320,7 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
         return newVersion;
     });
 };
+
 
 /**
  * Get all versions of a document

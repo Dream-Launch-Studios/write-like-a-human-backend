@@ -157,6 +157,110 @@ export const convertPdfToHtml = async (req: Request, res: Response): Promise<voi
  * Combines PDF to HTML conversion with document creation
  */
 
+// export const createDocumentFromHtml = async (req: Request, res: Response): Promise<void> => {
+//     try {
+//         // Check if file was uploaded
+//         if (!req.file) {
+//             const response: ApiResponse = {
+//                 success: false,
+//                 message: 'No file uploaded'
+//             };
+//             res.status(400).json(response);
+//             return;
+//         }
+
+//         // Validate the PDF
+//         const pdfBuffer = req.file.buffer;
+//         const isValidPdf = await pdfService.validatePdf(pdfBuffer);
+
+//         if (!isValidPdf) {
+//             const response: ApiResponse = {
+//                 success: false,
+//                 message: 'Invalid PDF file'
+//             };
+//             res.status(422).json(response);
+//             return;
+//         }
+
+//         let htmlContent: string;
+//         try {
+//             // Convert PDF to HTML 
+//             htmlContent = await pdfService.extractHtmlFromPdf(pdfBuffer);
+//         } catch (conversionError) {
+//             console.error('PDF conversion error:', conversionError);
+//             const response: ApiResponse = {
+//                 success: false,
+//                 message: 'Error converting PDF to HTML',
+//                 error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
+//             };
+//             res.status(422).json(response);
+//             return;
+//         }
+
+//         // Upload file to Supabase storage
+//         const uploadResult = await uploadFileToSupabase(
+//             pdfBuffer,
+//             req.file.originalname,
+//             req.file.mimetype,
+//             req.user.id
+//         );
+
+//         // Handle upload failure
+//         if (!uploadResult.success) {
+//             const response: ApiResponse = {
+//                 success: false,
+//                 message: 'Failed to upload file to storage',
+//                 error: uploadResult.error
+//             };
+//             res.status(500).json(response);
+//             return;
+//         }
+
+//         // Get document data from validated request
+//         const title = req.body.title || req.file.originalname;
+//         const groupId = req.body.groupId;
+
+//         // Create document in the database with HTML content and file URL
+//         const document = await documentService.createDocument({
+//             title,
+//             content: htmlContent, // Store HTML content instead of plain text
+//             contentFormat: 'HTML', // Add this field to your document model
+//             fileName: req.file.originalname,
+//             fileUrl: uploadResult.fileUrl ?? "", // Now storing the file URL from Supabase
+//             fileType: req.file.mimetype,
+//             fileSize: req.file.size,
+//             userId: req.user.id,
+//             groupId: groupId || null
+//         });
+
+//         const response: ApiResponse = {
+//             success: true,
+//             message: 'Document created from PDF with HTML formatting',
+//             document: {
+//                 id: document.id,
+//                 title: document.title,
+//                 fileName: document.fileName,
+//                 fileUrl: document.fileUrl, // Include the file URL in the response
+//                 createdAt: document.createdAt,
+//                 contentFormat: 'html'
+//             }
+//         };
+
+//         res.status(201).json(response);
+//     } catch (error) {
+//         console.error('Error creating HTML document:', error);
+
+//         const response: ApiResponse = {
+//             success: false,
+//             message: 'Failed to create HTML document',
+//             error: error instanceof Error ? error.message : 'Unknown error'
+//         };
+
+//         res.status(500).json(response);
+//     }
+// };
+
+
 export const createDocumentFromHtml = async (req: Request, res: Response): Promise<void> => {
     try {
         // Check if file was uploaded
@@ -169,14 +273,35 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
             return;
         }
 
-        // Validate the PDF
-        const pdfBuffer = req.file.buffer;
-        const isValidPdf = await pdfService.validatePdf(pdfBuffer);
-
-        if (!isValidPdf) {
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+        
+        // Validate based on file type
+        let isValid = false;
+        if (mimeType === 'application/pdf') {
+            isValid = await pdfService.validatePdf(fileBuffer);
+            if (!isValid) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: 'Invalid PDF file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            isValid = await pdfService.validateDocx(fileBuffer);
+            if (!isValid) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: 'Invalid DOCX file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        } else {
             const response: ApiResponse = {
                 success: false,
-                message: 'Invalid PDF file'
+                message: 'Unsupported file type. Only PDF and DOCX are supported.'
             };
             res.status(422).json(response);
             return;
@@ -184,28 +309,28 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
 
         let htmlContent: string;
         try {
-            // Convert PDF to HTML 
-            htmlContent = await pdfService.extractHtmlFromPdf(pdfBuffer);
+            // Extract HTML using the appropriate method
+            htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
         } catch (conversionError) {
-            console.error('PDF conversion error:', conversionError);
+            console.error('Document conversion error:', conversionError);
             const response: ApiResponse = {
                 success: false,
-                message: 'Error converting PDF to HTML',
+                message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
                 error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
             };
             res.status(422).json(response);
             return;
         }
 
-        // Upload file to Supabase storage
+        // Upload file to Supabase storage (unchanged)
         const uploadResult = await uploadFileToSupabase(
-            pdfBuffer,
+            fileBuffer,
             req.file.originalname,
-            req.file.mimetype,
+            mimeType,
             req.user.id
         );
 
-        // Handle upload failure
+        // Handle upload failure (unchanged)
         if (!uploadResult.success) {
             const response: ApiResponse = {
                 success: false,
@@ -227,7 +352,7 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
             contentFormat: 'HTML', // Add this field to your document model
             fileName: req.file.originalname,
             fileUrl: uploadResult.fileUrl ?? "", // Now storing the file URL from Supabase
-            fileType: req.file.mimetype,
+            fileType: mimeType,
             fileSize: req.file.size,
             userId: req.user.id,
             groupId: groupId || null
@@ -235,7 +360,7 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
 
         const response: ApiResponse = {
             success: true,
-            message: 'Document created from PDF with HTML formatting',
+            message: `Document created from ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} with HTML formatting`,
             document: {
                 id: document.id,
                 title: document.title,
@@ -259,7 +384,6 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
         res.status(500).json(response);
     }
 };
-
 
 
 /**
@@ -571,15 +695,6 @@ export const deleteDocument = async (req: Request, res: Response): Promise<void>
  */
 export const createVersion = async (req: Request, res: Response): Promise<void> => {
     try {
-        // Check if file was uploaded
-        // if (!req.file) {
-        //     const response: ApiResponse = {
-        //         success: false,
-        //         message: 'No file uploaded'
-        //     };
-        //     res.status(400).json(response);
-        //     return;
-        // }
 
         const { id: parentDocumentId } = req.params;
         const { title, content } = req.body;
