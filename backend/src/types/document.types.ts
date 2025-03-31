@@ -32,6 +32,7 @@ export interface CreateDocumentData {
 export interface UpdateDocumentData {
   title?: string;
   content?: string;
+  feedbackMetricsId?: string
 }
 
 /**

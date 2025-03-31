@@ -285,9 +285,7 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
         throw new Error('Document not found');
     }
 
-    // Start a transaction to update the parent and create the new version
     return await prisma.$transaction(async (tx) => {
-        // 1. Set all previous versions (including parent) to not be the latest
         await tx.document.updateMany({
             where: {
                 OR: [
@@ -300,7 +298,6 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
             }
         });
 
-        // 2. Create the new version with an incremented version number
         const newVersion = await tx.document.create({
             data: {
                 title: data.title,

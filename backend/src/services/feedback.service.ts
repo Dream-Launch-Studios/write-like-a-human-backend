@@ -5,7 +5,7 @@ import {
     UpdateFeedbackData
 } from '../types/feedback.types';
 import { openai } from '../lib/openai';
-import { getDocumentById } from './document.service';
+import { getDocumentById, updateDocument } from './document.service';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +25,9 @@ export const createFeedback = async (data: CreateFeedbackData) => {
     });
 
     await generateFeedbackMetrics(feedback.id);
+
+    // Update the feedback id in document
+    await updateDocument(data.documentId, { feedbackMetricsId: feedback.id }); 
 
     return feedback;
 };
@@ -368,7 +371,7 @@ Format the response as a JSON object without explanations, just the metric value
 
             // AI Detection
             originalityShiftScore: metricsResponse?.aIDetection?.originalityShiftScore || 0,
-            
+
         };
 
         // Mark the feedback as reviewed

@@ -59,22 +59,23 @@ model GroupMember {
 }
 
 model Document {
-    id               String              @id @default(cuid())
-    title            String
-    content          String              @default("")
-    createdWith      DocumentCreatedWith @default(UPLOAD)
-    parentDocumentId String?
-    versionNumber    Int                 @default(1)
-    isLatest         Boolean             @default(true)
-    fileName         String
-    fileUrl          String
-    fileType         String
-    fileSize         Int
-    groupId          String?
-    userId           String
-    contentFormat    ContentFormat       @default(HTML)
-    createdAt        DateTime            @default(now())
-    updatedAt        DateTime            @updatedAt
+    id                String              @id @default(cuid())
+    title             String
+    content           String              @default("")
+    createdWith       DocumentCreatedWith @default(UPLOAD)
+    parentDocumentId  String?
+    versionNumber     Int                 @default(1)
+    isLatest          Boolean             @default(true)
+    fileName          String
+    fileUrl           String
+    fileType          String
+    fileSize          Int
+    groupId           String?
+    userId            String
+    contentFormat     ContentFormat       @default(HTML)
+    feedbackMetricsId String?
+    createdAt         DateTime            @default(now())
+    updatedAt         DateTime            @updatedAt
 
     parent          Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
     versions        Document[]       @relation("DocumentVersions")
