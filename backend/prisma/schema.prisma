@@ -63,7 +63,6 @@ model Document {
     title             String
     content           String              @default("")
     createdWith       DocumentCreatedWith @default(UPLOAD)
-    parentDocumentId  String?
     versionNumber     Int                 @default(1)
     isLatest          Boolean             @default(true)
     fileName          String
@@ -77,8 +76,9 @@ model Document {
     createdAt         DateTime            @default(now())
     updatedAt         DateTime            @updatedAt
 
-    parent          Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
-    versions        Document[]       @relation("DocumentVersions")
+    asRootDocument      DocumentVersion[] @relation("RootDocument")
+    asVersionedDocument DocumentVersion[] @relation("VersionedDocument")
+
     group           Group?           @relation(fields: [groupId], references: [id])
     user            User             @relation(fields: [userId], references: [id])
     feedbacks       Feedback[]
@@ -86,6 +86,20 @@ model Document {
     wordSuggestions WordSuggestion[]
     aiAnalysis      AIAnalysis?
     submissions     Submission[]
+}
+
+model DocumentVersion {
+    id             String   @id @default(cuid())
+    rootDocumentId String // The original document ID
+    versionedDocId String // The ID of a specific version
+    versionNumber  Int // The version number
+    createdAt      DateTime @default(now())
+
+    rootDocument Document @relation("RootDocument", fields: [rootDocumentId], references: [id])
+    versionedDoc Document @relation("VersionedDocument", fields: [versionedDocId], references: [id])
+
+    @@unique([rootDocumentId, versionNumber])
+    @@unique([rootDocumentId, versionedDocId])
 }
 
 enum DocumentCreatedWith {
