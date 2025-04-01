@@ -269,7 +269,6 @@ export const generateFeedbackMetrics = async (feedbackId: string) => {
                         id: true,
                         title: true,
                         content: true,
-                        parentDocumentId: true,
                         versionNumber: true
                     }
                 }
@@ -290,12 +289,12 @@ export const generateFeedbackMetrics = async (feedbackId: string) => {
 
         // If this is a newer version, get the parent document to compare
         let previousDocumentContent = "";
-        if (feedback.document.parentDocumentId && feedback.document.versionNumber > 1) {
-            const parentDocument = await getDocumentById(feedback.document.parentDocumentId);
-            if (parentDocument) {
-                previousDocumentContent = parentDocument.content;
-            }
-        }
+        // if (feedback.document.parentDocumentId && feedback.document.versionNumber > 1) {
+        //     const parentDocument = await getDocumentById(feedback.document.parentDocumentId);
+        //     if (parentDocument) {
+        //         previousDocumentContent = parentDocument.content;
+        //     }
+        // }
 
         // Prepare the payload for OpenAI analysis
         const prompt = {
