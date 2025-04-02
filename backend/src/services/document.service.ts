@@ -51,7 +51,8 @@ export const listDocuments = async ({
     userId,
     page = 1,
     limit = 10,
-    groupId
+    groupId,
+    search
 }: DocumentFilter) => {
     // Calculate pagination
     const skip = (page - 1) * limit;
@@ -64,6 +65,14 @@ export const listDocuments = async ({
         ],
         isLatest: true // Only show latest versions
     };
+
+
+    if (search && search.trim() !== '') {
+        where.title = {
+            contains: search,
+            mode: 'insensitive'
+        };
+    }
 
     // Get documents with pagination
     const documents = await prisma.document.findMany({
@@ -80,6 +89,7 @@ export const listDocuments = async ({
             versionNumber: true,
             isLatest: true,
             createdAt: true,
+            rootDocumentId: true,
             user: {
                 select: {
                     id: true,
@@ -398,7 +408,8 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
                 userId: data.userId,
                 groupId: data.groupId,
                 versionNumber: nextVersionNumber,
-                isLatest: true
+                isLatest: true,
+                rootDocumentId
             }
         });
 

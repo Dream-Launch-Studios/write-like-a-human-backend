@@ -8,6 +8,7 @@ export interface DocumentFilter {
   page?: number;
   limit?: number;
   groupId?: string;
+  search?: string;
 }
 
 /**

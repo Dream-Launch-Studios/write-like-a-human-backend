@@ -1,4 +1,4 @@
-import { Group, GroupMember, User } from '@prisma/client';
+import { Group, GroupMember } from '@prisma/client';
 
 /**
  * Interface for creating a group

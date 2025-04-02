@@ -34,7 +34,7 @@ export const createDocument = async (req: Request, res: Response): Promise<void>
             console.error('PDF processing error:', pdfError);
             const response: ApiResponse = {
                 success: false,
-                message: 'Error processing PDF',
+                message: 'Error processing document',
                 error: pdfError instanceof Error ? pdfError.message : 'Unknown error'
             };
             res.status(422).json(response);
@@ -275,7 +275,7 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
 
         const fileBuffer = req.file.buffer;
         const mimeType = req.file.mimetype;
-        
+
         // Validate based on file type
         let isValid = false;
         if (mimeType === 'application/pdf') {
@@ -487,14 +487,15 @@ export const convertDocumentToHtml = async (req: Request, res: Response): Promis
  */
 export const listDocuments = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { page = 1, limit = 10, groupId } = req.query;
+        const { page = 1, limit = 10, groupId, search } = req.query;
 
         // Get documents from service
         const { documents, pagination } = await documentService.listDocuments({
             userId: req.user.id,
             page: Number(page),
             limit: Number(limit),
-            groupId: groupId as string || undefined
+            groupId: groupId as string || undefined,
+            search: search as string || undefined
         });
 
         const response: ApiResponse = {
@@ -761,7 +762,6 @@ export const createVersion = async (req: Request, res: Response): Promise<void> 
                 id: newVersion.id,
                 title: newVersion.title,
                 versionNumber: newVersion.versionNumber,
-                parentDocumentId: newVersion.parentDocumentId,
                 isLatest: newVersion.isLatest,
                 createdAt: newVersion.createdAt
             }

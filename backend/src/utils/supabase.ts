@@ -24,7 +24,7 @@ export const uploadFileToSupabase = async (
         const fileName = `${uuid()}${fileExtension}`;
 
         // Create path with user ID for better organization
-        const filePath = `documents/${userId}/${fileName}`;
+        const filePath = `/${userId}/${fileName}`;
 
         // Upload file to Supabase Storage
         const { data, error } = await supabase

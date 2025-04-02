@@ -26,7 +26,8 @@ export const listDocumentsSchema = z.object({
             .refine((val) => val > 0 && val <= 100, {
                 message: 'Limit must be between 1 and 100'
             }),
-        groupId: z.string().uuid({ message: 'Invalid group ID' }).optional()
+        groupId: z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        search: z.string().optional()
     })
 });
 

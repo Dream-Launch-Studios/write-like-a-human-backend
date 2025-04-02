@@ -1,4 +1,4 @@
-import { PrismaClient, SubmissionStatus } from '@prisma/client';
+import { DocumentCreatedWith, PrismaClient, SubmissionStatus } from '@prisma/client';
 import {
     CreateAssignmentData,
     UpdateAssignmentData,
@@ -45,11 +45,7 @@ export const uploadFileToStorage = async (
  */
 export const createAssignment = async (
     data: CreateAssignmentData,
-    fileBuffer?: Buffer,
-    fileName?: string,
-    fileType?: string
 ) => {
-    // Check if group exists
     const groupExists = await prisma.group.findUnique({
         where: {
             id: data.groupId
@@ -60,28 +56,20 @@ export const createAssignment = async (
         throw new Error(`Group with ID ${data.groupId} not found`);
     }
 
-    // Upload file if provided
-    let documentUrl = null;
-    let documentName = null;
-    let documentType = null;
-
-    if (fileBuffer && fileName && fileType) {
-        // Upload file to Supabase storage
-        documentUrl = await uploadFileToStorage(fileBuffer, fileName, fileType);
-        documentName = fileName;
-        documentType = fileType;
-    }
 
     const assignment = await prisma.assignment.create({
         data: {
             title: data.title,
             description: data.description,
             dueDate: data.dueDate,
-            documentUrl,
-            documentName,
-            documentType,
+            documentUrl: data.documentUrl,
+            documentName: data.documentName,
             creatorId: data.creatorId,
             groupId: data.groupId,
+            createdWith: data.createdWith,
+            contentFormat: data.createdWith === DocumentCreatedWith.UPLOAD ? "HTML" : "TEXT",
+            fileType: data.mimeType,
+            pastedContent: data.pastedContent,
         },
     });
 
@@ -162,7 +150,6 @@ export const updateAssignment = async (id: string, data: UpdateAssignmentData) =
                 dueDate: data.dueDate,
                 documentUrl: data.documentUrl,
                 documentName: data.documentName,
-                documentType: data.documentType,
             },
         });
 

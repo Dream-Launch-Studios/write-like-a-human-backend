@@ -19,7 +19,7 @@ import {
     submitAssignmentSchema,
     updateSubmissionStatusSchema
 } from '../schemas/assignment.schema';
-import { uploadMiddleware, validatePdfMiddleware } from '../middleware/upload.middleware';
+import { uploadMiddleware, validateDocumentMiddleware, validatePdfMiddleware } from '../middleware/upload.middleware';
 import { validate } from '../middleware/validate.middleware';
 
 const router = express.Router();
@@ -30,7 +30,7 @@ router.use(authMiddleware);
 router.post(
     '/groups/:id/assignments',
     uploadMiddleware.single('file'),
-    validatePdfMiddleware,
+    validateDocumentMiddleware,
     validate(createAssignmentSchema),
     createAssignmentController
 );

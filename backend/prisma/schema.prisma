@@ -73,6 +73,7 @@ model Document {
     userId            String
     contentFormat     ContentFormat       @default(HTML)
     feedbackMetricsId String?
+    rootDocumentId    String?
     createdAt         DateTime            @default(now())
     updatedAt         DateTime            @updatedAt
 
@@ -135,26 +136,33 @@ model DocumentSection {
 }
 
 model Assignment {
-    id           String       @id @default(cuid())
-    title        String
-    description  String
-    dueDate      DateTime?
-    documentUrl  String? // Optional URL for question paper or instructions
-    documentName String? // Optional name for the referenced document
-    documentType String? // Optional file type (PDF, DOCX, etc.)
-    creatorId    String
-    creator      User         @relation("AssignmentCreator", fields: [creatorId], references: [id])
-    groupId      String
-    group        Group        @relation(fields: [groupId], references: [id])
-    submissions  Submission[]
-    createdAt    DateTime     @default(now())
-    updatedAt    DateTime     @updatedAt
+    id            String              @id @default(cuid())
+    title         String
+    description   String
+    dueDate       DateTime?
+    documentUrl   String?
+    documentName  String?
+    contentFormat ContentFormat       @default(HTML)
+    fileType      String?
+    pastedContent String?
+    createdWith   DocumentCreatedWith @default(UPLOAD)
+    creatorId     String
+    creator       User                @relation("AssignmentCreator", fields: [creatorId], references: [id])
+    groupId       String
+    group         Group               @relation(fields: [groupId], references: [id])
+    submissions   Submission[]
+    createdAt     DateTime            @default(now())
+    updatedAt     DateTime            @updatedAt
 }
 
 model Submission {
     id           String           @id @default(cuid())
     documentId   String
     document     Document         @relation(fields: [documentId], references: [id])
+    // finalVersionId           String?
+    // teacherFeedback          String?
+    // teacherFeedbackCreatedAt DateTime?
+    // teacherFeedbackStatus
     assignmentId String
     assignment   Assignment       @relation(fields: [assignmentId], references: [id])
     userId       String

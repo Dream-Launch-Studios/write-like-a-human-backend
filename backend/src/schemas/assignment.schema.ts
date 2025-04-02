@@ -8,9 +8,12 @@ export const createAssignmentSchema = z.object({
         title: z.string().min(1, 'Assignment title is required'),
         description: z.string().min(1, 'Assignment description is required'),
         dueDate: z.string().optional().nullable().transform(val => val ? new Date(val) : null),
+        createdWith: z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
+        contentFormat: z.enum(['HTML', 'TEXT']).default("HTML"),
+        pastedContent: z.string().optional().nullable(),
     }),
     params: z.object({
-        id: z.string().min(1, 'Group ID is required'),
+        id: z.string().cuid(),
     }),
 });
 
