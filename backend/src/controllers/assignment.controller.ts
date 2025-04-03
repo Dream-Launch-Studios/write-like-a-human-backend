@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as pdfService from "../services/pdf.service";
+import * as documentService from '../services/document.service';
 import {
     createAssignment,
     getGroupAssignments,
@@ -398,23 +399,109 @@ export const submitAssignmentController = async (
 ): Promise<void> => {
     try {
         const { id: assignmentId } = req.params;
-        const { title } = req.body;
+        const { groupId } = req.body
         const userId = req.user.id;
 
-        // This would typically come from a file upload process
-        // For this example, we'll assume the document has already been created
-        // and the ID is passed in the request
-        const documentId = req.file?.path || "";
-
-        if (!documentId) {
+        const isMember = await isUserInGroup(userId, groupId);
+        if (!isMember && req.user.role !== "ADMIN" && req.user.role !== "TEACHER") {
             const response: ApiResponse = {
                 success: false,
-                message: "No document provided",
+                message: "Unauthorized to create assignments submission for this group",
             };
-            res.status(400).json(response);
+            res.status(403).json(response);
         }
 
-        const submission = await submitAssignment(assignmentId, userId, documentId);
+        if (!req.file) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'No file uploaded'
+            };
+            res.status(400).json(response);
+            return;
+        }
+
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+
+        // Validate based on file type
+        let isValid = false;
+        if (mimeType === 'application/pdf') {
+            isValid = await pdfService.validatePdf(fileBuffer);
+            if (!isValid) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: 'Invalid PDF file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            isValid = await pdfService.validateDocx(fileBuffer);
+            if (!isValid) {
+                const response: ApiResponse = {
+                    success: false,
+                    message: 'Invalid DOCX file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        } else {
+            const response: ApiResponse = {
+                success: false,
+                message: 'Unsupported file type. Only PDF and DOCX are supported.'
+            };
+            res.status(422).json(response);
+            return;
+        }
+
+        let htmlContent: string;
+        try {
+            htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
+        } catch (conversionError) {
+            console.error('Document conversion error:', conversionError);
+            const response: ApiResponse = {
+                success: false,
+                message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
+                error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
+            };
+            res.status(422).json(response);
+            return;
+        }
+
+        const uploadResult = await uploadFileToSupabase(
+            fileBuffer,
+            req.file.originalname,
+            mimeType,
+            req.user.id,
+            "assignment-submissions"
+        );
+
+        if (!uploadResult.success) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'Failed to upload file to storage',
+                error: uploadResult.error
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        // Get document data from validated request
+        const title = req.body.title || req.file.originalname;
+
+        const document = await documentService.createDocument({
+            title,
+            content: htmlContent,
+            contentFormat: 'HTML',
+            fileName: req.file.originalname,
+            fileUrl: uploadResult.fileUrl ?? "",
+            fileType: mimeType,
+            fileSize: req.file.size,
+            userId: req.user.id,
+            groupId: groupId
+        });
+
+        const submission = await submitAssignment(assignmentId, userId, document.id);
 
         const response: ApiResponse = {
             success: true,

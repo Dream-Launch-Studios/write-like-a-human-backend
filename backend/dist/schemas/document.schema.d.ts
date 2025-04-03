@@ -2,23 +2,38 @@ import { z } from 'zod';
 export declare const createDocumentSchema: z.ZodObject<{
     body: z.ZodObject<{
         title: z.ZodOptional<z.ZodString>;
+        pastedContent: z.ZodOptional<z.ZodString>;
         groupId: z.ZodOptional<z.ZodString>;
+        createdWith: z.ZodOptional<z.ZodDefault<z.ZodEnum<["PASTE", "UPLOAD"]>>>;
+        contentFormat: z.ZodOptional<z.ZodDefault<z.ZodEnum<["HTML", "TEXT"]>>>;
     }, "strip", z.ZodTypeAny, {
         groupId?: string | undefined;
         title?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
+        pastedContent?: string | undefined;
     }, {
         groupId?: string | undefined;
         title?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
+        pastedContent?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         groupId?: string | undefined;
         title?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
+        pastedContent?: string | undefined;
     };
 }, {
     body: {
         groupId?: string | undefined;
         title?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
+        pastedContent?: string | undefined;
     };
 }>;
 export declare const listDocumentsSchema: z.ZodObject<{
@@ -26,11 +41,14 @@ export declare const listDocumentsSchema: z.ZodObject<{
         page: z.ZodEffects<z.ZodEffects<z.ZodOptional<z.ZodString>, number, string | undefined>, number, string | undefined>;
         limit: z.ZodEffects<z.ZodEffects<z.ZodOptional<z.ZodString>, number, string | undefined>, number, string | undefined>;
         groupId: z.ZodOptional<z.ZodString>;
+        search: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         page: number;
         limit: number;
+        search?: string | undefined;
         groupId?: string | undefined;
     }, {
+        search?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
         groupId?: string | undefined;
@@ -39,10 +57,12 @@ export declare const listDocumentsSchema: z.ZodObject<{
     query: {
         page: number;
         limit: number;
+        search?: string | undefined;
         groupId?: string | undefined;
     };
 }, {
     query: {
+        search?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
         groupId?: string | undefined;

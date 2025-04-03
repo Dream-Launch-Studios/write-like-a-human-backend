@@ -29,9 +29,6 @@ exports.uploadFileToStorage = uploadFileToStorage;
 /**
  * Get a submission by ID
  */
-/**
- * Get a submission by ID
- */
 const getSubmissionById = async (id) => {
     const submission = await prisma.submission.findUnique({
         where: {
@@ -189,7 +186,6 @@ const resubmitAssignment = async (data, fileBuffer, fileName, fileType, title) =
             fileSize: fileBuffer.length,
             userId: data.userId,
             groupId: submission.assignment.groupId, // This should now be available
-            parentDocumentId: submission.documentId,
             versionNumber: 1, // This will be updated by a trigger or in another query
         },
     });

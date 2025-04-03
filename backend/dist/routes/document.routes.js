@@ -33,22 +33,14 @@ const validate_middleware_1 = require("../middleware/validate.middleware");
 const upload_middleware_1 = require("../middleware/upload.middleware");
 const document_schema_1 = require("../schemas/document.schema");
 const router = express_1.default.Router();
-// Apply authentication middleware to all document routes
 router.use(auth_middleware_1.authMiddleware);
-// Upload a new document
-router.post('/', upload_middleware_1.uploadMiddleware.single('file'), (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), documentController.createDocument);
-// List user's documents
+router.post('/', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), documentController.createDocument);
+router.post('/convert-document-to-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, documentController.convertDocumentToHtml);
+router.post('/from-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), documentController.createDocumentFromHtml);
 router.get('/', (0, validate_middleware_1.validate)(document_schema_1.listDocumentsSchema), documentController.listDocuments);
-// Get a specific document
 router.get('/:id', (0, validate_middleware_1.validate)(document_schema_1.getDocumentSchema), documentController.getDocument);
-// Update a document
 router.patch('/:id', (0, validate_middleware_1.validate)(document_schema_1.updateDocumentSchema), documentController.updateDocument);
-// Delete a document
 router.delete('/:id', (0, validate_middleware_1.validate)(document_schema_1.deleteDocumentSchema), documentController.deleteDocument);
-// Create a new version of a document
-router.post('/:id/versions', 
-// uploadMiddleware.single('file'),
-(0, validate_middleware_1.validate)(document_schema_1.createVersionSchema), documentController.createVersion);
-// List document versions
+router.post('/:id/versions', (0, validate_middleware_1.validate)(document_schema_1.createVersionSchema), documentController.createVersion);
 router.get('/:id/versions', (0, validate_middleware_1.validate)(document_schema_1.listVersionsSchema), documentController.listVersions);
 exports.default = router;

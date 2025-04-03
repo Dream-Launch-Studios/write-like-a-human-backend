@@ -11,8 +11,7 @@ const upload_middleware_1 = require("../middleware/upload.middleware");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const router = express_1.default.Router();
 router.use(auth_middleware_1.authMiddleware);
-// Group assignments
-router.post('/groups/:id/assignments', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validatePdfMiddleware, (0, validate_middleware_1.validate)(assignment_schema_1.createAssignmentSchema), assignment_controller_1.createAssignmentController);
+router.post('/groups/:id/assignments', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(assignment_schema_1.createAssignmentSchema), assignment_controller_1.createAssignmentController);
 router.get('/groups/:id/assignments', (0, validate_middleware_1.validate)(assignment_schema_1.groupParamsSchema), assignment_controller_1.getGroupAssignmentsController);
 // Assignment management
 router.get('/:id', (0, validate_middleware_1.validate)(assignment_schema_1.assignmentParamsSchema), assignment_controller_1.getAssignmentByIdController);

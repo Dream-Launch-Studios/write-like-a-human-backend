@@ -4,6 +4,22 @@ import { Request, Response } from 'express';
  */
 export declare const createDocument: (req: Request, res: Response) => Promise<void>;
 /**
+ * Convert a PDF file to HTML
+ * For use in rich text editors
+ */
+export declare const convertPdfToHtml: (req: Request, res: Response) => Promise<void>;
+/**
+ * Create a document from a PDF converted to HTML
+ * Combines PDF to HTML conversion with document creation
+ */
+export declare const createDocumentFromHtml: (req: Request, res: Response) => Promise<void>;
+/**
+ * Convert a document file to HTML
+ * Supports PDF and DOCX formats
+ * For use in rich text editors
+ */
+export declare const convertDocumentToHtml: (req: Request, res: Response) => Promise<void>;
+/**
  * List documents for the current user
  */
 export declare const listDocuments: (req: Request, res: Response) => Promise<void>;

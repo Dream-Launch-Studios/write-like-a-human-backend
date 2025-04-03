@@ -25,6 +25,7 @@ model User {
     submissions        Submission[]
     createdAt          DateTime           @default(now())
     updatedAt          DateTime           @updatedAt
+    evaluations        SubmissionResult[]
 }
 
 enum AccountCreatedWith {
@@ -80,13 +81,14 @@ model Document {
     asRootDocument      DocumentVersion[] @relation("RootDocument")
     asVersionedDocument DocumentVersion[] @relation("VersionedDocument")
 
-    group           Group?           @relation(fields: [groupId], references: [id])
-    user            User             @relation(fields: [userId], references: [id])
-    feedbacks       Feedback[]
-    comments        Comment[]
-    wordSuggestions WordSuggestion[]
-    aiAnalysis      AIAnalysis?
-    submissions     Submission[]
+    group            Group?             @relation(fields: [groupId], references: [id])
+    user             User               @relation(fields: [userId], references: [id])
+    feedbacks        Feedback[]
+    comments         Comment[]
+    wordSuggestions  WordSuggestion[]
+    aiAnalysis       AIAnalysis?
+    submissions      Submission[]
+    SubmissionResult SubmissionResult[]
 }
 
 model DocumentVersion {
@@ -142,7 +144,6 @@ model Assignment {
     dueDate       DateTime?
     documentUrl   String?
     documentName  String?
-    contentFormat ContentFormat       @default(HTML)
     fileType      String?
     pastedContent String?
     createdWith   DocumentCreatedWith @default(UPLOAD)
@@ -156,21 +157,40 @@ model Assignment {
 }
 
 model Submission {
+    id               String            @id @default(cuid())
+    documentId       String
+    document         Document          @relation(fields: [documentId], references: [id])
+    assignmentId     String
+    assignment       Assignment        @relation(fields: [assignmentId], references: [id])
+    userId           String
+    user             User              @relation(fields: [userId], references: [id])
+    status           SubmissionStatus  @default(DRAFT)
+    submittedAt      DateTime?
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    SubmissionResult SubmissionResult?
+}
+
+model SubmissionResult {
     id           String           @id @default(cuid())
-    documentId   String
-    document     Document         @relation(fields: [documentId], references: [id])
-    // finalVersionId           String?
-    // teacherFeedback          String?
-    // teacherFeedbackCreatedAt DateTime?
-    // teacherFeedbackStatus
-    assignmentId String
-    assignment   Assignment       @relation(fields: [assignmentId], references: [id])
-    userId       String
-    user         User             @relation(fields: [userId], references: [id])
-    status       SubmissionStatus @default(DRAFT)
-    submittedAt  DateTime?
+    submissionId String           @unique
+    submission   Submission       @relation(fields: [submissionId], references: [id])
+    teacherId    String
+    teacher      User             @relation(fields: [teacherId], references: [id])
+    feedback     String
+    grade        String?
+    status       EvaluationStatus @default(PENDING)
+    documentId   String?
+    document     Document?        @relation(fields: [documentId], references: [id])
     createdAt    DateTime         @default(now())
     updatedAt    DateTime         @updatedAt
+}
+
+enum EvaluationStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    REQUIRES_REVISION
 }
 
 model Feedback {

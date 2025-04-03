@@ -7,9 +7,6 @@ export declare const uploadFileToStorage: (fileBuffer: Buffer, fileName: string,
 /**
  * Get a submission by ID
  */
-/**
- * Get a submission by ID
- */
 export declare const getSubmissionById: (id: string) => Promise<SubmissionWithDetails | null>;
 /**
  * Update submission status
@@ -41,11 +38,11 @@ export declare const getUserSubmissions: (userId: string) => Promise<({
     assignment: {
         id: string;
         groupId: string;
-        title: string;
         group: {
             name: string;
             id: string;
         };
+        title: string;
         dueDate: Date | null;
     };
 } & {

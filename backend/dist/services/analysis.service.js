@@ -12,7 +12,7 @@ const getAnalysisByDocumentId = async (documentId) => {
     const analysis = await prisma.aIAnalysis.findUnique({
         where: {
             documentId
-        }
+        },
     });
     return analysis;
 };
@@ -63,8 +63,6 @@ const initiateAnalysis = async (document) => {
             analysisDate: new Date()
         }
     });
-    // Run the analysis in the background
-    // In a production environment, this would typically be a job queue
     console.log('⌚ Starting analysis for document', document.id);
     await performAnalysis(document, analysis.id).catch(error => {
         console.error(`Analysis failed for document ${document.id}:`, error);

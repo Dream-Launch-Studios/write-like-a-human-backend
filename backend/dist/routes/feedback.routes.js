@@ -32,15 +32,10 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const feedback_schema_1 = require("../schemas/feedback.schema");
 const router = express_1.default.Router();
-// Apply authentication middleware to all feedback routes
 router.use(auth_middleware_1.authMiddleware);
-// Create feedback for a document
 router.post('/documents/:id/feedback', (0, validate_middleware_1.validate)(feedback_schema_1.createFeedbackSchema), feedbackController.createFeedback);
-// Get all feedback for a document
 router.get('/documents/:id/feedback', (0, validate_middleware_1.validate)(feedback_schema_1.getDocumentFeedbackSchema), feedbackController.getDocumentFeedback);
-// Get a specific feedback by ID
 router.get('/:id', (0, validate_middleware_1.validate)(feedback_schema_1.getFeedbackSchema), feedbackController.getFeedback);
-// Update feedback
 router.patch('/feedback/:id', (0, validate_middleware_1.validate)(feedback_schema_1.updateFeedbackSchema), feedbackController.updateFeedback);
 // Delete feedback
 router.delete('/feedback/:id', (0, validate_middleware_1.validate)(feedback_schema_1.deleteFeedbackSchema), feedbackController.deleteFeedback);

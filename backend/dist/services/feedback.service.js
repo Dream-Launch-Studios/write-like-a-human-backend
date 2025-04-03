@@ -12,14 +12,16 @@ const createFeedback = async (data) => {
     // Create the feedback
     const feedback = await prisma.feedback.create({
         data: {
-            content: data.content,
-            status: data.status || 'PENDING',
+            content: (data === null || data === void 0 ? void 0 : data.content) || "",
+            status: (data === null || data === void 0 ? void 0 : data.status) || 'PENDING',
             userId: data.userId,
             documentId: data.documentId,
             groupId: data.groupId
         }
     });
     await (0, exports.generateFeedbackMetrics)(feedback.id);
+    // Update the feedback id in document
+    await (0, document_service_1.updateDocument)(data.documentId, { feedbackMetricsId: feedback.id });
     return feedback;
 };
 exports.createFeedback = createFeedback;
@@ -228,7 +230,7 @@ exports.createFeedbackMetrics = createFeedbackMetrics;
  * Generate feedback metrics by analyzing document content and feedback
  */
 const generateFeedbackMetrics = async (feedbackId) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y;
     try {
         // Get the feedback
         const feedback = await prisma.feedback.findUnique({
@@ -239,7 +241,6 @@ const generateFeedbackMetrics = async (feedbackId) => {
                         id: true,
                         title: true,
                         content: true,
-                        parentDocumentId: true,
                         versionNumber: true
                     }
                 }
@@ -256,23 +257,22 @@ const generateFeedbackMetrics = async (feedbackId) => {
         console.log(documentContent);
         // If this is a newer version, get the parent document to compare
         let previousDocumentContent = "";
-        if (feedback.document.parentDocumentId && feedback.document.versionNumber > 1) {
-            const parentDocument = await (0, document_service_1.getDocumentById)(feedback.document.parentDocumentId);
-            if (parentDocument) {
-                previousDocumentContent = parentDocument.content;
-            }
-        }
+        // if (feedback.document.parentDocumentId && feedback.document.versionNumber > 1) {
+        //     const parentDocument = await getDocumentById(feedback.document.parentDocumentId);
+        //     if (parentDocument) {
+        //         previousDocumentContent = parentDocument.content;
+        //     }
+        // }
         // Prepare the payload for OpenAI analysis
         const prompt = {
             role: "system",
-            content: `Analyze the following document and feedback to generate detailed metrics about writing style, structure, and authenticity. 
+            content: `Analyze the following document to generate detailed metrics about writing style, structure, and authenticity. 
             
 The metrics should reflect changes between document versions (if available) and the impact of the feedback.
 
 For each metric, provide a specific numerical score between 0 and 1, where appropriate, or percentage changes where measuring differences.
 
 Document Title: ${feedback.document.title}
-Feedback Content: ${feedback.content}
 
 ${previousDocumentContent ? "Previous Document Content: " + previousDocumentContent : ""}
 Current Document Content: ${documentContent}
@@ -306,28 +306,28 @@ Format the response as a JSON object without explanations, just the metric value
             paragraphStructureScore: (_d = (_c = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.structuralComparison) === null || _c === void 0 ? void 0 : _c.paragraphStructureScore) !== null && _d !== void 0 ? _d : 0,
             headingConsistencyScore: (_f = (_e = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.structuralComparison) === null || _e === void 0 ? void 0 : _e.headingConsistencyScore) !== null && _f !== void 0 ? _f : 0,
             // Vocabulary Metrics
-            lexicalDiversityChange: metricsResponse.lexicalDiversityChange || 0,
-            wordRepetitionScore: metricsResponse.wordRepetitionScore || 0,
-            formalityShift: metricsResponse.formalityShift || 0,
+            lexicalDiversityChange: ((_g = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _g === void 0 ? void 0 : _g.lexicalDiversityChange) || 0,
+            wordRepetitionScore: ((_h = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _h === void 0 ? void 0 : _h.wordRepetitionScore) || 0,
+            formalityShift: ((_j = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _j === void 0 ? void 0 : _j.formalityShift) || 0,
             // Style Metrics
-            readabilityChange: ((_g = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _g === void 0 ? void 0 : _g.readabilityChange) || 0,
-            voiceConsistencyScore: ((_h = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _h === void 0 ? void 0 : _h.voiceConsistencyScore) || 0,
-            perspectiveShift: ((_j = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _j === void 0 ? void 0 : _j.perspectiveShift) || 0,
-            descriptiveLanguageScore: ((_k = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.vocabularyMetrics) === null || _k === void 0 ? void 0 : _k.descriptiveLanguageScore) || 0,
+            readabilityChange: ((_k = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.styleMetrics) === null || _k === void 0 ? void 0 : _k.readabilityChange) || 0,
+            voiceConsistencyScore: ((_l = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.styleMetrics) === null || _l === void 0 ? void 0 : _l.voiceConsistencyScore) || 0,
+            perspectiveShift: ((_m = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.styleMetrics) === null || _m === void 0 ? void 0 : _m.perspectiveShift) || 0,
+            descriptiveLanguageScore: ((_o = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.styleMetrics) === null || _o === void 0 ? void 0 : _o.descriptiveLanguageScore) || 0,
             // Grammar & Mechanics
-            punctuationChangeScore: ((_l = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _l === void 0 ? void 0 : _l.punctuationChangeScore) || 0,
-            grammarPatternScore: ((_m = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _m === void 0 ? void 0 : _m.grammarPatternScore) || 0,
-            spellingVariationScore: ((_o = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _o === void 0 ? void 0 : _o.spellingVariationScore) || 0,
+            punctuationChangeScore: ((_p = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _p === void 0 ? void 0 : _p.punctuationChangeScore) || 0,
+            grammarPatternScore: ((_q = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _q === void 0 ? void 0 : _q.grammarPatternScore) || 0,
+            spellingVariationScore: ((_r = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.grammarAndMechanics) === null || _r === void 0 ? void 0 : _r.spellingVariationScore) || 0,
             // Topic & Thematic Elements
-            thematicConsistencyScore: ((_p = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _p === void 0 ? void 0 : _p.thematicConsistencyScore) || 0,
-            keywordFrequencyChange: ((_q = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _q === void 0 ? void 0 : _q.keywordFrequencyChange) || 0,
-            argumentDevelopmentScore: ((_r = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _r === void 0 ? void 0 : _r.argumentDevelopmentScore) || 0,
+            thematicConsistencyScore: ((_s = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _s === void 0 ? void 0 : _s.thematicConsistencyScore) || 0,
+            keywordFrequencyChange: ((_t = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _t === void 0 ? void 0 : _t.keywordFrequencyChange) || 0,
+            argumentDevelopmentScore: ((_u = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.topicThematicElements) === null || _u === void 0 ? void 0 : _u.argumentDevelopmentScore) || 0,
             // Similarity Metrics
-            nGramSimilarityScore: ((_s = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _s === void 0 ? void 0 : _s.nGramSimilarityScore) || 0,
-            tfIdfSimilarityScore: ((_t = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _t === void 0 ? void 0 : _t.tfIdfSimilarityScore) || 0,
-            jaccardSimilarityScore: ((_u = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _u === void 0 ? void 0 : _u.jaccardSimilarityScore) || 0,
+            nGramSimilarityScore: ((_v = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _v === void 0 ? void 0 : _v.nGramSimilarityScore) || 0,
+            tfIdfSimilarityScore: ((_w = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _w === void 0 ? void 0 : _w.tfIdfSimilarityScore) || 0,
+            jaccardSimilarityScore: ((_x = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.similarityMetrics) === null || _x === void 0 ? void 0 : _x.jaccardSimilarityScore) || 0,
             // AI Detection
-            originalityShiftScore: ((_v = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.aIDetection) === null || _v === void 0 ? void 0 : _v.originalityShiftScore) || 0,
+            originalityShiftScore: ((_y = metricsResponse === null || metricsResponse === void 0 ? void 0 : metricsResponse.aIDetection) === null || _y === void 0 ? void 0 : _y.originalityShiftScore) || 0,
         };
         // Mark the feedback as reviewed
         await (0, exports.updateFeedback)(feedbackId, { status: "REVIEWED" });

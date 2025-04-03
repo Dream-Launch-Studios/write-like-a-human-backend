@@ -60,6 +60,7 @@ const getDocumentComments = async (documentId) => {
                 select: {
                     id: true,
                     name: true,
+                    email: true
                 },
             },
         },

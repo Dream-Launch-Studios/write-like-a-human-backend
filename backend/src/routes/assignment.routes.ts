@@ -26,7 +26,6 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-// Group assignments
 router.post(
     '/groups/:id/assignments',
     uploadMiddleware.single('file'),
@@ -64,7 +63,7 @@ router.delete(
 router.post(
     '/:id/submissions',
     uploadMiddleware.single('file'),
-    validatePdfMiddleware,
+    validateDocumentMiddleware,
     validate(submitAssignmentSchema),
     submitAssignmentController
 );

@@ -5,17 +5,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authController_1 = require("../controllers/authController");
-const server_1 = require("../middleware/server");
 const supabase_js_1 = require("@supabase/supabase-js");
 const config_1 = __importDefault(require("../config/config"));
 const client_1 = require("@prisma/client");
+const auth_middleware_1 = require("../middleware/auth.middleware");
 const Authrouter = express_1.default.Router();
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
 const supabaseAdmin = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceKey);
 Authrouter.post("/register", authController_1.register);
 Authrouter.post("/login", authController_1.login);
-Authrouter.get("/me", server_1.authenticateUser, authController_1.getCurrentUser);
+Authrouter.get("/me", auth_middleware_1.authMiddleware, authController_1.getCurrentUser);
 // Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> => {
 //     console.log(`👆👆👆👆👆 Route called: /sync-user`);
 //     try {

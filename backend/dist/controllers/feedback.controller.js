@@ -32,7 +32,7 @@ const feedbackService = __importStar(require("../services/feedback.service"));
 const createFeedback = async (req, res) => {
     try {
         const { id: documentId } = req.params;
-        const { content, status = 'PENDING' } = req.body;
+        // const { content, status = 'PENDING' } = req.body;
         // Get document from service
         const document = await documentService.getDocumentById(documentId);
         if (!document) {
@@ -67,8 +67,8 @@ const createFeedback = async (req, res) => {
         }
         // Create feedback
         const feedback = await feedbackService.createFeedback({
-            content,
-            status,
+            content: "",
+            status: "PENDING",
             userId: req.user.id,
             documentId,
             groupId: document.groupId

@@ -67,7 +67,6 @@ export const createAssignment = async (
             creatorId: data.creatorId,
             groupId: data.groupId,
             createdWith: data.createdWith,
-            contentFormat: data.createdWith === DocumentCreatedWith.UPLOAD ? "HTML" : "TEXT",
             fileType: data.mimeType,
             pastedContent: data.pastedContent,
         },
@@ -238,11 +237,6 @@ export const submitAssignment = async (
         throw new Error(`Document with ID ${documentId} not found`);
     }
 
-    // Check if user is a member of the group
-    const isMember = await isUserInGroup(userId, assignment.groupId);
-    if (!isMember) {
-        throw new Error('User is not a member of the group for this assignment');
-    }
 
     // Check if submission already exists
     const existingSubmission = await prisma.submission.findFirst({

@@ -10,9 +10,12 @@ exports.createAssignmentSchema = zod_1.z.object({
         title: zod_1.z.string().min(1, 'Assignment title is required'),
         description: zod_1.z.string().min(1, 'Assignment description is required'),
         dueDate: zod_1.z.string().optional().nullable().transform(val => val ? new Date(val) : null),
+        createdWith: zod_1.z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
+        contentFormat: zod_1.z.enum(['HTML', 'TEXT']).default("HTML"),
+        pastedContent: zod_1.z.string().optional().nullable(),
     }),
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Group ID is required'),
+        id: zod_1.z.string().cuid(),
     }),
 });
 /**
@@ -44,7 +47,7 @@ exports.groupParamsSchema = zod_1.z.object({
  */
 exports.assignmentParamsSchema = zod_1.z.object({
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Assignment ID is required'),
+        id: zod_1.z.string().cuid(),
     }),
 });
 /**

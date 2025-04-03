@@ -7,27 +7,38 @@ const prisma = new client_1.PrismaClient();
  * Create a new document
  */
 const createDocument = async (data) => {
-    const document = await prisma.document.create({
-        data: {
-            title: data.title,
-            content: data.content,
-            fileName: data.fileName,
-            fileUrl: data.fileUrl,
-            fileType: data.fileType,
-            fileSize: data.fileSize,
-            userId: data.userId,
-            groupId: data.groupId,
-            versionNumber: 1,
-            isLatest: true
-        }
+    return await prisma.$transaction(async (tx) => {
+        const document = await tx.document.create({
+            data: {
+                title: data.title,
+                content: data.content,
+                fileName: data.fileName,
+                fileUrl: data.fileUrl,
+                fileType: data.fileType,
+                fileSize: data.fileSize,
+                userId: data.userId,
+                groupId: data.groupId,
+                versionNumber: 1,
+                createdWith: data.createdWith,
+                isLatest: true,
+                contentFormat: data.contentFormat
+            }
+        });
+        await tx.documentVersion.create({
+            data: {
+                rootDocumentId: document.id,
+                versionedDocId: document.id,
+                versionNumber: 1,
+            }
+        });
+        return document;
     });
-    return document;
 };
 exports.createDocument = createDocument;
 /**
  * List documents with pagination and filtering
  */
-const listDocuments = async ({ userId, page = 1, limit = 10, groupId }) => {
+const listDocuments = async ({ userId, page = 1, limit = 10, groupId, search }) => {
     // Calculate pagination
     const skip = (page - 1) * limit;
     // Build where clause based on filters
@@ -38,6 +49,12 @@ const listDocuments = async ({ userId, page = 1, limit = 10, groupId }) => {
         ],
         isLatest: true // Only show latest versions
     };
+    if (search && search.trim() !== '') {
+        where.title = {
+            contains: search,
+            mode: 'insensitive'
+        };
+    }
     // Get documents with pagination
     const documents = await prisma.document.findMany({
         where,
@@ -53,6 +70,7 @@ const listDocuments = async ({ userId, page = 1, limit = 10, groupId }) => {
             versionNumber: true,
             isLatest: true,
             createdAt: true,
+            rootDocumentId: true,
             user: {
                 select: {
                     id: true,
@@ -120,20 +138,73 @@ const updateDocument = async (id, data) => {
 };
 exports.updateDocument = updateDocument;
 /**
- * Delete a document
+ * Helper function to delete a single document with no version handling
  */
+const deleteDocumentById = async (id) => {
+    await prisma.$transaction([
+        // Delete any word suggestions
+        prisma.wordSuggestion.deleteMany({
+            where: { documentId: id }
+        }),
+        // Delete any comments
+        prisma.comment.deleteMany({
+            where: { documentId: id }
+        }),
+        // Delete any feedback
+        prisma.feedback.deleteMany({
+            where: { documentId: id }
+        }),
+        // Delete any AI analysis and related data
+        prisma.documentSection.deleteMany({
+            where: {
+                aiAnalysis: {
+                    documentId: id
+                }
+            }
+        }),
+        prisma.textMetrics.deleteMany({
+            where: {
+                aiAnalysis: {
+                    documentId: id
+                }
+            }
+        }),
+        prisma.aIAnalysis.deleteMany({
+            where: { documentId: id }
+        }),
+        // Delete submissions
+        prisma.submission.deleteMany({
+            where: { documentId: id }
+        }),
+        // Finally, delete the document
+        prisma.document.delete({
+            where: { id }
+        })
+    ]);
+    return true;
+};
 const deleteDocument = async (id) => {
-    // First get all related versions
-    const versions = await prisma.document.findMany({
+    // First, find the root document ID
+    const documentVersion = await prisma.documentVersion.findFirst({
         where: {
             OR: [
-                { id },
-                { parentDocumentId: id }
+                { rootDocumentId: id },
+                { versionedDocId: id }
             ]
-        },
-        select: { id: true }
+        }
     });
-    const versionIds = versions.map(v => v.id);
+    if (!documentVersion) {
+        // If no version entry exists, just delete the document
+        return await deleteDocumentById(id);
+    }
+    // Get the root document ID
+    const rootDocumentId = documentVersion.rootDocumentId;
+    // Get all versions of this document
+    const allVersions = await prisma.documentVersion.findMany({
+        where: { rootDocumentId },
+        select: { versionedDocId: true }
+    });
+    const versionIds = allVersions.map(v => v.versionedDocId);
     // Use a transaction to delete all related data
     await prisma.$transaction([
         // Delete any word suggestions
@@ -170,6 +241,10 @@ const deleteDocument = async (id) => {
         prisma.submission.deleteMany({
             where: { documentId: { in: versionIds } }
         }),
+        // Delete all version mappings
+        prisma.documentVersion.deleteMany({
+            where: { rootDocumentId }
+        }),
         // Finally, delete all document versions
         prisma.document.deleteMany({
             where: { id: { in: versionIds } }
@@ -181,29 +256,83 @@ exports.deleteDocument = deleteDocument;
 /**
  * Create a new version of a document
  */
+// export const createDocumentVersion = async (data: CreateVersionData) => {
+//     // Get parent document to determine version number
+//     const parentDocument = await prisma.document.findUnique({
+//         where: { id: data.parentDocumentId }
+//     });
+//     if (!parentDocument) {
+//         throw new Error('Parent document not found');
+//     }
+//     // Start a transaction to update the parent and create the new version
+//     return await prisma.$transaction(async (tx) => {
+//         // 1. Set all previous versions (including parent) to not be the latest
+//         await tx.document.updateMany({
+//             where: {
+//                 OR: [   
+//                     { id: data.parentDocumentId },
+//                     { parentDocumentId: data.parentDocumentId }
+//                 ]
+//             },
+//             data: {
+//                 isLatest: false
+//             }
+//         });
+//         // 2. Create the new version
+//         const newVersion = await tx.document.create({
+//             data: {
+//                 title: data.title,
+//                 content: data.content,
+//                 fileName: data.fileName,
+//                 fileUrl: data.fileUrl,
+//                 fileType: data.fileType,
+//                 fileSize: data.fileSize,
+//                 userId: data.userId,
+//                 groupId: data.groupId,
+//                 parentDocumentId: data.parentDocumentId,
+//                 versionNumber: parentDocument.versionNumber + 1,
+//                 isLatest: true
+//             }
+//         });
+//         return newVersion;
+//     });
+// };
+/**
+ * Create a new version of a document
+ */
 const createDocumentVersion = async (data) => {
-    // Get parent document to determine version number
-    const parentDocument = await prisma.document.findUnique({
-        where: { id: data.parentDocumentId }
+    // First, find the version entry for the document being versioned
+    const versionEntry = await prisma.documentVersion.findFirst({
+        where: { versionedDocId: data.parentDocumentId }
     });
-    if (!parentDocument) {
-        throw new Error('Parent document not found');
+    if (!versionEntry) {
+        throw new Error('Document not found or not properly versioned');
     }
-    // Start a transaction to update the parent and create the new version
+    // Get the root document ID
+    const rootDocumentId = versionEntry.rootDocumentId;
+    // Find the highest version number for this root document
+    const highestVersion = await prisma.documentVersion.findFirst({
+        where: { rootDocumentId },
+        orderBy: { versionNumber: 'desc' }
+    });
+    if (!highestVersion) {
+        throw new Error('Could not determine version number');
+    }
+    const nextVersionNumber = highestVersion.versionNumber + 1;
     return await prisma.$transaction(async (tx) => {
-        // 1. Set all previous versions (including parent) to not be the latest
         await tx.document.updateMany({
             where: {
-                OR: [
-                    { id: data.parentDocumentId },
-                    { parentDocumentId: data.parentDocumentId }
-                ]
+                id: {
+                    in: (await tx.documentVersion.findMany({
+                        where: { rootDocumentId },
+                        select: { versionedDocId: true }
+                    })).map(v => v.versionedDocId)
+                }
             },
             data: {
                 isLatest: false
             }
         });
-        // 2. Create the new version
         const newVersion = await tx.document.create({
             data: {
                 title: data.title,
@@ -214,9 +343,16 @@ const createDocumentVersion = async (data) => {
                 fileSize: data.fileSize,
                 userId: data.userId,
                 groupId: data.groupId,
-                parentDocumentId: data.parentDocumentId,
-                versionNumber: parentDocument.versionNumber + 1,
-                isLatest: true
+                versionNumber: nextVersionNumber,
+                isLatest: true,
+                rootDocumentId
+            }
+        });
+        await tx.documentVersion.create({
+            data: {
+                rootDocumentId,
+                versionedDocId: newVersion.id,
+                versionNumber: nextVersionNumber
             }
         });
         return newVersion;
@@ -227,34 +363,37 @@ exports.createDocumentVersion = createDocumentVersion;
  * Get all versions of a document
  */
 const getDocumentVersions = async (documentId) => {
-    // Get the original document first
-    const originalDocument = await prisma.document.findUnique({
-        where: { id: documentId }
-    });
-    if (!originalDocument) {
-        throw new Error('Document not found');
-    }
-    // If this is already a child version, find the true parent
-    const rootDocumentId = originalDocument.parentDocumentId || originalDocument.id;
-    // Get all versions
-    const versions = await prisma.document.findMany({
+    // Find the root document ID for this document
+    const versionEntry = await prisma.documentVersion.findFirst({
         where: {
             OR: [
-                { id: rootDocumentId },
-                { parentDocumentId: rootDocumentId }
+                { rootDocumentId: documentId },
+                { versionedDocId: documentId }
             ]
-        },
-        select: {
-            id: true,
-            title: true,
-            versionNumber: true,
-            isLatest: true,
-            createdAt: true,
-            userId: true,
-            user: {
+        }
+    });
+    if (!versionEntry) {
+        throw new Error('Document not found or not properly versioned');
+    }
+    const rootDocumentId = versionEntry.rootDocumentId;
+    // Get all versions for this root document
+    const allVersionEntries = await prisma.documentVersion.findMany({
+        where: { rootDocumentId },
+        include: {
+            versionedDoc: {
                 select: {
                     id: true,
-                    name: true
+                    title: true,
+                    createdAt: true,
+                    userId: true,
+                    isLatest: true,
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true
+                        }
+                    }
                 }
             }
         },
@@ -262,7 +401,16 @@ const getDocumentVersions = async (documentId) => {
             versionNumber: 'desc'
         }
     });
-    return versions;
+    // Format the version data
+    return allVersionEntries.map(entry => ({
+        id: entry.versionedDoc.id,
+        title: entry.versionedDoc.title,
+        versionNumber: entry.versionNumber,
+        isLatest: entry.versionedDoc.isLatest,
+        createdAt: entry.versionedDoc.createdAt,
+        userId: entry.versionedDoc.userId,
+        user: entry.versionedDoc.user
+    }));
 };
 exports.getDocumentVersions = getDocumentVersions;
 /**

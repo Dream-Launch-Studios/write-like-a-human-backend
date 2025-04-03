@@ -7,17 +7,19 @@ export declare const uploadFileToStorage: (fileBuffer: Buffer, fileName: string,
 /**
  * Create a new assignment
  */
-export declare const createAssignment: (data: CreateAssignmentData, fileBuffer?: Buffer, fileName?: string, fileType?: string) => Promise<{
+export declare const createAssignment: (data: CreateAssignmentData) => Promise<{
     id: string;
     createdAt: Date;
     updatedAt: Date;
     groupId: string;
     title: string;
+    createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
+    fileType: string | null;
     description: string;
+    pastedContent: string | null;
     dueDate: Date | null;
     documentUrl: string | null;
     documentName: string | null;
-    documentType: string | null;
     creatorId: string;
 }>;
 /**
@@ -37,11 +39,13 @@ export declare const updateAssignment: (id: string, data: UpdateAssignmentData) 
     updatedAt: Date;
     groupId: string;
     title: string;
+    createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
+    fileType: string | null;
     description: string;
+    pastedContent: string | null;
     dueDate: Date | null;
     documentUrl: string | null;
     documentName: string | null;
-    documentType: string | null;
     creatorId: string;
 } | null>;
 /**

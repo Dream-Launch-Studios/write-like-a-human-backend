@@ -21,6 +21,7 @@ export declare const createComment: (data: CreateCommentData) => Promise<{
  */
 export declare const getDocumentComments: (documentId: string) => Promise<({
     user: {
+        email: string;
         name: string | null;
         id: string;
     };

@@ -7,29 +7,11 @@ export declare const createFeedbackSchema: z.ZodObject<{
     }, {
         id: string;
     }>;
-    body: z.ZodObject<{
-        content: z.ZodString;
-        status: z.ZodDefault<z.ZodOptional<z.ZodEnum<["PENDING", "ANALYZED", "REVIEWED"]>>>;
-    }, "strip", z.ZodTypeAny, {
-        status: "PENDING" | "ANALYZED" | "REVIEWED";
-        content: string;
-    }, {
-        content: string;
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
-    }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        status: "PENDING" | "ANALYZED" | "REVIEWED";
-        content: string;
-    };
     params: {
         id: string;
     };
 }, {
-    body: {
-        content: string;
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
-    };
     params: {
         id: string;
     };

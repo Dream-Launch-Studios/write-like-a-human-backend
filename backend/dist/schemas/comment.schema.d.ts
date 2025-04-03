@@ -72,7 +72,7 @@ export declare const updateCommentSchema: z.ZodObject<{
 }>;
 /**
  * Schema for deleting a comment
- */
+*/
 export declare const deleteCommentSchema: z.ZodObject<{
     params: z.ZodObject<{
         id: z.ZodString;

@@ -1,45 +1,140 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateSubmissionStatusController = exports.getSubmissionByIdController = exports.getAssignmentSubmissionsController = exports.submitAssignmentController = exports.deleteAssignmentController = exports.updateAssignmentController = exports.getAssignmentByIdController = exports.getGroupAssignmentsController = exports.createAssignmentController = void 0;
+const pdfService = __importStar(require("../services/pdf.service"));
 const assignment_service_1 = require("../services/assignment.service");
+const client_1 = require("@prisma/client");
+const supabase_1 = require("../utils/supabase");
 /**
  * Create a new assignment for a group
  */
 const createAssignmentController = async (req, res) => {
+    var _a, _b, _c, _d, _e, _f;
     try {
         const { id: groupId } = req.params;
-        const { title, description, dueDate, documentUrl, documentName, documentType } = req.body;
+        const { title, description, dueDate, contentFormat, createdWith, pastedContent, } = req.body;
         const creatorId = req.user.id;
+        let documentUrl = "";
+        let mimeType = "";
         // Check if user is a member or admin of the group
         const isMember = await (0, assignment_service_1.isUserInGroup)(creatorId, groupId);
-        if (!isMember && req.user.role !== 'ADMIN' && req.user.role !== 'TEACHER') {
+        if (!isMember && req.user.role !== "ADMIN" && req.user.role !== "TEACHER") {
             const response = {
                 success: false,
-                message: 'Unauthorized to create assignments for this group',
+                message: "Unauthorized to create assignments for this group",
             };
             res.status(403).json(response);
+        }
+        if (!pastedContent && createdWith === client_1.DocumentCreatedWith.PASTE) {
+            const response = {
+                success: false,
+                message: "No content pasted",
+            };
+            res.status(400).json(response);
+            return;
+        }
+        if (!req.file && createdWith === client_1.DocumentCreatedWith.UPLOAD) {
+            const response = {
+                success: false,
+                message: "No file uploaded",
+            };
+            res.status(400).json(response);
+            return;
+        }
+        if (createdWith === client_1.DocumentCreatedWith.UPLOAD) {
+            const fileBuffer = (_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.buffer;
+            mimeType = (_b = req === null || req === void 0 ? void 0 : req.file) === null || _b === void 0 ? void 0 : _b.mimetype;
+            let isValid = false;
+            if (mimeType === "application/pdf") {
+                isValid = await pdfService.validatePdf(fileBuffer);
+                if (!isValid) {
+                    const response = {
+                        success: false,
+                        message: "Invalid PDF file",
+                    };
+                    res.status(422).json(response);
+                    return;
+                }
+            }
+            else if (mimeType ===
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                isValid = await pdfService.validateDocx(fileBuffer);
+                if (!isValid) {
+                    const response = {
+                        success: false,
+                        message: "Invalid DOCX file",
+                    };
+                    res.status(422).json(response);
+                    return;
+                }
+            }
+            else {
+                const response = {
+                    success: false,
+                    message: "Unsupported file type. Only PDF and DOCX are supported.",
+                };
+                res.status(422).json(response);
+                return;
+            }
+            const uploadResult = await (0, supabase_1.uploadFileToSupabase)(fileBuffer, (_d = (_c = req === null || req === void 0 ? void 0 : req.file) === null || _c === void 0 ? void 0 : _c.originalname) !== null && _d !== void 0 ? _d : "x", mimeType, req.user.id, "assignments");
+            if (!uploadResult.success) {
+                const response = {
+                    success: false,
+                    message: "Failed to upload file to storage",
+                    error: uploadResult.error,
+                };
+                res.status(500).json(response);
+                return;
+            }
+            documentUrl = (_e = uploadResult.fileUrl) !== null && _e !== void 0 ? _e : "";
         }
         const assignment = await (0, assignment_service_1.createAssignment)({
             title,
             description,
             dueDate,
-            documentUrl,
-            documentName,
-            documentType,
+            documentUrl: documentUrl !== null && documentUrl !== void 0 ? documentUrl : "",
+            documentName: (_f = req === null || req === void 0 ? void 0 : req.file) === null || _f === void 0 ? void 0 : _f.originalname,
             creatorId,
             groupId,
+            contentFormat,
+            createdWith,
+            mimeType,
+            pastedContent
         });
         const response = {
             success: true,
-            message: 'Assignment created successfully',
+            message: "Assignment created successfully",
             assignment,
         };
         res.status(201).json(response);
     }
     catch (error) {
-        console.error('Error creating assignment:', error);
+        console.error("Error creating assignment:", error);
         // Handle specific error cases
-        if (error instanceof Error && error.message.includes('not found')) {
+        if (error instanceof Error && error.message.includes("not found")) {
             const response = {
                 success: false,
                 message: error.message,
@@ -48,8 +143,8 @@ const createAssignmentController = async (req, res) => {
         }
         const response = {
             success: false,
-            message: 'Failed to create assignment',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to create assignment",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -64,10 +159,10 @@ const getGroupAssignmentsController = async (req, res) => {
         const userId = req.user.id;
         // Check if user is a member or admin of the group
         const isMember = await (0, assignment_service_1.isUserInGroup)(userId, groupId);
-        if (!isMember && req.user.role !== 'ADMIN') {
+        if (!isMember && req.user.role !== "ADMIN") {
             const response = {
                 success: false,
-                message: 'Unauthorized to view assignments for this group',
+                message: "Unauthorized to view assignments for this group",
             };
             res.status(403).json(response);
         }
@@ -79,11 +174,11 @@ const getGroupAssignmentsController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error getting group assignments:', error);
+        console.error("Error getting group assignments:", error);
         const response = {
             success: false,
-            message: 'Failed to get group assignments',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to get group assignments",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -100,16 +195,16 @@ const getAssignmentByIdController = async (req, res) => {
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Assignment not found',
+                message: "Assignment not found",
             };
             res.status(404).json(response);
         }
         // Check if user is a member or admin of the group
         const isMember = await (0, assignment_service_1.isUserInGroup)(userId, assignment === null || assignment === void 0 ? void 0 : assignment.groupId);
-        if (!isMember && req.user.role !== 'ADMIN') {
+        if (!isMember && req.user.role !== "ADMIN") {
             const response = {
                 success: false,
-                message: 'Unauthorized to view this assignment',
+                message: "Unauthorized to view this assignment",
             };
             res.status(403).json(response);
         }
@@ -120,11 +215,11 @@ const getAssignmentByIdController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error getting assignment:', error);
+        console.error("Error getting assignment:", error);
         const response = {
             success: false,
-            message: 'Failed to get assignment',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to get assignment",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -136,22 +231,22 @@ exports.getAssignmentByIdController = getAssignmentByIdController;
 const updateAssignmentController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, documentUrl, documentName, documentType } = req.body;
+        const { title, description, dueDate, documentUrl, documentName, documentType, } = req.body;
         const userId = req.user.id;
         // Check if assignment exists
         const assignment = await (0, assignment_service_1.getAssignmentById)(id);
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Assignment not found',
+                message: "Assignment not found",
             };
             res.status(404).json(response);
         }
         // Check if user is the creator or an admin
-        if ((assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) !== userId && req.user.role !== 'ADMIN') {
+        if ((assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) !== userId && req.user.role !== "ADMIN") {
             const response = {
                 success: false,
-                message: 'Unauthorized to update this assignment',
+                message: "Unauthorized to update this assignment",
             };
             res.status(403).json(response);
         }
@@ -165,7 +260,7 @@ const updateAssignmentController = async (req, res) => {
         });
         const response = {
             success: true,
-            message: 'Assignment updated successfully',
+            message: "Assignment updated successfully",
             assignment: {
                 id: updatedAssignment === null || updatedAssignment === void 0 ? void 0 : updatedAssignment.id,
                 title: updatedAssignment === null || updatedAssignment === void 0 ? void 0 : updatedAssignment.title,
@@ -177,11 +272,11 @@ const updateAssignmentController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error updating assignment:', error);
+        console.error("Error updating assignment:", error);
         const response = {
             success: false,
-            message: 'Failed to update assignment',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to update assignment",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -199,15 +294,15 @@ const deleteAssignmentController = async (req, res) => {
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Assignment not found',
+                message: "Assignment not found",
             };
             res.status(404).json(response);
         }
         // Check if user is the creator or an admin
-        if ((assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) !== userId && req.user.role !== 'ADMIN') {
+        if ((assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) !== userId && req.user.role !== "ADMIN") {
             const response = {
                 success: false,
-                message: 'Unauthorized to delete this assignment',
+                message: "Unauthorized to delete this assignment",
             };
             res.status(403).json(response);
         }
@@ -215,22 +310,22 @@ const deleteAssignmentController = async (req, res) => {
         if (!deleted) {
             const response = {
                 success: false,
-                message: 'Assignment not found',
+                message: "Assignment not found",
             };
             res.status(404).json(response);
         }
         const response = {
             success: true,
-            message: 'Assignment deleted successfully',
+            message: "Assignment deleted successfully",
         };
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error deleting assignment:', error);
+        console.error("Error deleting assignment:", error);
         const response = {
             success: false,
-            message: 'Failed to delete assignment',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to delete assignment",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -252,22 +347,24 @@ const submitAssignmentController = async (req, res) => {
         if (!documentId) {
             const response = {
                 success: false,
-                message: 'No document provided',
+                message: "No document provided",
             };
             res.status(400).json(response);
         }
         const submission = await (0, assignment_service_1.submitAssignment)(assignmentId, userId, documentId);
         const response = {
             success: true,
-            message: 'Assignment submitted successfully',
+            message: "Assignment submitted successfully",
             submission,
         };
         res.status(201).json(response);
     }
     catch (error) {
-        console.error('Error submitting assignment:', error);
+        console.error("Error submitting assignment:", error);
         // Handle specific error cases
-        if (error instanceof Error && (error.message.includes('not found') || error.message.includes('not a member'))) {
+        if (error instanceof Error &&
+            (error.message.includes("not found") ||
+                error.message.includes("not a member"))) {
             const response = {
                 success: false,
                 message: error.message,
@@ -276,8 +373,8 @@ const submitAssignmentController = async (req, res) => {
         }
         const response = {
             success: false,
-            message: 'Failed to submit assignment',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to submit assignment",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -295,17 +392,17 @@ const getAssignmentSubmissionsController = async (req, res) => {
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Assignment not found',
+                message: "Assignment not found",
             };
             res.status(404).json(response);
         }
         // Check if user is the creator, a teacher, or an admin
         const isCreator = (assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) === userId;
-        const isTeacherOrAdmin = req.user.role === 'TEACHER' || req.user.role === 'ADMIN';
+        const isTeacherOrAdmin = req.user.role === "TEACHER" || req.user.role === "ADMIN";
         if (!isCreator && !isTeacherOrAdmin) {
             const response = {
                 success: false,
-                message: 'Unauthorized to view submissions for this assignment',
+                message: "Unauthorized to view submissions for this assignment",
             };
             res.status(403).json(response);
         }
@@ -317,11 +414,11 @@ const getAssignmentSubmissionsController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error getting assignment submissions:', error);
+        console.error("Error getting assignment submissions:", error);
         const response = {
             success: false,
-            message: 'Failed to get assignment submissions',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to get assignment submissions",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -338,7 +435,7 @@ const getSubmissionByIdController = async (req, res) => {
         if (!submission) {
             const response = {
                 success: false,
-                message: 'Submission not found',
+                message: "Submission not found",
             };
             res.status(404).json(response);
         }
@@ -347,18 +444,18 @@ const getSubmissionByIdController = async (req, res) => {
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Associated assignment not found',
+                message: "Associated assignment not found",
             };
             res.status(404).json(response);
         }
         // Check if user is authorized to view this submission
         const isSubmitter = (submission === null || submission === void 0 ? void 0 : submission.userId) === userId;
         const isCreator = (assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) === userId;
-        const isTeacherOrAdmin = req.user.role === 'TEACHER' || req.user.role === 'ADMIN';
+        const isTeacherOrAdmin = req.user.role === "TEACHER" || req.user.role === "ADMIN";
         if (!isSubmitter && !isCreator && !isTeacherOrAdmin) {
             const response = {
                 success: false,
-                message: 'Unauthorized to view this submission',
+                message: "Unauthorized to view this submission",
             };
             res.status(403).json(response);
         }
@@ -369,11 +466,11 @@ const getSubmissionByIdController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error getting submission:', error);
+        console.error("Error getting submission:", error);
         const response = {
             success: false,
-            message: 'Failed to get submission',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to get submission",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }
@@ -392,7 +489,7 @@ const updateSubmissionStatusController = async (req, res) => {
         if (!submission) {
             const response = {
                 success: false,
-                message: 'Submission not found',
+                message: "Submission not found",
             };
             res.status(404).json(response);
         }
@@ -401,28 +498,28 @@ const updateSubmissionStatusController = async (req, res) => {
         if (!assignment) {
             const response = {
                 success: false,
-                message: 'Associated assignment not found',
+                message: "Associated assignment not found",
             };
             res.status(404).json(response);
         }
         // Determine authorization
-        const isTeacherOrAdmin = req.user.role === 'TEACHER' || req.user.role === 'ADMIN';
+        const isTeacherOrAdmin = req.user.role === "TEACHER" || req.user.role === "ADMIN";
         const isCreator = (assignment === null || assignment === void 0 ? void 0 : assignment.creatorId) === userId;
         const isSubmitter = (submission === null || submission === void 0 ? void 0 : submission.userId) === userId;
         // Only the submitter can change from DRAFT to SUBMITTED
         // Only teachers, admins, or the assignment creator can change other statuses
-        if ((status === 'SUBMITTED' && !isSubmitter) ||
-            (status !== 'SUBMITTED' && !isTeacherOrAdmin && !isCreator)) {
+        if ((status === "SUBMITTED" && !isSubmitter) ||
+            (status !== "SUBMITTED" && !isTeacherOrAdmin && !isCreator)) {
             const response = {
                 success: false,
-                message: 'Unauthorized to update this submission status',
+                message: "Unauthorized to update this submission status",
             };
             res.status(403).json(response);
         }
         const updatedSubmission = await (0, assignment_service_1.updateSubmissionStatus)(id, status);
         const response = {
             success: true,
-            message: 'Submission status updated successfully',
+            message: "Submission status updated successfully",
             submission: {
                 id: updatedSubmission === null || updatedSubmission === void 0 ? void 0 : updatedSubmission.id,
                 status: updatedSubmission === null || updatedSubmission === void 0 ? void 0 : updatedSubmission.status,
@@ -432,11 +529,11 @@ const updateSubmissionStatusController = async (req, res) => {
         res.status(200).json(response);
     }
     catch (error) {
-        console.error('Error updating submission status:', error);
+        console.error("Error updating submission status:", error);
         const response = {
             success: false,
-            message: 'Failed to update submission status',
-            error: error instanceof Error ? error.message : 'Unknown error',
+            message: "Failed to update submission status",
+            error: error instanceof Error ? error.message : "Unknown error",
         };
         res.status(500).json(response);
     }

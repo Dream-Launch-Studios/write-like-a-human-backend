@@ -11,7 +11,7 @@ exports.createDocumentCommentSchema = zod_1.z.object({
         feedbackId: zod_1.z.string().optional().nullable(),
     }),
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Document ID is required'),
+        id: zod_1.z.string().cuid({ message: 'Invalid document ID' }),
     }),
 });
 /**
@@ -22,15 +22,15 @@ exports.updateCommentSchema = zod_1.z.object({
         content: zod_1.z.string().min(1, 'Comment content is required'),
     }),
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Comment ID is required'),
+        id: zod_1.z.string().cuid({ message: 'Invalid Comment ID' }),
     }),
 });
 /**
  * Schema for deleting a comment
- */
+*/
 exports.deleteCommentSchema = zod_1.z.object({
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Comment ID is required'),
+        id: zod_1.z.string().cuid({ message: 'Invalid Comment ID' }),
     }),
 });
 /**
@@ -38,9 +38,9 @@ exports.deleteCommentSchema = zod_1.z.object({
  */
 exports.getDocumentCommentsSchema = zod_1.z.object({
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Document ID is required'),
+        id: zod_1.z.string().cuid({ message: 'Invalid Document ID' }),
     }),
     query: zod_1.z.object({
-        feedbackId: zod_1.z.string().optional(),
+        feedbackId: zod_1.z.string().cuid({ message: 'Invalid feedback ID' }).optional(),
     }).optional(),
 });

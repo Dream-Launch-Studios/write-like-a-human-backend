@@ -9,7 +9,6 @@ const generateWordSuggestionsController = async (req, res) => {
     try {
         const { id: documentId } = req.params;
         const userId = req.user.id;
-        // Step 1: Generate suggestions using OpenAI
         const aiSuggestions = await (0, word_suggestion_service_1.generateAIWordSuggestions)(documentId);
         if (!aiSuggestions || aiSuggestions.length === 0) {
             res.status(200).json({
@@ -18,7 +17,6 @@ const generateWordSuggestionsController = async (req, res) => {
                 suggestions: [],
             });
         }
-        // Step 2: Save the generated suggestions to the database
         const createdSuggestions = await (0, word_suggestion_service_1.batchCreateWordSuggestions)({
             documentId,
             userId,

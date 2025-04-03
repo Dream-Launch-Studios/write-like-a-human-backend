@@ -75,8 +75,6 @@ const analyzeDocument = async (req, res) => {
             res.status(200).json(response);
             return;
         }
-        // Start the analysis process
-        // We'll use a background job approach to handle long-running analysis
         const analysisJob = await analysisService.initiateAnalysis(document);
         const response = {
             success: true,

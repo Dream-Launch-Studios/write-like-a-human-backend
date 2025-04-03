@@ -48,7 +48,7 @@ export const groupParamsSchema = z.object({
  */
 export const assignmentParamsSchema = z.object({
     params: z.object({
-        id: z.string().min(1, 'Assignment ID is required'),
+        id: z.string().cuid(),
     }),
 });
 
@@ -57,10 +57,10 @@ export const assignmentParamsSchema = z.object({
  */
 export const submitAssignmentSchema = z.object({
     body: z.object({
-        title: z.string().min(1, 'Document title is required'),
+        groupId: z.string().cuid()
     }),
     params: z.object({
-        id: z.string().min(1, 'Assignment ID is required'),
+        id: z.string().cuid(),
     }),
 });
 

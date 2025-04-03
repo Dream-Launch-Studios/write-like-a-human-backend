@@ -1,3 +1,4 @@
+import { ContentFormat, DocumentCreatedWith } from "@prisma/client";
 /**
  * Interface for document filtering parameters
  */
@@ -6,6 +7,7 @@ export interface DocumentFilter {
     page?: number;
     limit?: number;
     groupId?: string;
+    search?: string;
 }
 /**
  * Interface for creating a document
@@ -19,6 +21,8 @@ export interface CreateDocumentData {
     fileSize: number;
     userId: string;
     groupId?: string | null;
+    createdWith?: DocumentCreatedWith;
+    contentFormat: ContentFormat;
 }
 /**
  * Interface for updating a document
@@ -26,6 +30,7 @@ export interface CreateDocumentData {
 export interface UpdateDocumentData {
     title?: string;
     content?: string;
+    feedbackMetricsId?: string;
 }
 /**
  * Interface for creating a new version of a document

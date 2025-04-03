@@ -6,9 +6,11 @@ const zod_1 = require("zod");
 exports.createDocumentSchema = zod_1.z.object({
     body: zod_1.z.object({
         title: zod_1.z.string().optional(),
-        groupId: zod_1.z.string().uuid({ message: 'Invalid group ID' }).optional()
+        pastedContent: zod_1.z.string().optional(),
+        groupId: zod_1.z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        createdWith: zod_1.z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
+        contentFormat: zod_1.z.enum(['HTML', 'TEXT']).default("HTML").optional(),
     })
-    // Note: file validation is handled by uploadMiddleware
 });
 // Schema for listing documents with pagination
 exports.listDocumentsSchema = zod_1.z.object({
@@ -25,7 +27,8 @@ exports.listDocumentsSchema = zod_1.z.object({
             .refine((val) => val > 0 && val <= 100, {
             message: 'Limit must be between 1 and 100'
         }),
-        groupId: zod_1.z.string().uuid({ message: 'Invalid group ID' }).optional()
+        groupId: zod_1.z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        search: zod_1.z.string().optional()
     })
 });
 // Schema for getting a document

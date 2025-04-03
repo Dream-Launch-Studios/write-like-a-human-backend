@@ -20,16 +20,14 @@ import { uploadMiddleware, validatePdfMiddleware } from '../middleware/upload.mi
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authMiddleware);
 
-// User's submissions
+
 router.get(
     '/submissions/me',
     getUserSubmissionsController
 );
 
-// Submission management
 router.get(
     '/submissions/:id',
     validate(submissionParamsSchema),
@@ -48,7 +46,6 @@ router.delete(
     deleteSubmissionController
 );
 
-// Resubmit assignment
 router.post(
     '/submissions/:id/resubmit',
     uploadMiddleware.single('file'),
@@ -57,7 +54,6 @@ router.post(
     resubmitAssignmentController
 );
 
-// Submission feedback
 router.get(
     '/submissions/:id/feedback',
     validate(submissionParamsSchema),

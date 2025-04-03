@@ -9,10 +9,10 @@ exports.createFeedbackSchema = zod_1.z.object({
     params: zod_1.z.object({
         id: zod_1.z.string().cuid({ message: 'Invalid document ID' })
     }),
-    body: zod_1.z.object({
-        content: zod_1.z.string().min(1, { message: 'Feedback content is required' }),
-        status: feedbackStatusEnum.optional().default('PENDING')
-    })
+    // body: z.object({
+    //     content: z.string().min(1, { message: 'Feedback content is required' }),
+    //     status: feedbackStatusEnum.optional().default('PENDING')
+    // })
 });
 // Schema for getting feedback for a document
 exports.getDocumentFeedbackSchema = zod_1.z.object({

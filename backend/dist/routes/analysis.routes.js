@@ -32,7 +32,6 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const analysis_schema_1 = require("../schemas/analysis.schema");
 const router = express_1.default.Router();
-// Apply authentication middleware to all analysis routes
 router.use(auth_middleware_1.authMiddleware);
 // Analyze a document for AI content
 router.post('/documents/:id/analyze', (0, validate_middleware_1.validate)(analysis_schema_1.analyzeDocumentSchema), analysisController.analyzeDocument);

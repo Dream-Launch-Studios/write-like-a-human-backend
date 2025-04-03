@@ -29,8 +29,7 @@ exports.uploadFileToStorage = uploadFileToStorage;
 /**
  * Create a new assignment
  */
-const createAssignment = async (data, fileBuffer, fileName, fileType) => {
-    // Check if group exists
+const createAssignment = async (data) => {
     const groupExists = await prisma.group.findUnique({
         where: {
             id: data.groupId
@@ -39,26 +38,18 @@ const createAssignment = async (data, fileBuffer, fileName, fileType) => {
     if (!groupExists) {
         throw new Error(`Group with ID ${data.groupId} not found`);
     }
-    // Upload file if provided
-    let documentUrl = null;
-    let documentName = null;
-    let documentType = null;
-    if (fileBuffer && fileName && fileType) {
-        // Upload file to Supabase storage
-        documentUrl = await (0, exports.uploadFileToStorage)(fileBuffer, fileName, fileType);
-        documentName = fileName;
-        documentType = fileType;
-    }
     const assignment = await prisma.assignment.create({
         data: {
             title: data.title,
             description: data.description,
             dueDate: data.dueDate,
-            documentUrl,
-            documentName,
-            documentType,
+            documentUrl: data.documentUrl,
+            documentName: data.documentName,
             creatorId: data.creatorId,
             groupId: data.groupId,
+            createdWith: data.createdWith,
+            fileType: data.mimeType,
+            pastedContent: data.pastedContent,
         },
     });
     return assignment;
@@ -133,7 +124,6 @@ const updateAssignment = async (id, data) => {
                 dueDate: data.dueDate,
                 documentUrl: data.documentUrl,
                 documentName: data.documentName,
-                documentType: data.documentType,
             },
         });
         return updatedAssignment;

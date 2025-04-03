@@ -1,4 +1,4 @@
-import { Assignment, Submission } from '@prisma/client';
+import { Assignment, ContentFormat, DocumentCreatedWith, Submission } from '@prisma/client';
 /**
  * Interface for creating an assignment
  */
@@ -8,9 +8,12 @@ export interface CreateAssignmentData {
     dueDate?: Date | null;
     documentUrl?: string | null;
     documentName?: string | null;
-    documentType?: string | null;
     creatorId: string;
     groupId: string;
+    createdWith?: DocumentCreatedWith;
+    contentFormat: ContentFormat;
+    mimeType?: string;
+    pastedContent?: string;
 }
 /**
  * Interface for updating an assignment
