@@ -1,18 +1,18 @@
 import express from 'express';
 import {
     getSubmissionByIdController,
-    updateSubmissionStatusController,
-    getUserSubmissionsController,
-    deleteSubmissionController,
+    updateSubmissionStatusController, deleteSubmissionController,
     resubmitAssignmentController,
     getSubmissionFeedbackController,
-    addSubmissionFeedbackController
+    addSubmissionFeedbackController,
+    getUserSubmissionsByAssignmentIdController
 } from '../controllers/submission.controller';
 import {
     submissionParamsSchema,
     updateSubmissionStatusSchema,
     resubmitAssignmentSchema,
-    addSubmissionFeedbackSchema
+    addSubmissionFeedbackSchema,
+    userSubmissionByAssignmentIdParamsSchema
 } from '../schemas/submission.schema';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -24,9 +24,12 @@ router.use(authMiddleware);
 
 
 router.get(
-    '/submissions/me',
-    getUserSubmissionsController
+    '/assignments/:id',
+    validate(userSubmissionByAssignmentIdParamsSchema),
+    getUserSubmissionsByAssignmentIdController
 );
+
+router.patch("/:id")
 
 router.get(
     '/submissions/:id',

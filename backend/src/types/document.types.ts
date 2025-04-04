@@ -23,6 +23,7 @@ export interface CreateDocumentData {
   fileSize: number;
   userId: string;
   groupId?: string | null;
+  submissionId?: string
   createdWith?: DocumentCreatedWith
   contentFormat: ContentFormat
 }

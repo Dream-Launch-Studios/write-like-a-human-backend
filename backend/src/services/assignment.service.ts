@@ -207,9 +207,6 @@ export const isUserInGroup = async (userId: string, groupId: string): Promise<bo
     return !!membership;
 };
 
-/**
- * Submit an assignment
- */
 export const submitAssignment = async (
     assignmentId: string,
     userId: string,
@@ -237,7 +234,6 @@ export const submitAssignment = async (
         throw new Error(`Document with ID ${documentId} not found`);
     }
 
-
     // Check if submission already exists
     const existingSubmission = await prisma.submission.findFirst({
         where: {
@@ -246,69 +242,84 @@ export const submitAssignment = async (
         },
     });
 
-    if (existingSubmission) {
-        // Update existing submission
-        const updatedSubmission = await prisma.submission.update({
-            where: {
-                id: existingSubmission.id,
-            },
-            data: {
-                documentId,
-                status: 'SUBMITTED',
-                submittedAt: new Date(),
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-                document: {
-                    select: {
-                        id: true,
-                        title: true,
-                        fileName: true,
-                        fileUrl: true,
-                    },
-                },
-            },
-        });
+    // Use a transaction to ensure data consistency
+    return await prisma.$transaction(async (tx) => {
+        let submission;
 
-        return updatedSubmission;
-    } else {
-        // Create new submission
-        const submission = await prisma.submission.create({
-            data: {
-                documentId,
-                assignmentId,
-                userId,
-                status: 'SUBMITTED',
-                submittedAt: new Date(),
+        if (existingSubmission) {
+            // Update existing submission
+            submission = await tx.submission.update({
+                where: {
+                    id: existingSubmission.id,
+                },
+                data: {
+                    documentId,
+                    status: 'DRAFT',
+                    submittedAt: new Date(),
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                    document: {
+                        select: {
+                            id: true,
+                            title: true,
+                            fileName: true,
+                            fileUrl: true,
+                        },
+                    },
+                },
+            });
+        } else {
+            // Create new submission
+            submission = await tx.submission.create({
+                data: {
+                    documentId,
+                    assignmentId,
+                    userId,
+                    status: 'DRAFT',
+                    submittedAt: new Date(),
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                    document: {
+                        select: {
+                            id: true,
+                            title: true,
+                            fileName: true,
+                            fileUrl: true,
+                        },
+                    },
+                },
+            });
+        }
+
+        // Update the document to include the assignment reference and submission ID
+        await tx.document.update({
+            where: {
+                id: documentId,
             },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-                document: {
-                    select: {
-                        id: true,
-                        title: true,
-                        fileName: true,
-                        fileUrl: true,
-                    },
-                },
+            data: {
+                assignmentId: assignmentId,
+                submissionId: submission.id, // Set the primary submission ID
             },
         });
 
         return submission;
-    }
+    });
 };
+
 
 /**
  * Get submissions for an assignment

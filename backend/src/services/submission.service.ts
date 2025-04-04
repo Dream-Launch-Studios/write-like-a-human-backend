@@ -142,10 +142,11 @@ export const deleteSubmission = async (id: string) => {
 /**
  * Get submissions for a user
  */
-export const getUserSubmissions = async (userId: string) => {
+export const getUserSubmissionsByAssignmentId = async (userId: string, assignmentId: string) => {
     const submissions = await prisma.submission.findMany({
         where: {
             userId,
+            assignmentId
         },
         include: {
             assignment: {

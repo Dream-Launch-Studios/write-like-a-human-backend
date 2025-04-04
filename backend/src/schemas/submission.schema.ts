@@ -3,6 +3,11 @@ import { z } from 'zod';
 /**
  * Schema for submission params
  */
+export const userSubmissionByAssignmentIdParamsSchema = z.object({
+    params: z.object({
+        id: z.string().min(1, 'Submission ID is required'),
+    }),
+});
 export const submissionParamsSchema = z.object({
     params: z.object({
         id: z.string().min(1, 'Submission ID is required'),

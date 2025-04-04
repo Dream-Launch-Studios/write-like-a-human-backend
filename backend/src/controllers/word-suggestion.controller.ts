@@ -18,6 +18,7 @@ export const generateWordSuggestionsController = async (req: Request, res: Respo
 
         const aiSuggestions = await generateAIWordSuggestions(documentId);
 
+
         if (!aiSuggestions || aiSuggestions.length === 0) {
             res.status(200).json({
                 success: true,
@@ -29,7 +30,7 @@ export const generateWordSuggestionsController = async (req: Request, res: Respo
         const createdSuggestions = await batchCreateWordSuggestions({
             documentId,
             userId,
-            suggestions: aiSuggestions, 
+            suggestions: aiSuggestions,
         });
 
         const response: ApiResponse = {

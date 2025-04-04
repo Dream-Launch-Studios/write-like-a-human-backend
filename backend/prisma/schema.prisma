@@ -75,6 +75,7 @@ model Document {
     contentFormat     ContentFormat       @default(HTML)
     feedbackMetricsId String?
     rootDocumentId    String?
+    submissionId      String?             // The primary submission this document is associated with
     createdAt         DateTime            @default(now())
     updatedAt         DateTime            @updatedAt
 
@@ -87,8 +88,13 @@ model Document {
     comments         Comment[]
     wordSuggestions  WordSuggestion[]
     aiAnalysis       AIAnalysis?
-    submissions      Submission[]
-    SubmissionResult SubmissionResult[]
+    submissions      Submission[]       @relation("DocumentSubmissions")
+    submission       Submission?        @relation("DocumentPrimarySubmission", fields: [submissionId], references: [id])
+    submissionResults SubmissionResult[]
+    
+    // Optional: if you want to track which assignment this document was created for
+    assignmentId     String?
+    assignment       Assignment?        @relation(fields: [assignmentId], references: [id])
 }
 
 model DocumentVersion {
@@ -152,6 +158,7 @@ model Assignment {
     groupId       String
     group         Group               @relation(fields: [groupId], references: [id])
     submissions   Submission[]
+    documents     Document[]          // Documents created for this assignment
     createdAt     DateTime            @default(now())
     updatedAt     DateTime            @updatedAt
 }
@@ -159,7 +166,7 @@ model Assignment {
 model Submission {
     id               String            @id @default(cuid())
     documentId       String
-    document         Document          @relation(fields: [documentId], references: [id])
+    document         Document          @relation("DocumentSubmissions", fields: [documentId], references: [id])
     assignmentId     String
     assignment       Assignment        @relation(fields: [assignmentId], references: [id])
     userId           String
@@ -168,7 +175,10 @@ model Submission {
     submittedAt      DateTime?
     createdAt        DateTime          @default(now())
     updatedAt        DateTime          @updatedAt
-    SubmissionResult SubmissionResult?
+    submissionResult SubmissionResult?
+    
+    // Documents that have this as their primary submission
+    primaryDocuments Document[]        @relation("DocumentPrimarySubmission")
 }
 
 model SubmissionResult {

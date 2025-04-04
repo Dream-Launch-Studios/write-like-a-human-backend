@@ -524,9 +524,12 @@ export const listDocuments = async (req: Request, res: Response): Promise<void> 
 export const getDocument = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
+        console.log(`id ${id} in getDocument`)
 
         // Get document from service
         const document = await documentService.getDocumentById(id);
+        console.log(`document`)
+        console.log(document)
 
         if (!document) {
             const response: ApiResponse = {
@@ -537,8 +540,13 @@ export const getDocument = async (req: Request, res: Response): Promise<void> =>
             return;
         }
 
+        console.log(`user id ${req.user.id} in getDocument`)
+        console.log(`document user id ${document.userId} in getDocument`)
+        console.log(`document group id ${document.groupId} in getDocument`)
+
         // Check if user has access to this document
         if (document.userId !== req.user.id && document.groupId === null) {
+            console.log(`⭕ Document has no group and doesn't belong to user`)
             // If document has no group and doesn't belong to user, deny access
             const response: ApiResponse = {
                 success: false,

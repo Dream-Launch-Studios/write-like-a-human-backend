@@ -3,7 +3,7 @@ import {
     getSubmissionById,
     updateSubmissionStatus,
     deleteSubmission,
-    getUserSubmissions,
+    getUserSubmissionsByAssignmentId,
     resubmitAssignment,
     getSubmissionFeedback,
     addSubmissionFeedback
@@ -184,11 +184,41 @@ export const deleteSubmissionController = async (req: Request, res: Response): P
 /**
  * Get submissions for the current user
  */
-export const getUserSubmissionsController = async (req: Request, res: Response): Promise<void> => {
+// export const getUserSubmissionsController = async (req: Request, res: Response): Promise<void> => {
+//     try {
+//         const userId = req.user.id;
+
+//         const submissions = await getUserSubmissions(userId);
+
+//         const response: ApiResponse = {
+//             success: true,
+//             submissions,
+//         };
+
+//         res.status(200).json(response);
+//     } catch (error) {
+//         console.error('Error getting user submissions:', error);
+
+//         const response: ApiResponse = {
+//             success: false,
+//             message: 'Failed to get user submissions',
+//             error: error instanceof Error ? error.message : 'Unknown error',
+//         };
+
+//         res.status(500).json(response);
+//     }
+// };
+
+
+/**
+ * Get submissions by assignment Id for the current user
+ */
+export const getUserSubmissionsByAssignmentIdController = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user.id;
+        const { id } = req.params
 
-        const submissions = await getUserSubmissions(userId);
+        const submissions = await getUserSubmissionsByAssignmentId(userId, id);
 
         const response: ApiResponse = {
             success: true,
@@ -208,6 +238,9 @@ export const getUserSubmissionsController = async (req: Request, res: Response):
         res.status(500).json(response);
     }
 };
+
+
+
 
 /**
  * Resubmit an assignment

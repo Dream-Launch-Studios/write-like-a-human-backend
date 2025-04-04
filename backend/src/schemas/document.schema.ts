@@ -5,7 +5,8 @@ export const createDocumentSchema = z.object({
     body: z.object({
         title: z.string().optional(),
         pastedContent: z.string().optional(),
-        groupId: z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        groupId: z.string().cuid({ message: 'Invalid group ID' }).optional(),
+        submissionId: z.string().cuid({ message: 'Invalid submission ID' }).optional(), 
         createdWith: z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
         contentFormat: z.enum(['HTML', 'TEXT']).default("HTML").optional(),
     })
@@ -65,7 +66,9 @@ export const createVersionSchema = z.object({
     }),
     body: z.object({
         title: z.string().optional(),
-        content: z.string()
+        submissionId: z.string().cuid({ message: 'Invalid submission ID' }).optional(), 
+        content: z.string(),
+
     })
     // Note: file validation is handled by uploadMiddleware
 });
