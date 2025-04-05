@@ -345,6 +345,15 @@ export const getAssignmentSubmissions = async (assignmentId: string) => {
                     fileUrl: true,
                 },
             },
+            submissionResult: {
+                select: {
+                    id: true,
+                    documentId: true,
+                    status: true,
+                    feedback: true,
+                    grade: true,
+                },
+            }
         },
         orderBy: {
             submittedAt: 'desc',

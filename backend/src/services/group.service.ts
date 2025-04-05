@@ -112,6 +112,7 @@ export const getGroupById = async (id: string): Promise<GroupWithAdmin | null> =
         return null;
     }
 
+
     return {
         ...group,
         memberCount: group._count.members,

@@ -171,6 +171,16 @@ export const getUserSubmissionsByAssignmentId = async (userId: string, assignmen
                     fileUrl: true,
                 },
             },
+            submissionResult: {
+                select: {
+                    id: true,
+                    feedback: true,
+                    grade: true,
+                    status: true,
+                    updatedAt: true
+
+                }
+            }
         },
         orderBy: {
             createdAt: 'desc',
@@ -180,9 +190,6 @@ export const getUserSubmissionsByAssignmentId = async (userId: string, assignmen
     return submissions;
 };
 
-/**
- * Resubmit an assignment (create a new document version and update submission)
- */
 /**
  * Resubmit an assignment (create a new document version and update submission)
  */
@@ -394,7 +401,7 @@ export const finalSubmitAssignment = async (
                 submissionId,
                 teacherId: submission.assignment.creatorId,
                 feedback: '',
-                status: 'COMPLETED',
+                status: 'PENDING',
                 documentId,
             },
         });
@@ -445,6 +452,9 @@ export const evaluateSubmission = async (
                 },
             });
 
+            console.log(`TEACHER ID: ${teacherId}`);
+            console.log(`ASSIGNMENT CREATOR ID: ${submissionResult.submission.assignment.creatorId}`);
+
             if (!isGroupMember) {
                 throw new Error('You are not authorized to evaluate this submission');
             }
@@ -457,12 +467,18 @@ export const evaluateSubmission = async (
             data: {
                 feedback: evaluationData.feedback,
                 grade: evaluationData.grade,
-                status: evaluationData.status,
+                status: "COMPLETED",
                 updatedAt: new Date(),
             },
         });
 
-        if (evaluationData.status === 'COMPLETED') {
+        const updatedResult = await tx.submissionResult.findUnique({
+            where: {
+                id: submissionResultId,
+            },
+        });
+
+        if (updatedResult?.status === 'COMPLETED') {
             await tx.submission.update({
                 where: {
                     id: submissionResult.submissionId,
@@ -471,7 +487,7 @@ export const evaluateSubmission = async (
                     status: 'GRADED',
                 },
             });
-        } else if (evaluationData.status === 'REQUIRES_REVISION') {
+        } else if (updatedResult?.status === 'REQUIRES_REVISION') {
             await tx.submission.update({
                 where: {
                     id: submissionResult.submissionId,
@@ -489,5 +505,4 @@ export const evaluateSubmission = async (
 export interface SubmissionEvaluationData {
     feedback?: string;
     grade?: string;
-    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REQUIRES_REVISION';
 }

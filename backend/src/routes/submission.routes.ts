@@ -6,7 +6,8 @@ import {
     getSubmissionFeedbackController,
     addSubmissionFeedbackController,
     getUserSubmissionsByAssignmentIdController,
-    finalSubmitAssignmentController
+    finalSubmitAssignmentController,
+    evaluateSubmissionController
 } from '../controllers/submission.controller';
 import {
     submissionParamsSchema,
@@ -33,7 +34,7 @@ router.get(
 );
 
 router.post("/:id/final-submit", validate(finalSubmitAssignmentSchema), finalSubmitAssignmentController)
-router.post("/:id/evaluate", validate(evaluateSubmissionSchema), finalSubmitAssignmentController)
+router.post("/results/:id/evaluate", validate(evaluateSubmissionSchema), evaluateSubmissionController)
 
 
 

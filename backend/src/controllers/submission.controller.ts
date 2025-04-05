@@ -479,35 +479,19 @@ export const evaluateSubmissionController = async (req: Request, res: Response):
     try {
         const { id: submissionResultId } = req.params;
         const teacherId = req.user.id;
-        const { feedback, grade, status } = req.body;
-
-        if (!status || !['PENDING', 'IN_PROGRESS', 'COMPLETED', 'REQUIRES_REVISION'].includes(status)) {
-            res.status(400).json({
-                success: false,
-                message: 'Valid status is required (PENDING, IN_PROGRESS, COMPLETED, REQUIRES_REVISION)'
-            });
-            return;
-        }
-
-        if (status === 'COMPLETED' && !grade) {
-            res.status(400).json({
-                success: false,
-                message: 'Grade is required when status is COMPLETED'
-            });
-            return;
-        }
+        const { feedback, grade } = req.body;
 
         const evaluationData = {
             feedback,
             grade,
-            status,
         };
+
 
         const result = await evaluateSubmission(submissionResultId, teacherId, evaluationData);
 
         const response = {
             success: true,
-            message: `Submission evaluation ${status === 'COMPLETED' ? 'completed' : 'updated'} successfully`,
+            message: `Submission evaluated successfully`,
             data: {
                 id: result.id,
                 feedback: result.feedback,

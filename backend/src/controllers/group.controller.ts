@@ -114,12 +114,26 @@ export const getGroupByIdController = async (req: Request, res: Response): Promi
             res.status(403).json(response);
         }
 
-        const response: ApiResponse = {
-            success: true,
-            group,
-        };
+        // remove token from group object if user is not admin or teacher
+        const groupWithoutToken = { ...group, joinToken: undefined };
 
-        res.status(200).json(response);
+        if (req.user.role === "TEACHER" || req.user.role === "ADMIN") {
+            const response: ApiResponse = {
+                success: true,
+                group,
+            };
+
+            res.status(200).json(response);
+        } else {
+            const response: ApiResponse = {
+                success: true,
+                group: groupWithoutToken,
+            };
+            res.status(200).json(response);
+
+        }
+
+
     } catch (error) {
         console.error('Error getting group:', error);
 
