@@ -40,7 +40,11 @@ app.use("/api/submissions", submission_routes_1.default);
 // app.use("/api/users", userRouter); //completed
 // app.use("/api/documents", documentRouter); //completed almost
 // app.use("/api/analyze", analysisRouter);
+app.get("/", (req, res) => {
+    res.send("API is running...");
+});
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+exports.default = app;
