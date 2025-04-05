@@ -66,7 +66,7 @@ export const createVersionSchema = z.object({
     }),
     body: z.object({
         title: z.string().optional(),
-        submissionId: z.string().cuid({ message: 'Invalid submission ID' }).optional(), 
+        submissionId: z.string().cuid({ message: 'Invalid submission ID' }).optional().nullable(), 
         content: z.string(),
 
     })
