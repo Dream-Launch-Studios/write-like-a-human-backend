@@ -5,14 +5,17 @@ import {
     resubmitAssignmentController,
     getSubmissionFeedbackController,
     addSubmissionFeedbackController,
-    getUserSubmissionsByAssignmentIdController
+    getUserSubmissionsByAssignmentIdController,
+    finalSubmitAssignmentController
 } from '../controllers/submission.controller';
 import {
     submissionParamsSchema,
     updateSubmissionStatusSchema,
     resubmitAssignmentSchema,
     addSubmissionFeedbackSchema,
-    userSubmissionByAssignmentIdParamsSchema
+    userSubmissionByAssignmentIdParamsSchema,
+    finalSubmitAssignmentSchema,
+    evaluateSubmissionSchema
 } from '../schemas/submission.schema';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -29,7 +32,10 @@ router.get(
     getUserSubmissionsByAssignmentIdController
 );
 
-router.patch("/:id")
+router.post("/:id/final-submit", validate(finalSubmitAssignmentSchema), finalSubmitAssignmentController)
+router.post("/:id/evaluate", validate(evaluateSubmissionSchema), finalSubmitAssignmentController)
+
+
 
 router.get(
     '/submissions/:id',

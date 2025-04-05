@@ -75,26 +75,26 @@ model Document {
     contentFormat     ContentFormat       @default(HTML)
     feedbackMetricsId String?
     rootDocumentId    String?
-    submissionId      String?             // The primary submission this document is associated with
+    submissionId      String? // The primary submission this document is associated with
     createdAt         DateTime            @default(now())
     updatedAt         DateTime            @updatedAt
 
     asRootDocument      DocumentVersion[] @relation("RootDocument")
     asVersionedDocument DocumentVersion[] @relation("VersionedDocument")
 
-    group            Group?             @relation(fields: [groupId], references: [id])
-    user             User               @relation(fields: [userId], references: [id])
-    feedbacks        Feedback[]
-    comments         Comment[]
-    wordSuggestions  WordSuggestion[]
-    aiAnalysis       AIAnalysis?
-    submissions      Submission[]       @relation("DocumentSubmissions")
-    submission       Submission?        @relation("DocumentPrimarySubmission", fields: [submissionId], references: [id])
+    group             Group?             @relation(fields: [groupId], references: [id])
+    user              User               @relation(fields: [userId], references: [id])
+    feedbacks         Feedback[]
+    comments          Comment[]
+    wordSuggestions   WordSuggestion[]
+    aiAnalysis        AIAnalysis?
+    submissions       Submission[]       @relation("DocumentSubmissions")
+    submission        Submission?        @relation("DocumentPrimarySubmission", fields: [submissionId], references: [id])
     submissionResults SubmissionResult[]
-    
+
     // Optional: if you want to track which assignment this document was created for
-    assignmentId     String?
-    assignment       Assignment?        @relation(fields: [assignmentId], references: [id])
+    assignmentId String?
+    assignment   Assignment? @relation(fields: [assignmentId], references: [id])
 }
 
 model DocumentVersion {
@@ -158,7 +158,7 @@ model Assignment {
     groupId       String
     group         Group               @relation(fields: [groupId], references: [id])
     submissions   Submission[]
-    documents     Document[]          // Documents created for this assignment
+    documents     Document[] // Documents created for this assignment
     createdAt     DateTime            @default(now())
     updatedAt     DateTime            @updatedAt
 }
@@ -176,24 +176,25 @@ model Submission {
     createdAt        DateTime          @default(now())
     updatedAt        DateTime          @updatedAt
     submissionResult SubmissionResult?
-    
+
     // Documents that have this as their primary submission
-    primaryDocuments Document[]        @relation("DocumentPrimarySubmission")
+    primaryDocuments Document[] @relation("DocumentPrimarySubmission")
 }
 
 model SubmissionResult {
-    id           String           @id @default(cuid())
-    submissionId String           @unique
-    submission   Submission       @relation(fields: [submissionId], references: [id])
-    teacherId    String
-    teacher      User             @relation(fields: [teacherId], references: [id])
-    feedback     String
-    grade        String?
-    status       EvaluationStatus @default(PENDING)
-    documentId   String?
-    document     Document?        @relation(fields: [documentId], references: [id])
-    createdAt    DateTime         @default(now())
-    updatedAt    DateTime         @updatedAt
+    id             String           @id @default(cuid())
+    submissionId   String           @unique
+    submission     Submission       @relation(fields: [submissionId], references: [id])
+    teacherId      String
+    teacher        User             @relation(fields: [teacherId], references: [id])
+    feedback       String?
+    grade          String?
+    status         EvaluationStatus @default(PENDING)
+    rootDocumentId String?
+    documentId     String?
+    document       Document?        @relation(fields: [documentId], references: [id])
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
 }
 
 enum EvaluationStatus {

@@ -8,6 +8,7 @@ export const userSubmissionByAssignmentIdParamsSchema = z.object({
         id: z.string().min(1, 'Submission ID is required'),
     }),
 });
+
 export const submissionParamsSchema = z.object({
     params: z.object({
         id: z.string().min(1, 'Submission ID is required'),
@@ -35,6 +36,25 @@ export const resubmitAssignmentSchema = z.object({
     }),
     params: z.object({
         id: z.string().min(1, 'Submission ID is required'),
+    }),
+});
+
+export const finalSubmitAssignmentSchema = z.object({
+    params: z.object({
+        id: z.string({ required_error: "Submission ID is required" }).cuid(),
+    }),
+    body: z.object({
+        documentId: z.string({ required_error: "Document ID is required" }).cuid(),
+    })
+});
+
+export const evaluateSubmissionSchema = z.object({
+    params: z.object({
+        id: z.string({ required_error: "Submission ID is required" }).cuid(),
+    }),
+    body: z.object({
+        feedback: z.string().optional(),
+        grade: z.string().optional(),
     }),
 });
 

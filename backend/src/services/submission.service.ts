@@ -321,3 +321,173 @@ export const addSubmissionFeedback = async (data: SubmissionFeedbackData) => {
 
     return feedback;
 };
+
+
+/**
+ * Service function to handle final submission of an assignment
+ * Updates submission status and creates a submission result
+ */
+export const finalSubmitAssignment = async (
+    submissionId: string,
+    documentId: string,
+    userId: string,
+) => {
+    return await prisma.$transaction(async (tx) => {
+        // Find the submission
+        const submission = await tx.submission.findUnique({
+            where: {
+                id: submissionId,
+            },
+            include: {
+                assignment: {
+                    select: {
+                        id: true,
+                        title: true,
+                        creatorId: true,
+                    },
+                },
+            },
+        });
+
+        if (!submission) {
+            throw new Error(`Submission with ID ${submissionId} not found`);
+        }
+
+        if (submission.userId !== userId) {
+            throw new Error('You are not authorized to submit this assignment');
+        }
+
+        const document = await tx.document.findUnique({
+            where: {
+                id: documentId,
+                userId,
+            },
+        });
+
+        if (!document) {
+            throw new Error(`Document with ID ${documentId} not found or you don't have access to it`);
+        }
+
+        await tx.document.update({
+            where: {
+                id: documentId,
+            },
+            data: {
+                submissionId: submissionId,
+                assignmentId: submission.assignmentId,
+            },
+        });
+
+        const updatedSubmission = await tx.submission.update({
+            where: {
+                id: submissionId,
+            },
+            data: {
+                documentId,
+                status: 'SUBMITTED',
+                submittedAt: new Date(),
+            },
+        });
+
+        const submissionResult = await tx.submissionResult.create({
+            data: {
+                submissionId,
+                teacherId: submission.assignment.creatorId,
+                feedback: '',
+                status: 'COMPLETED',
+                documentId,
+            },
+        });
+
+        return {
+            submission: updatedSubmission,
+            submissionResult,
+        };
+    });
+};
+
+
+/**
+ * Service function to handle teacher evaluation of a submission
+ * Updates submission result with feedback and status
+ */
+export const evaluateSubmission = async (
+    submissionResultId: string,
+    teacherId: string,
+    evaluationData: SubmissionEvaluationData
+) => {
+    return await prisma.$transaction(async (tx) => {
+        const submissionResult = await tx.submissionResult.findUnique({
+            where: {
+                id: submissionResultId,
+            },
+            include: {
+                submission: {
+                    include: {
+                        assignment: true,
+                        document: true,
+                    },
+                },
+            },
+        });
+
+        if (!submissionResult) {
+            throw new Error(`Submission result with ID ${submissionResultId} not found`);
+        }
+
+        const isAssignmentCreator = submissionResult.submission.assignment.creatorId === teacherId;
+
+        if (!isAssignmentCreator) {
+            const isGroupMember = await tx.groupMember.findFirst({
+                where: {
+                    userId: teacherId,
+                    groupId: submissionResult.submission.assignment.groupId,
+                },
+            });
+
+            if (!isGroupMember) {
+                throw new Error('You are not authorized to evaluate this submission');
+            }
+        }
+
+        const updatedSubmissionResult = await tx.submissionResult.update({
+            where: {
+                id: submissionResultId,
+            },
+            data: {
+                feedback: evaluationData.feedback,
+                grade: evaluationData.grade,
+                status: evaluationData.status,
+                updatedAt: new Date(),
+            },
+        });
+
+        if (evaluationData.status === 'COMPLETED') {
+            await tx.submission.update({
+                where: {
+                    id: submissionResult.submissionId,
+                },
+                data: {
+                    status: 'GRADED',
+                },
+            });
+        } else if (evaluationData.status === 'REQUIRES_REVISION') {
+            await tx.submission.update({
+                where: {
+                    id: submissionResult.submissionId,
+                },
+                data: {
+                    status: 'RETURNED',
+                },
+            });
+        }
+
+        return updatedSubmissionResult;
+    });
+};
+
+export interface SubmissionEvaluationData {
+    feedback?: string;
+    grade?: string;
+    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REQUIRES_REVISION';
+}
