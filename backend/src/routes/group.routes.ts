@@ -12,7 +12,6 @@ import {
     refreshGroupTokenController,
 } from "../controllers/group.controller";
 import {
-    adminMiddleware,
     authMiddleware,
     teacherMiddleware,
 } from "../middleware/auth.middleware";
@@ -33,7 +32,6 @@ router.use(authMiddleware);
 router.post(
     "/",
     validate(createGroupSchema),
-    adminMiddleware,
     teacherMiddleware,
     createGroupController
 );
