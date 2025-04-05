@@ -6,6 +6,17 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_KEY!;
+
+
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
+
+
 export const uploadFileToSupabase = async (
     fileBuffer: Buffer,
     originalFilename: string,

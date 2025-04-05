@@ -25,6 +25,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateSubmissionStatusController = exports.getSubmissionByIdController = exports.getAssignmentSubmissionsController = exports.submitAssignmentController = exports.deleteAssignmentController = exports.updateAssignmentController = exports.getAssignmentByIdController = exports.getGroupAssignmentsController = exports.createAssignmentController = void 0;
 const pdfService = __importStar(require("../services/pdf.service"));
+const documentService = __importStar(require("../services/document.service"));
 const assignment_service_1 = require("../services/assignment.service");
 const client_1 = require("@prisma/client");
 const supabase_1 = require("../utils/supabase");
@@ -338,20 +339,96 @@ const submitAssignmentController = async (req, res) => {
     var _a;
     try {
         const { id: assignmentId } = req.params;
-        const { title } = req.body;
+        const { groupId } = req.body;
         const userId = req.user.id;
-        // This would typically come from a file upload process
-        // For this example, we'll assume the document has already been created
-        // and the ID is passed in the request
-        const documentId = ((_a = req.file) === null || _a === void 0 ? void 0 : _a.path) || "";
-        if (!documentId) {
+        const isMember = await (0, assignment_service_1.isUserInGroup)(userId, groupId);
+        if (!isMember && req.user.role !== "ADMIN" && req.user.role !== "TEACHER") {
             const response = {
                 success: false,
-                message: "No document provided",
+                message: "Unauthorized to create assignments submission for this group",
+            };
+            res.status(403).json(response);
+        }
+        if (!req.file) {
+            const response = {
+                success: false,
+                message: 'No file uploaded'
             };
             res.status(400).json(response);
+            return;
         }
-        const submission = await (0, assignment_service_1.submitAssignment)(assignmentId, userId, documentId);
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+        // Validate based on file type
+        let isValid = false;
+        if (mimeType === 'application/pdf') {
+            isValid = await pdfService.validatePdf(fileBuffer);
+            if (!isValid) {
+                const response = {
+                    success: false,
+                    message: 'Invalid PDF file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        }
+        else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            isValid = await pdfService.validateDocx(fileBuffer);
+            if (!isValid) {
+                const response = {
+                    success: false,
+                    message: 'Invalid DOCX file'
+                };
+                res.status(422).json(response);
+                return;
+            }
+        }
+        else {
+            const response = {
+                success: false,
+                message: 'Unsupported file type. Only PDF and DOCX are supported.'
+            };
+            res.status(422).json(response);
+            return;
+        }
+        let htmlContent;
+        try {
+            htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
+        }
+        catch (conversionError) {
+            console.error('Document conversion error:', conversionError);
+            const response = {
+                success: false,
+                message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
+                error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
+            };
+            res.status(422).json(response);
+            return;
+        }
+        const uploadResult = await (0, supabase_1.uploadFileToSupabase)(fileBuffer, req.file.originalname, mimeType, req.user.id, "assignment-submissions");
+        if (!uploadResult.success) {
+            const response = {
+                success: false,
+                message: 'Failed to upload file to storage',
+                error: uploadResult.error
+            };
+            res.status(500).json(response);
+            return;
+        }
+        // Get document data from validated request
+        const title = req.body.title || req.file.originalname;
+        const document = await documentService.createDocument({
+            title,
+            content: htmlContent,
+            contentFormat: 'HTML',
+            fileName: req.file.originalname,
+            fileUrl: (_a = uploadResult.fileUrl) !== null && _a !== void 0 ? _a : "",
+            fileType: mimeType,
+            fileSize: req.file.size,
+            userId: req.user.id,
+            groupId: groupId
+        });
+        const submission = await (0, assignment_service_1.submitAssignment)(assignmentId, userId, document.id);
         const response = {
             success: true,
             message: "Assignment submitted successfully",

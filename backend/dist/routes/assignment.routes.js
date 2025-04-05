@@ -18,7 +18,7 @@ router.get('/:id', (0, validate_middleware_1.validate)(assignment_schema_1.assig
 router.patch('/:id', (0, validate_middleware_1.validate)(assignment_schema_1.updateAssignmentSchema), assignment_controller_1.updateAssignmentController);
 router.delete('/:id', (0, validate_middleware_1.validate)(assignment_schema_1.assignmentParamsSchema), assignment_controller_1.deleteAssignmentController);
 // Assignment submissions
-router.post('/:id/submissions', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validatePdfMiddleware, (0, validate_middleware_1.validate)(assignment_schema_1.submitAssignmentSchema), assignment_controller_1.submitAssignmentController);
+router.post('/:id/submissions', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(assignment_schema_1.submitAssignmentSchema), assignment_controller_1.submitAssignmentController);
 router.get('/:id/submissions', (0, validate_middleware_1.validate)(assignment_schema_1.assignmentParamsSchema), assignment_controller_1.getAssignmentSubmissionsController);
 // Submission management
 router.get('/submissions/:id', (0, validate_middleware_1.validate)(assignment_schema_1.assignmentParamsSchema), assignment_controller_1.getSubmissionByIdController);

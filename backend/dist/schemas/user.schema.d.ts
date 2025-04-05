@@ -7,9 +7,9 @@ export declare const listUsersSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         page: number;
         limit: number;
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
     }, {
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
         page?: string | undefined;
         limit?: string | undefined;
     }>;
@@ -17,11 +17,11 @@ export declare const listUsersSchema: z.ZodObject<{
     query: {
         page: number;
         limit: number;
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
     };
 }, {
     query: {
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
         page?: string | undefined;
         limit?: string | undefined;
     };
@@ -54,20 +54,20 @@ export declare const updateUserRoleSchema: z.ZodObject<{
     body: z.ZodObject<{
         role: z.ZodEnum<["STUDENT", "TEACHER", "ADMIN"]>;
     }, "strip", z.ZodTypeAny, {
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
     }, {
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
     };
     params: {
         id: string;
     };
 }, {
     body: {
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
     };
     params: {
         id: string;
@@ -82,17 +82,17 @@ export declare const userSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
-    email: string;
-    role: "STUDENT" | "TEACHER" | "ADMIN";
     id: string;
+    email: string;
+    role: "TEACHER" | "ADMIN" | "STUDENT";
     isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
     name?: string | null | undefined;
 }, {
-    email: string;
-    role: "STUDENT" | "TEACHER" | "ADMIN";
     id: string;
+    email: string;
+    role: "TEACHER" | "ADMIN" | "STUDENT";
     isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -106,19 +106,19 @@ export declare const createUserSchema: z.ZodObject<{
         isEmailVerified: z.ZodDefault<z.ZodOptional<z.ZodBoolean>>;
     }, "strip", z.ZodTypeAny, {
         email: string;
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
         isEmailVerified: boolean;
         name?: string | undefined;
     }, {
         email: string;
         name?: string | undefined;
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
         isEmailVerified?: boolean | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         email: string;
-        role: "STUDENT" | "TEACHER" | "ADMIN";
+        role: "TEACHER" | "ADMIN" | "STUDENT";
         isEmailVerified: boolean;
         name?: string | undefined;
     };
@@ -126,7 +126,7 @@ export declare const createUserSchema: z.ZodObject<{
     body: {
         email: string;
         name?: string | undefined;
-        role?: "STUDENT" | "TEACHER" | "ADMIN" | undefined;
+        role?: "TEACHER" | "ADMIN" | "STUDENT" | undefined;
         isEmailVerified?: boolean | undefined;
     };
 }>;

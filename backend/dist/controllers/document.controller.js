@@ -495,8 +495,11 @@ exports.listDocuments = listDocuments;
 const getDocument = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log(`id ${id} in getDocument`);
         // Get document from service
         const document = await documentService.getDocumentById(id);
+        console.log(`document`);
+        console.log(document);
         if (!document) {
             const response = {
                 success: false,
@@ -505,8 +508,12 @@ const getDocument = async (req, res) => {
             res.status(404).json(response);
             return;
         }
+        console.log(`user id ${req.user.id} in getDocument`);
+        console.log(`document user id ${document.userId} in getDocument`);
+        console.log(`document group id ${document.groupId} in getDocument`);
         // Check if user has access to this document
         if (document.userId !== req.user.id && document.groupId === null) {
+            console.log(`⭕ Document has no group and doesn't belong to user`);
             // If document has no group and doesn't belong to user, deny access
             const response = {
                 success: false,

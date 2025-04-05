@@ -55,10 +55,10 @@ exports.assignmentParamsSchema = zod_1.z.object({
  */
 exports.submitAssignmentSchema = zod_1.z.object({
     body: zod_1.z.object({
-        title: zod_1.z.string().min(1, 'Document title is required'),
+        groupId: zod_1.z.string().cuid()
     }),
     params: zod_1.z.object({
-        id: zod_1.z.string().min(1, 'Assignment ID is required'),
+        id: zod_1.z.string().cuid(),
     }),
 });
 /**

@@ -106,6 +106,7 @@ exports.listDocuments = listDocuments;
  * Get a document by ID with user and group information
  */
 const getDocumentById = async (id) => {
+    console.log(`id is ${id} 🩸🩸🩸🩸🩸`);
     const document = await prisma.document.findUnique({
         where: { id },
         include: {
@@ -256,50 +257,6 @@ exports.deleteDocument = deleteDocument;
 /**
  * Create a new version of a document
  */
-// export const createDocumentVersion = async (data: CreateVersionData) => {
-//     // Get parent document to determine version number
-//     const parentDocument = await prisma.document.findUnique({
-//         where: { id: data.parentDocumentId }
-//     });
-//     if (!parentDocument) {
-//         throw new Error('Parent document not found');
-//     }
-//     // Start a transaction to update the parent and create the new version
-//     return await prisma.$transaction(async (tx) => {
-//         // 1. Set all previous versions (including parent) to not be the latest
-//         await tx.document.updateMany({
-//             where: {
-//                 OR: [   
-//                     { id: data.parentDocumentId },
-//                     { parentDocumentId: data.parentDocumentId }
-//                 ]
-//             },
-//             data: {
-//                 isLatest: false
-//             }
-//         });
-//         // 2. Create the new version
-//         const newVersion = await tx.document.create({
-//             data: {
-//                 title: data.title,
-//                 content: data.content,
-//                 fileName: data.fileName,
-//                 fileUrl: data.fileUrl,
-//                 fileType: data.fileType,
-//                 fileSize: data.fileSize,
-//                 userId: data.userId,
-//                 groupId: data.groupId,
-//                 parentDocumentId: data.parentDocumentId,
-//                 versionNumber: parentDocument.versionNumber + 1,
-//                 isLatest: true
-//             }
-//         });
-//         return newVersion;
-//     });
-// };
-/**
- * Create a new version of a document
- */
 const createDocumentVersion = async (data) => {
     // First, find the version entry for the document being versioned
     const versionEntry = await prisma.documentVersion.findFirst({
@@ -320,6 +277,7 @@ const createDocumentVersion = async (data) => {
     }
     const nextVersionNumber = highestVersion.versionNumber + 1;
     return await prisma.$transaction(async (tx) => {
+        // Set all existing versions to non-latest
         await tx.document.updateMany({
             where: {
                 id: {
@@ -333,21 +291,49 @@ const createDocumentVersion = async (data) => {
                 isLatest: false
             }
         });
-        const newVersion = await tx.document.create({
-            data: {
-                title: data.title,
-                content: data.content,
-                fileName: data.fileName,
-                fileUrl: data.fileUrl,
-                fileType: data.fileType,
-                fileSize: data.fileSize,
-                userId: data.userId,
-                groupId: data.groupId,
-                versionNumber: nextVersionNumber,
-                isLatest: true,
-                rootDocumentId
+        // Build the document data conditionally
+        let documentData = {
+            title: data.title,
+            content: data.content,
+            fileName: data.fileName,
+            fileUrl: data.fileUrl,
+            fileType: data.fileType,
+            fileSize: data.fileSize,
+            userId: data.userId,
+            versionNumber: nextVersionNumber,
+            isLatest: true,
+            rootDocumentId
+        };
+        // Add groupId only if it exists
+        if (data.groupId) {
+            documentData.groupId = data.groupId;
+        }
+        // If submissionId is provided, process submission-related data
+        if (data.submissionId) {
+            // Get the submission details
+            const submission = await tx.submission.findUnique({
+                where: { id: data.submissionId },
+                select: { assignmentId: true }
+            });
+            if (!submission) {
+                throw new Error(`Submission with ID ${data.submissionId} not found`);
             }
+            // Add the direct submissionId field
+            documentData.submissionId = data.submissionId;
+            // Add assignmentId if it exists
+            if (submission.assignmentId) {
+                documentData.assignmentId = submission.assignmentId;
+            }
+            // Add the relationship through submissions relation
+            documentData.submissions = {
+                connect: [{ id: data.submissionId }]
+            };
+        }
+        // Create the new document version
+        const newVersion = await tx.document.create({
+            data: documentData
         });
+        // Create the document version record
         await tx.documentVersion.create({
             data: {
                 rootDocumentId,

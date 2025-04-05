@@ -180,9 +180,6 @@ const isUserInGroup = async (userId, groupId) => {
     return !!membership;
 };
 exports.isUserInGroup = isUserInGroup;
-/**
- * Submit an assignment
- */
 const submitAssignment = async (assignmentId, userId, documentId) => {
     // Check if assignment exists
     const assignment = await prisma.assignment.findUnique({
@@ -202,11 +199,6 @@ const submitAssignment = async (assignmentId, userId, documentId) => {
     if (!document) {
         throw new Error(`Document with ID ${documentId} not found`);
     }
-    // Check if user is a member of the group
-    const isMember = await (0, exports.isUserInGroup)(userId, assignment.groupId);
-    if (!isMember) {
-        throw new Error('User is not a member of the group for this assignment');
-    }
     // Check if submission already exists
     const existingSubmission = await prisma.submission.findFirst({
         where: {
@@ -214,67 +206,80 @@ const submitAssignment = async (assignmentId, userId, documentId) => {
             userId,
         },
     });
-    if (existingSubmission) {
-        // Update existing submission
-        const updatedSubmission = await prisma.submission.update({
+    // Use a transaction to ensure data consistency
+    return await prisma.$transaction(async (tx) => {
+        let submission;
+        if (existingSubmission) {
+            // Update existing submission
+            submission = await tx.submission.update({
+                where: {
+                    id: existingSubmission.id,
+                },
+                data: {
+                    documentId,
+                    status: 'DRAFT',
+                    submittedAt: new Date(),
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                    document: {
+                        select: {
+                            id: true,
+                            title: true,
+                            fileName: true,
+                            fileUrl: true,
+                        },
+                    },
+                },
+            });
+        }
+        else {
+            // Create new submission
+            submission = await tx.submission.create({
+                data: {
+                    documentId,
+                    assignmentId,
+                    userId,
+                    status: 'DRAFT',
+                    submittedAt: new Date(),
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                        },
+                    },
+                    document: {
+                        select: {
+                            id: true,
+                            title: true,
+                            fileName: true,
+                            fileUrl: true,
+                        },
+                    },
+                },
+            });
+        }
+        // Update the document to include the assignment reference and submission ID
+        await tx.document.update({
             where: {
-                id: existingSubmission.id,
+                id: documentId,
             },
             data: {
-                documentId,
-                status: 'SUBMITTED',
-                submittedAt: new Date(),
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-                document: {
-                    select: {
-                        id: true,
-                        title: true,
-                        fileName: true,
-                        fileUrl: true,
-                    },
-                },
-            },
-        });
-        return updatedSubmission;
-    }
-    else {
-        // Create new submission
-        const submission = await prisma.submission.create({
-            data: {
-                documentId,
-                assignmentId,
-                userId,
-                status: 'SUBMITTED',
-                submittedAt: new Date(),
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-                document: {
-                    select: {
-                        id: true,
-                        title: true,
-                        fileName: true,
-                        fileUrl: true,
-                    },
-                },
+                assignmentId: assignmentId,
+                submissionId: submission.id, // Set the primary submission ID
             },
         });
         return submission;
-    }
+    });
 };
 exports.submitAssignment = submitAssignment;
 /**
@@ -301,6 +306,15 @@ const getAssignmentSubmissions = async (assignmentId) => {
                     fileUrl: true,
                 },
             },
+            submissionResult: {
+                select: {
+                    id: true,
+                    documentId: true,
+                    status: true,
+                    feedback: true,
+                    grade: true,
+                },
+            }
         },
         orderBy: {
             submittedAt: 'desc',

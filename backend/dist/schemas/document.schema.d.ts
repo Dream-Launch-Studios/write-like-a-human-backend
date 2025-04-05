@@ -4,35 +4,40 @@ export declare const createDocumentSchema: z.ZodObject<{
         title: z.ZodOptional<z.ZodString>;
         pastedContent: z.ZodOptional<z.ZodString>;
         groupId: z.ZodOptional<z.ZodString>;
+        submissionId: z.ZodOptional<z.ZodString>;
         createdWith: z.ZodOptional<z.ZodDefault<z.ZodEnum<["PASTE", "UPLOAD"]>>>;
         contentFormat: z.ZodOptional<z.ZodDefault<z.ZodEnum<["HTML", "TEXT"]>>>;
     }, "strip", z.ZodTypeAny, {
-        groupId?: string | undefined;
         title?: string | undefined;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
+        groupId?: string | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
+        submissionId?: string | undefined;
         pastedContent?: string | undefined;
     }, {
-        groupId?: string | undefined;
         title?: string | undefined;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
+        groupId?: string | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
+        submissionId?: string | undefined;
         pastedContent?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        groupId?: string | undefined;
         title?: string | undefined;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
+        groupId?: string | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
+        submissionId?: string | undefined;
         pastedContent?: string | undefined;
     };
 }, {
     body: {
-        groupId?: string | undefined;
         title?: string | undefined;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
+        groupId?: string | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
+        submissionId?: string | undefined;
         pastedContent?: string | undefined;
     };
 }>;
@@ -153,18 +158,22 @@ export declare const createVersionSchema: z.ZodObject<{
     }>;
     body: z.ZodObject<{
         title: z.ZodOptional<z.ZodString>;
+        submissionId: z.ZodOptional<z.ZodString>;
         content: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         content: string;
         title?: string | undefined;
+        submissionId?: string | undefined;
     }, {
         content: string;
         title?: string | undefined;
+        submissionId?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         content: string;
         title?: string | undefined;
+        submissionId?: string | undefined;
     };
     params: {
         id: string;
@@ -173,6 +182,7 @@ export declare const createVersionSchema: z.ZodObject<{
     body: {
         content: string;
         title?: string | undefined;
+        submissionId?: string | undefined;
     };
     params: {
         id: string;

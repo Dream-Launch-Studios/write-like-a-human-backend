@@ -14,7 +14,10 @@ export declare const deleteSubmissionController: (req: Request, res: Response) =
 /**
  * Get submissions for the current user
  */
-export declare const getUserSubmissionsController: (req: Request, res: Response) => Promise<void>;
+/**
+ * Get submissions by assignment Id for the current user
+ */
+export declare const getUserSubmissionsByAssignmentIdController: (req: Request, res: Response) => Promise<void>;
 /**
  * Resubmit an assignment
  */
@@ -27,3 +30,8 @@ export declare const getSubmissionFeedbackController: (req: Request, res: Respon
  * Add feedback to a submission
  */
 export declare const addSubmissionFeedbackController: (req: Request, res: Response) => Promise<void>;
+export declare const finalSubmitAssignmentController: (req: Request, res: Response) => Promise<void>;
+/**
+ * Controller for handling submission evaluation requests
+ */
+export declare const evaluateSubmissionController: (req: Request, res: Response) => Promise<void>;

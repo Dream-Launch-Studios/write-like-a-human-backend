@@ -63,26 +63,26 @@ export declare const updateFeedbackSchema: z.ZodObject<{
         status: z.ZodOptional<z.ZodEnum<["PENDING", "ANALYZED", "REVIEWED"]>>;
         response: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     }, {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     }>, {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     }, {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     };
     params: {
@@ -90,8 +90,8 @@ export declare const updateFeedbackSchema: z.ZodObject<{
     };
 }, {
     body: {
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         content?: string | undefined;
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
         response?: string | undefined;
     };
     params: {

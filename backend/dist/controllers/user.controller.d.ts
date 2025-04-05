@@ -11,3 +11,7 @@ export declare const getUserById: (req: Request, res: Response) => Promise<void>
  * Update a user's role (admin only)
  */
 export declare const updateUserRole: (req: Request, res: Response) => Promise<void>;
+/**
+ * Get dashboard stats for the authenticated user
+ */
+export declare const getDashboardStats: (req: Request, res: Response) => Promise<void>;

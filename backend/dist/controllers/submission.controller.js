@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addSubmissionFeedbackController = exports.getSubmissionFeedbackController = exports.resubmitAssignmentController = exports.getUserSubmissionsController = exports.deleteSubmissionController = exports.updateSubmissionStatusController = exports.getSubmissionByIdController = void 0;
+exports.evaluateSubmissionController = exports.finalSubmitAssignmentController = exports.addSubmissionFeedbackController = exports.getSubmissionFeedbackController = exports.resubmitAssignmentController = exports.getUserSubmissionsByAssignmentIdController = exports.deleteSubmissionController = exports.updateSubmissionStatusController = exports.getSubmissionByIdController = void 0;
 const submission_service_1 = require("../services/submission.service");
 /**
  * Get a submission by ID
@@ -150,10 +150,33 @@ exports.deleteSubmissionController = deleteSubmissionController;
 /**
  * Get submissions for the current user
  */
-const getUserSubmissionsController = async (req, res) => {
+// export const getUserSubmissionsController = async (req: Request, res: Response): Promise<void> => {
+//     try {
+//         const userId = req.user.id;
+//         const submissions = await getUserSubmissions(userId);
+//         const response: ApiResponse = {
+//             success: true,
+//             submissions,
+//         };
+//         res.status(200).json(response);
+//     } catch (error) {
+//         console.error('Error getting user submissions:', error);
+//         const response: ApiResponse = {
+//             success: false,
+//             message: 'Failed to get user submissions',
+//             error: error instanceof Error ? error.message : 'Unknown error',
+//         };
+//         res.status(500).json(response);
+//     }
+// };
+/**
+ * Get submissions by assignment Id for the current user
+ */
+const getUserSubmissionsByAssignmentIdController = async (req, res) => {
     try {
         const userId = req.user.id;
-        const submissions = await (0, submission_service_1.getUserSubmissions)(userId);
+        const { id } = req.params;
+        const submissions = await (0, submission_service_1.getUserSubmissionsByAssignmentId)(userId, id);
         const response = {
             success: true,
             submissions,
@@ -170,7 +193,7 @@ const getUserSubmissionsController = async (req, res) => {
         res.status(500).json(response);
     }
 };
-exports.getUserSubmissionsController = getUserSubmissionsController;
+exports.getUserSubmissionsByAssignmentIdController = getUserSubmissionsByAssignmentIdController;
 /**
  * Resubmit an assignment
  */
@@ -321,3 +344,101 @@ const addSubmissionFeedbackController = async (req, res) => {
     }
 };
 exports.addSubmissionFeedbackController = addSubmissionFeedbackController;
+const finalSubmitAssignmentController = async (req, res) => {
+    try {
+        const { id: submissionId } = req.params;
+        const { documentId } = req.body;
+        const userId = req.user.id;
+        const result = await (0, submission_service_1.finalSubmitAssignment)(submissionId, documentId, userId);
+        const response = {
+            success: true,
+            message: 'Assignment final submitted successfully',
+            data: {
+                submissionId: result.submission.id,
+                status: result.submission.status,
+                submittedAt: result.submission.submittedAt,
+                evaluationStatus: result.submissionResult.status
+            }
+        };
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('Error final submitting assignment:', error);
+        // Handle specific error types
+        if (error instanceof Error) {
+            if (error.message.includes('not found')) {
+                res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+            else if (error.message.includes('not authorized')) {
+                res.status(403).json({
+                    success: false,
+                    message: error.message
+                });
+            }
+        }
+        const response = {
+            success: false,
+            message: 'Failed to final submit assignment',
+            error: error instanceof Error ? error.message : 'Unknown error',
+        };
+        res.status(500).json(response);
+    }
+};
+exports.finalSubmitAssignmentController = finalSubmitAssignmentController;
+/**
+ * Controller for handling submission evaluation requests
+ */
+const evaluateSubmissionController = async (req, res) => {
+    try {
+        const { id: submissionResultId } = req.params;
+        const teacherId = req.user.id;
+        const { feedback, grade } = req.body;
+        const evaluationData = {
+            feedback,
+            grade,
+        };
+        const result = await (0, submission_service_1.evaluateSubmission)(submissionResultId, teacherId, evaluationData);
+        const response = {
+            success: true,
+            message: `Submission evaluated successfully`,
+            data: {
+                id: result.id,
+                feedback: result.feedback,
+                grade: result.grade,
+                status: result.status,
+                updatedAt: result.updatedAt
+            }
+        };
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('Error evaluating submission:', error);
+        // Handle specific errors with appropriate status codes
+        if (error instanceof Error) {
+            if (error.message.includes('not found')) {
+                res.status(404).json({
+                    success: false,
+                    message: error.message
+                });
+                return;
+            }
+            else if (error.message.includes('not authorized')) {
+                res.status(403).json({
+                    success: false,
+                    message: error.message
+                });
+                return;
+            }
+        }
+        // Generic error response
+        res.status(500).json({
+            success: false,
+            message: 'Failed to evaluate submission',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+};
+exports.evaluateSubmissionController = evaluateSubmissionController;

@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUserRole = exports.getUserById = exports.getUsers = void 0;
+exports.getDashboardStats = exports.updateUserRole = exports.getUserById = exports.getUsers = void 0;
 const userService = __importStar(require("../services/user.service"));
 /**
  * Get list of users with pagination and filtering
@@ -135,3 +135,36 @@ const updateUserRole = async (req, res) => {
     }
 };
 exports.updateUserRole = updateUserRole;
+/**
+ * Get dashboard stats for the authenticated user
+ */
+const getDashboardStats = async (req, res) => {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!userId) {
+            const response = {
+                success: false,
+                message: 'User not authenticated'
+            };
+            res.status(401).json(response);
+            return;
+        }
+        const stats = await userService.getDashboardStats(userId);
+        const response = {
+            success: true,
+            stats
+        };
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('Error getting dashboard stats:', error);
+        const response = {
+            success: false,
+            message: 'Failed to get dashboard stats',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+        res.status(500).json(response);
+    }
+};
+exports.getDashboardStats = getDashboardStats;

@@ -160,11 +160,11 @@ export declare const assignmentParamsSchema: z.ZodObject<{
  */
 export declare const submitAssignmentSchema: z.ZodObject<{
     body: z.ZodObject<{
-        title: z.ZodString;
+        groupId: z.ZodString;
     }, "strip", z.ZodTypeAny, {
-        title: string;
+        groupId: string;
     }, {
-        title: string;
+        groupId: string;
     }>;
     params: z.ZodObject<{
         id: z.ZodString;
@@ -175,14 +175,14 @@ export declare const submitAssignmentSchema: z.ZodObject<{
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        title: string;
+        groupId: string;
     };
     params: {
         id: string;
     };
 }, {
     body: {
-        title: string;
+        groupId: string;
     };
     params: {
         id: string;

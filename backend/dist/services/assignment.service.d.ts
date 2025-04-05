@@ -11,10 +11,10 @@ export declare const createAssignment: (data: CreateAssignmentData) => Promise<{
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    groupId: string;
     title: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     fileType: string | null;
+    groupId: string;
     description: string;
     pastedContent: string | null;
     dueDate: Date | null;
@@ -37,10 +37,10 @@ export declare const updateAssignment: (id: string, data: UpdateAssignmentData) 
     id: string;
     createdAt: Date;
     updatedAt: Date;
-    groupId: string;
     title: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     fileType: string | null;
+    groupId: string;
     description: string;
     pastedContent: string | null;
     dueDate: Date | null;
@@ -56,14 +56,11 @@ export declare const deleteAssignment: (id: string) => Promise<boolean>;
  * Check if a user is a member of a group
  */
 export declare const isUserInGroup: (userId: string, groupId: string) => Promise<boolean>;
-/**
- * Submit an assignment
- */
 export declare const submitAssignment: (assignmentId: string, userId: string, documentId: string) => Promise<{
     user: {
+        id: string;
         email: string;
         name: string | null;
-        id: string;
     };
     document: {
         id: string;
@@ -76,9 +73,9 @@ export declare const submitAssignment: (assignmentId: string, userId: string, do
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    assignmentId: string;
     status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
-    assignmentId: string;
     submittedAt: Date | null;
 }>;
 /**
@@ -86,9 +83,9 @@ export declare const submitAssignment: (assignmentId: string, userId: string, do
  */
 export declare const getAssignmentSubmissions: (assignmentId: string) => Promise<({
     user: {
+        id: string;
         email: string;
         name: string | null;
-        id: string;
     };
     document: {
         id: string;
@@ -96,14 +93,21 @@ export declare const getAssignmentSubmissions: (assignmentId: string) => Promise
         fileName: string;
         fileUrl: string;
     };
+    submissionResult: {
+        id: string;
+        status: import(".prisma/client").$Enums.EvaluationStatus;
+        feedback: string | null;
+        documentId: string | null;
+        grade: string | null;
+    } | null;
 } & {
     id: string;
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    assignmentId: string;
     status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
-    assignmentId: string;
     submittedAt: Date | null;
 })[]>;
 /**
@@ -118,9 +122,9 @@ export declare const updateSubmissionStatus: (id: string, status: SubmissionStat
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    assignmentId: string;
     status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
-    assignmentId: string;
     submittedAt: Date | null;
 } | null>;
 /**
@@ -134,8 +138,8 @@ export declare const getUserSubmissions: (userId: string) => Promise<({
     };
     assignment: {
         id: string;
-        groupId: string;
         title: string;
+        groupId: string;
         dueDate: Date | null;
     };
 } & {
@@ -143,8 +147,8 @@ export declare const getUserSubmissions: (userId: string) => Promise<({
     createdAt: Date;
     updatedAt: Date;
     userId: string;
+    assignmentId: string;
     status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
-    assignmentId: string;
     submittedAt: Date | null;
 })[]>;

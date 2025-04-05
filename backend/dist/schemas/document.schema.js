@@ -7,7 +7,8 @@ exports.createDocumentSchema = zod_1.z.object({
     body: zod_1.z.object({
         title: zod_1.z.string().optional(),
         pastedContent: zod_1.z.string().optional(),
-        groupId: zod_1.z.string().uuid({ message: 'Invalid group ID' }).optional(),
+        groupId: zod_1.z.string().cuid({ message: 'Invalid group ID' }).optional(),
+        submissionId: zod_1.z.string().cuid({ message: 'Invalid submission ID' }).optional(),
         createdWith: zod_1.z.enum(['PASTE', 'UPLOAD']).default("UPLOAD").optional(),
         contentFormat: zod_1.z.enum(['HTML', 'TEXT']).default("HTML").optional(),
     })
@@ -62,7 +63,8 @@ exports.createVersionSchema = zod_1.z.object({
     }),
     body: zod_1.z.object({
         title: zod_1.z.string().optional(),
-        content: zod_1.z.string()
+        submissionId: zod_1.z.string().cuid({ message: 'Invalid submission ID' }).optional(),
+        content: zod_1.z.string(),
     })
     // Note: file validation is handled by uploadMiddleware
 });

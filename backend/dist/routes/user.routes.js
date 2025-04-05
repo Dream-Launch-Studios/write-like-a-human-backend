@@ -32,10 +32,8 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const user_schema_1 = require("../schemas/user.schema");
 const router = express_1.default.Router();
-// Get list of users (admin only)
 router.get('/', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, (0, validate_middleware_1.validate)(user_schema_1.listUsersSchema), userController.getUsers);
-// Get a specific user
+router.get('/stats', auth_middleware_1.authMiddleware, userController.getDashboardStats);
 router.get('/:id', auth_middleware_1.authMiddleware, (0, validate_middleware_1.validate)(user_schema_1.getUserByIdSchema), userController.getUserById);
-// Update user role (admin only)
 router.patch('/:id/role', auth_middleware_1.authMiddleware, auth_middleware_1.adminMiddleware, (0, validate_middleware_1.validate)(user_schema_1.updateUserRoleSchema), userController.updateUserRole);
 exports.default = router;

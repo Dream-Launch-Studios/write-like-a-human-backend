@@ -89,11 +89,22 @@ const getGroupByIdController = async (req, res) => {
             };
             res.status(403).json(response);
         }
-        const response = {
-            success: true,
-            group,
-        };
-        res.status(200).json(response);
+        // remove token from group object if user is not admin or teacher
+        const groupWithoutToken = Object.assign(Object.assign({}, group), { joinToken: undefined });
+        if (req.user.role === "TEACHER" || req.user.role === "ADMIN") {
+            const response = {
+                success: true,
+                group,
+            };
+            res.status(200).json(response);
+        }
+        else {
+            const response = {
+                success: true,
+                group: groupWithoutToken,
+            };
+            res.status(200).json(response);
+        }
     }
     catch (error) {
         console.error('Error getting group:', error);

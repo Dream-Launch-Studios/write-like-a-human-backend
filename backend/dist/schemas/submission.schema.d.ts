@@ -2,6 +2,23 @@ import { z } from 'zod';
 /**
  * Schema for submission params
  */
+export declare const userSubmissionByAssignmentIdParamsSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+    }, {
+        id: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
+}, {
+    params: {
+        id: string;
+    };
+}>;
 export declare const submissionParamsSchema: z.ZodObject<{
     params: z.ZodObject<{
         id: z.ZodString;
@@ -80,6 +97,71 @@ export declare const resubmitAssignmentSchema: z.ZodObject<{
 }, {
     body: {
         title: string;
+    };
+    params: {
+        id: string;
+    };
+}>;
+export declare const finalSubmitAssignmentSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+    }, {
+        id: string;
+    }>;
+    body: z.ZodObject<{
+        documentId: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        documentId: string;
+    }, {
+        documentId: string;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    body: {
+        documentId: string;
+    };
+    params: {
+        id: string;
+    };
+}, {
+    body: {
+        documentId: string;
+    };
+    params: {
+        id: string;
+    };
+}>;
+export declare const evaluateSubmissionSchema: z.ZodObject<{
+    params: z.ZodObject<{
+        id: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        id: string;
+    }, {
+        id: string;
+    }>;
+    body: z.ZodObject<{
+        feedback: z.ZodOptional<z.ZodString>;
+        grade: z.ZodOptional<z.ZodString>;
+    }, "strip", z.ZodTypeAny, {
+        feedback?: string | undefined;
+        grade?: string | undefined;
+    }, {
+        feedback?: string | undefined;
+        grade?: string | undefined;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    body: {
+        feedback?: string | undefined;
+        grade?: string | undefined;
+    };
+    params: {
+        id: string;
+    };
+}, {
+    body: {
+        feedback?: string | undefined;
+        grade?: string | undefined;
     };
     params: {
         id: string;
