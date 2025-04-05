@@ -126,3 +126,42 @@ export const updateUserRole = async (req: Request, res: Response): Promise<void>
         res.status(500).json(response);
     }
 };
+
+
+/**
+ * Get dashboard stats for the authenticated user
+ */
+export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.id;
+
+        if (!userId) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'User not authenticated'
+            };
+            res.status(401).json(response);
+            return;
+        }
+
+        const stats = await userService.getDashboardStats(userId);
+
+        const response: ApiResponse = {
+            success: true,
+            stats
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error('Error getting dashboard stats:', error);
+
+        const response: ApiResponse = {
+            success: false,
+            message: 'Failed to get dashboard stats',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        };
+
+        res.status(500).json(response);
+    }
+
+};

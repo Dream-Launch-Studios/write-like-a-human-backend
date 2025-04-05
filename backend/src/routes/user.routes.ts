@@ -6,7 +6,6 @@ import { listUsersSchema, getUserByIdSchema, updateUserRoleSchema } from '../sch
 
 const router = express.Router();
 
-// Get list of users (admin only)
 router.get(
     '/',
     authMiddleware,
@@ -14,8 +13,12 @@ router.get(
     validate(listUsersSchema),
     userController.getUsers
 );
+router.get(
+    '/stats',
+    authMiddleware,
+    userController.getDashboardStats
+);
 
-// Get a specific user
 router.get(
     '/:id',
     authMiddleware,
@@ -23,7 +26,6 @@ router.get(
     userController.getUserById
 );
 
-// Update user role (admin only)
 router.patch(
     '/:id/role',
     authMiddleware,
