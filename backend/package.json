@@ -9,12 +9,15 @@
     "preserve": "npm run build",
     "serve": "concurrently \"npx tsc -w\"  \"nodemon dist/index.js\"",
     "prettier": "prettier --write .",
-    "vercel-build": "npx prisma generate && npx prisma migrate deploy && echo WWW", 
+    "vercel-build": "npx prisma generate && npx prisma migrate deploy && echo WWW",
     "migrate:dev": "npx prisma migrate dev",
     "migrate:deploy": "npx prisma migrate deploy",
     "migrate:status": "npx prisma migrate status",
     "generate": "npx prisma generate",
     "postinstall": "npx prisma generate"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
