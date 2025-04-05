@@ -3,6 +3,7 @@ import { DocumentFilter, CreateDocumentData, UpdateDocumentData, CreateVersionDa
  * Create a new document
  */
 export declare const createDocument: (data: CreateDocumentData) => Promise<{
+    fileUrl: string;
     id: string;
     createdAt: Date;
     updatedAt: Date;
@@ -13,7 +14,6 @@ export declare const createDocument: (data: CreateDocumentData) => Promise<{
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
@@ -28,9 +28,10 @@ export declare const createDocument: (data: CreateDocumentData) => Promise<{
  */
 export declare const listDocuments: ({ userId, page, limit, groupId, search }: DocumentFilter) => Promise<{
     documents: {
+        fileUrl: string;
         user: {
-            id: string;
             name: string | null;
+            id: string;
         };
         id: string;
         createdAt: Date;
@@ -39,14 +40,13 @@ export declare const listDocuments: ({ userId, page, limit, groupId, search }: D
         versionNumber: number;
         isLatest: boolean;
         fileName: string;
-        fileUrl: string;
         fileType: string;
         fileSize: number;
         groupId: string | null;
         rootDocumentId: string | null;
         group: {
-            id: string;
             name: string;
+            id: string;
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
@@ -66,14 +66,15 @@ export declare const listDocuments: ({ userId, page, limit, groupId, search }: D
  */
 export declare const getDocumentById: (id: string) => Promise<({
     user: {
-        id: string;
         name: string | null;
+        id: string;
     };
     group: {
-        id: string;
         name: string;
+        id: string;
     } | null;
 } & {
+    fileUrl: string;
     id: string;
     createdAt: Date;
     updatedAt: Date;
@@ -84,7 +85,6 @@ export declare const getDocumentById: (id: string) => Promise<({
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
@@ -98,6 +98,7 @@ export declare const getDocumentById: (id: string) => Promise<({
  * Update a document
  */
 export declare const updateDocument: (id: string, data: UpdateDocumentData) => Promise<{
+    fileUrl: string;
     id: string;
     createdAt: Date;
     updatedAt: Date;
@@ -108,7 +109,6 @@ export declare const updateDocument: (id: string, data: UpdateDocumentData) => P
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
@@ -123,6 +123,7 @@ export declare const deleteDocument: (id: string) => Promise<boolean>;
  * Create a new version of a document
  */
 export declare const createDocumentVersion: (data: CreateVersionData) => Promise<{
+    fileUrl: string;
     id: string;
     createdAt: Date;
     updatedAt: Date;
@@ -133,7 +134,6 @@ export declare const createDocumentVersion: (data: CreateVersionData) => Promise
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
@@ -154,9 +154,9 @@ export declare const getDocumentVersions: (documentId: string) => Promise<{
     createdAt: Date;
     userId: string;
     user: {
-        id: string;
         email: string;
         name: string | null;
+        id: string;
     };
 }[]>;
 /**

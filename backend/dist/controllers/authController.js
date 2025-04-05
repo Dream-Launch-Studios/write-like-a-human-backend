@@ -8,6 +8,7 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const config_1 = __importDefault(require("../config/config"));
+const supabase_1 = require("../utils/supabase");
 dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const register = async (req, res) => {
@@ -228,7 +229,7 @@ const updateUserById = async (userId, updates, req, res) => {
                 try {
                     // This is an admin-only action that marks the email as confirmed in Supabase
                     // Only attempt this if we're verifying (not unverifying) the email
-                    await supabaseAdmin.auth.admin.updateUserById(userId, {
+                    await supabase_1.supabaseAdmin.auth.admin.updateUserById(userId, {
                         email_confirm: true
                     });
                     console.log('✅ Email confirmed in Supabase for user:', userId);
@@ -330,7 +331,7 @@ const updateEmailVerification = async (req, res) => {
         // If we're verifying the email, also update Supabase
         if (isVerified) {
             try {
-                await supabaseAdmin.auth.admin.updateUserById(userId, {
+                await supabase_1.supabaseAdmin.auth.admin.updateUserById(userId, {
                     email_confirm: true
                 });
                 console.log('✅ Email confirmed in Supabase for user:', userId);

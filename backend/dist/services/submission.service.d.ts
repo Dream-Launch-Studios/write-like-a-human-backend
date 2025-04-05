@@ -30,18 +30,18 @@ export declare const deleteSubmission: (id: string) => Promise<boolean>;
  */
 export declare const getUserSubmissionsByAssignmentId: (userId: string, assignmentId: string) => Promise<({
     document: {
+        fileUrl: string;
         id: string;
         title: string;
         fileName: string;
-        fileUrl: string;
     };
     assignment: {
         id: string;
         title: string;
         groupId: string;
         group: {
-            id: string;
             name: string;
+            id: string;
         };
         dueDate: Date | null;
     };
@@ -67,15 +67,15 @@ export declare const getUserSubmissionsByAssignmentId: (userId: string, assignme
  */
 export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuffer: Buffer, fileName: string, fileType: string, title: string) => Promise<{
     user: {
-        id: string;
         email: string;
         name: string | null;
+        id: string;
     };
     document: {
+        fileUrl: string;
         id: string;
         title: string;
         fileName: string;
-        fileUrl: string;
     };
     assignment: {
         id: string;
@@ -97,9 +97,9 @@ export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuff
  */
 export declare const getSubmissionFeedback: (submissionId: string) => Promise<({
     user: {
-        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
+        id: string;
     };
 } & {
     id: string;
@@ -118,9 +118,9 @@ export declare const getSubmissionFeedback: (submissionId: string) => Promise<({
  */
 export declare const addSubmissionFeedback: (data: SubmissionFeedbackData) => Promise<{
     user: {
-        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
+        id: string;
     };
 } & {
     id: string;

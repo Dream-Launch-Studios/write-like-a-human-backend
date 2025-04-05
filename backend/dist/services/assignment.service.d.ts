@@ -58,15 +58,15 @@ export declare const deleteAssignment: (id: string) => Promise<boolean>;
 export declare const isUserInGroup: (userId: string, groupId: string) => Promise<boolean>;
 export declare const submitAssignment: (assignmentId: string, userId: string, documentId: string) => Promise<{
     user: {
-        id: string;
         email: string;
         name: string | null;
+        id: string;
     };
     document: {
+        fileUrl: string;
         id: string;
         title: string;
         fileName: string;
-        fileUrl: string;
     };
 } & {
     id: string;
@@ -83,15 +83,15 @@ export declare const submitAssignment: (assignmentId: string, userId: string, do
  */
 export declare const getAssignmentSubmissions: (assignmentId: string) => Promise<({
     user: {
-        id: string;
         email: string;
         name: string | null;
+        id: string;
     };
     document: {
+        fileUrl: string;
         id: string;
         title: string;
         fileName: string;
-        fileUrl: string;
     };
     submissionResult: {
         id: string;

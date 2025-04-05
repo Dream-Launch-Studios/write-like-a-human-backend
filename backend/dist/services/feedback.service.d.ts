@@ -19,8 +19,8 @@ export declare const createFeedback: (data: CreateFeedbackData) => Promise<{
  */
 export declare const getDocumentFeedback: (documentId: string) => Promise<({
     user: {
-        id: string;
         name: string | null;
+        id: string;
     };
 } & {
     id: string;
@@ -39,9 +39,9 @@ export declare const getDocumentFeedback: (documentId: string) => Promise<({
  */
 export declare const getFeedbackById: (id: string) => Promise<({
     user: {
-        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
+        id: string;
     };
     document: {
         id: string;

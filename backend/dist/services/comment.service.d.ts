@@ -4,8 +4,8 @@ import { CreateCommentData, UpdateCommentData } from '../types/comment.types';
  */
 export declare const createComment: (data: CreateCommentData) => Promise<{
     user: {
-        id: string;
         name: string | null;
+        id: string;
     };
 } & {
     id: string;
@@ -21,9 +21,9 @@ export declare const createComment: (data: CreateCommentData) => Promise<{
  */
 export declare const getDocumentComments: (documentId: string) => Promise<({
     user: {
-        id: string;
         email: string;
         name: string | null;
+        id: string;
     };
 } & {
     id: string;
@@ -39,8 +39,8 @@ export declare const getDocumentComments: (documentId: string) => Promise<({
  */
 export declare const getCommentById: (id: string) => Promise<({
     user: {
-        id: string;
         name: string | null;
+        id: string;
     };
 } & {
     id: string;

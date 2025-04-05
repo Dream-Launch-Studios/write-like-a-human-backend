@@ -1,11 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadFileToSupabase = exports.supabase = void 0;
+exports.uploadFileToSupabase = exports.supabaseAdmin = exports.supabase = void 0;
 const supabase_js_1 = require("@supabase/supabase-js");
 const uuidv4_1 = require("uuidv4");
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 exports.supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey);
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_KEY;
+exports.supabaseAdmin = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
 const uploadFileToSupabase = async (fileBuffer, originalFilename, mimeType, userId, bucketName = 'documents') => {
     var _a;
     try {
