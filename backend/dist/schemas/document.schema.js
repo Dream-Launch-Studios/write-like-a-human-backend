@@ -63,7 +63,7 @@ exports.createVersionSchema = zod_1.z.object({
     }),
     body: zod_1.z.object({
         title: zod_1.z.string().optional(),
-        submissionId: zod_1.z.string().cuid({ message: 'Invalid submission ID' }).optional(),
+        submissionId: zod_1.z.string().cuid({ message: 'Invalid submission ID' }).optional().nullable(),
         content: zod_1.z.string(),
     })
     // Note: file validation is handled by uploadMiddleware

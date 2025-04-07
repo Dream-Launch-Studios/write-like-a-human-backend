@@ -24,6 +24,12 @@ const createDocument = async (data) => {
                 contentFormat: data.contentFormat
             }
         });
+        await tx.document.update({
+            where: { id: document.id },
+            data: {
+                rootDocumentId: document.id
+            }
+        });
         await tx.documentVersion.create({
             data: {
                 rootDocumentId: document.id,

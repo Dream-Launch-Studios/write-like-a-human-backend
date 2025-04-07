@@ -158,22 +158,22 @@ export declare const createVersionSchema: z.ZodObject<{
     }>;
     body: z.ZodObject<{
         title: z.ZodOptional<z.ZodString>;
-        submissionId: z.ZodOptional<z.ZodString>;
+        submissionId: z.ZodNullable<z.ZodOptional<z.ZodString>>;
         content: z.ZodString;
     }, "strip", z.ZodTypeAny, {
         content: string;
         title?: string | undefined;
-        submissionId?: string | undefined;
+        submissionId?: string | null | undefined;
     }, {
         content: string;
         title?: string | undefined;
-        submissionId?: string | undefined;
+        submissionId?: string | null | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         content: string;
         title?: string | undefined;
-        submissionId?: string | undefined;
+        submissionId?: string | null | undefined;
     };
     params: {
         id: string;
@@ -182,7 +182,7 @@ export declare const createVersionSchema: z.ZodObject<{
     body: {
         content: string;
         title?: string | undefined;
-        submissionId?: string | undefined;
+        submissionId?: string | null | undefined;
     };
     params: {
         id: string;
