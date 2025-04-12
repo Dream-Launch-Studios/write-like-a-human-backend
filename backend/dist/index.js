@@ -21,6 +21,8 @@ const word_suggestion_routes_1 = __importDefault(require("./routes/word-suggesti
 const group_routes_1 = __importDefault(require("./routes/group.routes"));
 const assignment_routes_1 = __importDefault(require("./routes/assignment.routes"));
 const submission_routes_1 = __importDefault(require("./routes/submission.routes"));
+const supabase_1 = require("./utils/supabase");
+const config_1 = __importDefault(require("./config/config"));
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
@@ -42,6 +44,81 @@ app.use("/api/submissions", submission_routes_1.default);
 // app.use("/api/analyze", analysisRouter);
 app.get("/", (req, res) => {
     res.send("API is running...");
+});
+app.get('/verify-email', async (req, res) => {
+    var _a;
+    const token_hash = req.query.token_hash;
+    const type = req.query.type;
+    const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+    // Validate required environment variables
+    const secret = process.env.SUPABASE_JWT_SECRET;
+    if (!secret) {
+        console.error("❌ SUPABASE_JWT_SECRET is not set");
+        return res.redirect(`${CLIENT_URL}/error?message=server-configuration-error`);
+    }
+    // Validate required query parameters
+    if (!token_hash || !type) {
+        console.error("❌ Missing required parameters: token_hash or type");
+        return res.redirect(`${CLIENT_URL}/error?message=missing-parameters`);
+    }
+    try {
+        // Step 1: Verify the OTP with Supabase
+        console.log(`🔍 Verifying OTP token for type: ${type}`);
+        const { error, data } = await supabase_1.supabaseAdmin.auth.verifyOtp({
+            type,
+            token_hash,
+        });
+        if (error) {
+            console.error("❌ OTP verification failed:", error);
+            return res.redirect(`${CLIENT_URL}/error?message=otp-verification-failed`);
+        }
+        // Step 2: Get user ID from verification response
+        const userId = (_a = data === null || data === void 0 ? void 0 : data.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!userId) {
+            console.error("❌ User ID not found in verification response");
+            return res.redirect(`${CLIENT_URL}/error?message=user-not-found`);
+        }
+        console.log(`✅ OTP verified successfully for user ${userId}`);
+        // Step 3: Verify user exists in database
+        const userToVerify = await config_1.default.user.findUnique({
+            where: { id: userId }
+        });
+        if (!userToVerify) {
+            console.error(`❌ User not found in database: ${userId}`);
+            return res.redirect(`${CLIENT_URL}/error?message=user-not-found-in-db`);
+        }
+        console.log(`✅ User found in database:`, {
+            id: userToVerify.id,
+            email: userToVerify.email,
+            currentVerificationStatus: userToVerify.isEmailVerified
+        });
+        // Step 4: Update Supabase and local database
+        try {
+            // Update Supabase first
+            console.log(`🔄 Updating Supabase email verification for user ${userId}`);
+            await supabase_1.supabaseAdmin.auth.admin.updateUserById(userId, {
+                email_confirm: true
+            });
+            console.log('✅ Email confirmed in Supabase');
+            // Then update local database
+            await config_1.default.user.update({
+                where: { id: userId },
+                data: { isEmailVerified: true }
+            });
+            console.log(`✅ Database updated successfully`);
+            // Successful flow - redirect to login
+            return res.redirect(`${CLIENT_URL}/auth/login`);
+        }
+        catch (updateError) {
+            console.error('❌ Failed to update email verification:', updateError);
+            return res.redirect(`${CLIENT_URL}/error?message=verification-update-failed`);
+        }
+    }
+    catch (error) {
+        // Catch any unexpected errors
+        console.error("❌ Unexpected error during verification process:", error);
+        return res.redirect(`${CLIENT_URL}/error?message=verification-process-error`);
+    }
 });
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

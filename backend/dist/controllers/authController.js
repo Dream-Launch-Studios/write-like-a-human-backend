@@ -34,6 +34,7 @@ const register = async (req, res) => {
                 name,
                 password: hashedPassword,
                 role: userRole,
+                isEmailVerified: false
             },
         });
         res.status(201).json({

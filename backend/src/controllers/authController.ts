@@ -38,6 +38,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
                 name,
                 password: hashedPassword,
                 role: userRole,
+                isEmailVerified: false
             },
         });
 
