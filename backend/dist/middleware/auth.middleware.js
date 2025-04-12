@@ -111,4 +111,4 @@ const roleMiddleware = (roles) => {
 exports.roleMiddleware = roleMiddleware;
 exports.teacherMiddleware = (0, exports.roleMiddleware)(['TEACHER', 'ADMIN']);
 exports.adminMiddleware = (0, exports.roleMiddleware)('ADMIN');
-exports.studentMiddleware = (0, exports.roleMiddleware)(['STUDENT', 'TEACHER', 'ADMIN']);
+exports.studentMiddleware = (0, exports.roleMiddleware)(['STUDENT']);

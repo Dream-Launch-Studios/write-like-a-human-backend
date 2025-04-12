@@ -134,4 +134,4 @@ export const roleMiddleware = (roles: string | string[]) => {
 
 export const teacherMiddleware = roleMiddleware(['TEACHER', 'ADMIN']);
 export const adminMiddleware = roleMiddleware('ADMIN');
-export const studentMiddleware = roleMiddleware(['STUDENT', 'TEACHER', 'ADMIN']);
+export const studentMiddleware = roleMiddleware(['STUDENT']);
