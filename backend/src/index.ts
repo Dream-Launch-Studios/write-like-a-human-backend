@@ -1,11 +1,5 @@
 import express from "express";
 import cors from "cors";
-// import userRouter from "./routes/userRoutes";
-// import groupRouter from "./routes/groupRoute";
-// import documentRouter from "./routes/documentRoutes";
-// import feedbackRouter from "./routes/feedbackRoutes";
-// import commentRouter from "./routes/commentRoutes";
-// import analysisRouter from "./routes/analysisRoutes";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/user.routes";
 import documentRoutes from "./routes/document.routes";
@@ -16,9 +10,12 @@ import wordSuggestionRoutes from "./routes/word-suggestion.routes";
 import groupRoutes from "./routes/group.routes";
 import assignmentRoutes from "./routes/assignment.routes";
 import submissionRoutes from "./routes/submission.routes";
-import { createClient, EmailOtpType } from "@supabase/supabase-js";
+import subscriptionRoutes from "./routes/subscription.routes";
+import { EmailOtpType } from "@supabase/supabase-js";
 import { supabaseAdmin } from "./utils/supabase";
 import prisma from "./config/config";
+import { SubscriptionController } from "./controllers/subscription.controller";
+import { Request, Response, NextFunction } from "express";
 
 const app = express();
 app.use(cors());
@@ -35,12 +32,16 @@ app.use("/api/groups", groupRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
 
-// app.use("/api/groups", groupRouter); //completed
-// app.use("/api/feedbacks", feedbackRouter);
-// app.use("/api/comments", commentRouter);
-// app.use("/api/users", userRouter); //completed
-// app.use("/api/documents", documentRouter); //completed almost
-// app.use("/api/analyze", analysisRouter);
+app.post(
+  '/api/subscriptions/webhook',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    const subscriptionController = new SubscriptionController();
+    return subscriptionController.handleWebhook(req, res);
+  }
+);
+
+app.use('/api/subscriptions', subscriptionRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -131,6 +132,21 @@ app.get('/verify-email', async (req, res): Promise<void> => {
   }
 });
 
+interface ErrorHandlerResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  const response: ErrorHandlerResponse = {
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  };
+  res.status(500).json(response);
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

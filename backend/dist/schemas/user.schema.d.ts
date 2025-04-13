@@ -82,17 +82,17 @@ export declare const userSchema: z.ZodObject<{
     createdAt: z.ZodDate;
     updatedAt: z.ZodDate;
 }, "strip", z.ZodTypeAny, {
+    id: string;
     email: string;
     role: "STUDENT" | "TEACHER" | "ADMIN";
-    id: string;
     isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
     name?: string | null | undefined;
 }, {
+    id: string;
     email: string;
     role: "STUDENT" | "TEACHER" | "ADMIN";
-    id: string;
     isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;

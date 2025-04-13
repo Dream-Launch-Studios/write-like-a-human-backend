@@ -5,10 +5,12 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import prisma from "../config/config";
 import { supabaseAdmin } from "../utils/supabase";
+import { SubscriptionService } from "../services/subscription.service";
 
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
+const subscriptionService = new SubscriptionService();
 
 export const register = async (req: Request, res: Response): Promise<any> => {
     try {
@@ -38,9 +40,12 @@ export const register = async (req: Request, res: Response): Promise<any> => {
                 name,
                 password: hashedPassword,
                 role: userRole,
-                isEmailVerified: false
+                isEmailVerified: false,
+                subscriptionStatus: "FREE",
+                subscriptionTier: "FREE",
             },
         });
+        await subscriptionService.createFreeSubscriptionForNewUser(user.id);
 
         res.status(201).json({
             message: "User registered successfully",

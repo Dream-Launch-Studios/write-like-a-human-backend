@@ -30,8 +30,8 @@ export declare const listDocuments: ({ userId, page, limit, groupId, search }: D
     documents: {
         fileUrl: string;
         user: {
-            name: string | null;
             id: string;
+            name: string | null;
         };
         id: string;
         createdAt: Date;
@@ -45,8 +45,8 @@ export declare const listDocuments: ({ userId, page, limit, groupId, search }: D
         groupId: string | null;
         rootDocumentId: string | null;
         group: {
-            name: string;
             id: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
             description: string | null;
@@ -66,12 +66,12 @@ export declare const listDocuments: ({ userId, page, limit, groupId, search }: D
  */
 export declare const getDocumentById: (id: string) => Promise<({
     user: {
-        name: string | null;
         id: string;
+        name: string | null;
     };
     group: {
-        name: string;
         id: string;
+        name: string;
     } | null;
 } & {
     fileUrl: string;
@@ -154,9 +154,9 @@ export declare const getDocumentVersions: (documentId: string) => Promise<{
     createdAt: Date;
     userId: string;
     user: {
+        id: string;
         email: string;
         name: string | null;
-        id: string;
     };
 }[]>;
 /**

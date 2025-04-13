@@ -10,17 +10,17 @@ export declare const createFeedback: (data: CreateFeedbackData) => Promise<{
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 }>;
 /**
  * Get all feedback for a document
  */
 export declare const getDocumentFeedback: (documentId: string) => Promise<({
     user: {
-        name: string | null;
         id: string;
+        name: string | null;
     };
 } & {
     id: string;
@@ -30,18 +30,18 @@ export declare const getDocumentFeedback: (documentId: string) => Promise<({
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 })[]>;
 /**
  * Get feedback by ID
  */
 export declare const getFeedbackById: (id: string) => Promise<({
     user: {
+        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
-        id: string;
     };
     document: {
         id: string;
@@ -55,9 +55,9 @@ export declare const getFeedbackById: (id: string) => Promise<({
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 }) | null>;
 /**
  * Update feedback
@@ -70,9 +70,9 @@ export declare const updateFeedback: (id: string, data: UpdateFeedbackData) => P
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 } | null>;
 /**
  * Delete feedback

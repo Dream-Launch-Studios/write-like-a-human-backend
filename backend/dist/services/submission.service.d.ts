@@ -40,8 +40,8 @@ export declare const getUserSubmissionsByAssignmentId: (userId: string, assignme
         title: string;
         groupId: string;
         group: {
-            name: string;
             id: string;
+            name: string;
         };
         dueDate: Date | null;
     };
@@ -67,9 +67,9 @@ export declare const getUserSubmissionsByAssignmentId: (userId: string, assignme
  */
 export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuffer: Buffer, fileName: string, fileType: string, title: string) => Promise<{
     user: {
+        id: string;
         email: string;
         name: string | null;
-        id: string;
     };
     document: {
         fileUrl: string;
@@ -97,9 +97,9 @@ export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuff
  */
 export declare const getSubmissionFeedback: (submissionId: string) => Promise<({
     user: {
+        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
-        id: string;
     };
 } & {
     id: string;
@@ -109,18 +109,18 @@ export declare const getSubmissionFeedback: (submissionId: string) => Promise<({
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 })[]>;
 /**
  * Add feedback to a submission
  */
 export declare const addSubmissionFeedback: (data: SubmissionFeedbackData) => Promise<{
     user: {
+        id: string;
         name: string | null;
         role: import(".prisma/client").$Enums.UserRole;
-        id: string;
     };
 } & {
     id: string;
@@ -130,9 +130,9 @@ export declare const addSubmissionFeedback: (data: SubmissionFeedbackData) => Pr
     content: string;
     groupId: string | null;
     status: import(".prisma/client").$Enums.FeedbackStatus;
-    documentId: string | null;
-    response: string | null;
     aiScore: number | null;
+    response: string | null;
+    documentId: string | null;
 }>;
 /**
  * Service function to handle final submission of an assignment

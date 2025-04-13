@@ -22,8 +22,8 @@ export declare const createAssignmentSchema: z.ZodObject<{
         description: string;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
-        pastedContent?: string | null | undefined;
         dueDate?: string | null | undefined;
+        pastedContent?: string | null | undefined;
     }>;
     params: z.ZodObject<{
         id: z.ZodString;
@@ -50,8 +50,8 @@ export declare const createAssignmentSchema: z.ZodObject<{
         description: string;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
-        pastedContent?: string | null | undefined;
         dueDate?: string | null | undefined;
+        pastedContent?: string | null | undefined;
     };
     params: {
         id: string;
