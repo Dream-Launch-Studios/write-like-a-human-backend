@@ -21,6 +21,7 @@ import {
 } from '../schemas/assignment.schema';
 import { uploadMiddleware, validateDocumentMiddleware, validatePdfMiddleware } from '../middleware/upload.middleware';
 import { validate } from '../middleware/validate.middleware';
+import { checkAssignmentLimitMiddleware, checkSubmissionLimitMiddleware, incrementAssignmentCountMiddleware, incrementSubmissionCountMiddleware } from '../middleware/subscription.middleware';
 
 const router = express.Router();
 
@@ -30,6 +31,8 @@ router.post(
     '/groups/:id/assignments',
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
+    checkAssignmentLimitMiddleware,
+    incrementAssignmentCountMiddleware,
     validate(createAssignmentSchema),
     createAssignmentController
 );
@@ -65,6 +68,8 @@ router.post(
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
     validate(submitAssignmentSchema),
+    checkSubmissionLimitMiddleware,
+    incrementSubmissionCountMiddleware,
     submitAssignmentController
 );
 

@@ -5,12 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-// import userRouter from "./routes/userRoutes";
-// import groupRouter from "./routes/groupRoute";
-// import documentRouter from "./routes/documentRoutes";
-// import feedbackRouter from "./routes/feedbackRoutes";
-// import commentRouter from "./routes/commentRoutes";
-// import analysisRouter from "./routes/analysisRoutes";
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
 const document_routes_1 = __importDefault(require("./routes/document.routes"));
@@ -21,10 +15,17 @@ const word_suggestion_routes_1 = __importDefault(require("./routes/word-suggesti
 const group_routes_1 = __importDefault(require("./routes/group.routes"));
 const assignment_routes_1 = __importDefault(require("./routes/assignment.routes"));
 const submission_routes_1 = __importDefault(require("./routes/submission.routes"));
+const subscription_routes_1 = __importDefault(require("./routes/subscription.routes"));
 const supabase_1 = require("./utils/supabase");
 const config_1 = __importDefault(require("./config/config"));
+const subscription_controller_1 = require("./controllers/subscription.controller");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
+app.post('/api/subscriptions/webhook', express_1.default.raw({ type: 'application/json' }), (req, res) => {
+    console.log(`🔷 Stripe webhook called`);
+    const subscriptionController = new subscription_controller_1.SubscriptionController();
+    return subscriptionController.handleWebhook(req, res);
+});
 app.use(express_1.default.json());
 app.use("/api/auth", authRoutes_1.default);
 app.use('/api/users', user_routes_1.default);
@@ -36,12 +37,7 @@ app.use("/api/word-suggestions", word_suggestion_routes_1.default);
 app.use("/api/groups", group_routes_1.default);
 app.use("/api/assignments", assignment_routes_1.default);
 app.use("/api/submissions", submission_routes_1.default);
-// app.use("/api/groups", groupRouter); //completed
-// app.use("/api/feedbacks", feedbackRouter);
-// app.use("/api/comments", commentRouter);
-// app.use("/api/users", userRouter); //completed
-// app.use("/api/documents", documentRouter); //completed almost
-// app.use("/api/analyze", analysisRouter);
+app.use('/api/subscriptions', subscription_routes_1.default);
 app.get("/", (req, res) => {
     res.send("API is running...");
 });
@@ -119,6 +115,15 @@ app.get('/verify-email', async (req, res) => {
         console.error("❌ Unexpected error during verification process:", error);
         return res.redirect(`${CLIENT_URL}/error?message=verification-process-error`);
     }
+});
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    const response = {
+        success: false,
+        message: 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    };
+    res.status(500).json(response);
 });
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

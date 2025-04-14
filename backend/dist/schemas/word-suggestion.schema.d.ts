@@ -76,17 +76,17 @@ export declare const updateWordSuggestionSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        isAccepted: boolean;
-    };
     params: {
         id: string;
+    };
+    body: {
+        isAccepted: boolean;
     };
 }, {
-    body: {
-        isAccepted: boolean;
-    };
     params: {
         id: string;
+    };
+    body: {
+        isAccepted: boolean;
     };
 }>;

@@ -59,5 +59,16 @@ router.get(
     subscriptionController.getUsageStats
 );
 
+router.post(
+    "/verify-session",
+    authMiddleware,
+    subscriptionController.verifySession
+);
+
+router.post(
+    "/reactivate",
+    authMiddleware,
+    subscriptionController.reactivateSubscription
+);
 
 export default router;

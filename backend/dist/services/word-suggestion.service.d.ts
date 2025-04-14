@@ -8,14 +8,14 @@ export declare const generateAIWordSuggestions: (documentId: string) => Promise<
  */
 export declare const createWordSuggestion: (data: CreateWordSuggestionData) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     documentId: string;
+    context: string | null;
     startOffset: number;
     endOffset: number;
     aiConfidence: number | null;
-    context: string | null;
     originalWord: string;
     suggestedWord: string;
     position: number;
@@ -28,14 +28,14 @@ export declare const createWordSuggestion: (data: CreateWordSuggestionData) => P
  */
 export declare const batchCreateWordSuggestions: (data: BatchCreateWordSuggestionsData) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     documentId: string;
+    context: string | null;
     startOffset: number;
     endOffset: number;
     aiConfidence: number | null;
-    context: string | null;
     originalWord: string;
     suggestedWord: string;
     position: number;
@@ -51,14 +51,14 @@ export declare const getDocumentWordSuggestions: (documentId: string, filters?: 
     highlighted?: boolean;
 }) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     documentId: string;
+    context: string | null;
     startOffset: number;
     endOffset: number;
     aiConfidence: number | null;
-    context: string | null;
     originalWord: string;
     suggestedWord: string;
     position: number;
@@ -71,14 +71,14 @@ export declare const getDocumentWordSuggestions: (documentId: string, filters?: 
  */
 export declare const getWordSuggestionById: (id: string) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     documentId: string;
+    context: string | null;
     startOffset: number;
     endOffset: number;
     aiConfidence: number | null;
-    context: string | null;
     originalWord: string;
     suggestedWord: string;
     position: number;
@@ -91,14 +91,14 @@ export declare const getWordSuggestionById: (id: string) => Promise<{
  */
 export declare const updateWordSuggestion: (id: string, data: UpdateWordSuggestionData) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     documentId: string;
+    context: string | null;
     startOffset: number;
     endOffset: number;
     aiConfidence: number | null;
-    context: string | null;
     originalWord: string;
     suggestedWord: string;
     position: number;

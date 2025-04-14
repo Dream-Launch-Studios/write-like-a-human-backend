@@ -9,10 +9,12 @@ const supabase_js_1 = require("@supabase/supabase-js");
 const config_1 = __importDefault(require("../config/config"));
 const client_1 = require("@prisma/client");
 const auth_middleware_1 = require("../middleware/auth.middleware");
+const subscription_service_1 = require("../services/subscription.service");
 const Authrouter = express_1.default.Router();
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || '';
 const supabaseAdmin = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceKey);
+const subscriptionService = new subscription_service_1.SubscriptionService();
 Authrouter.post("/register", authController_1.register);
 Authrouter.post("/login", authController_1.login);
 Authrouter.get("/me", auth_middleware_1.authMiddleware, authController_1.getCurrentUser);
@@ -144,6 +146,7 @@ Authrouter.post("/sync-user", async (req, res) => {
                 where: { id }
             });
             if (existingUser) {
+                await subscriptionService.createFreeSubscriptionForNewUser(existingUser.id);
                 console.log('👤 User already exists in database');
                 return res.status(200).json({
                     success: true,
@@ -169,6 +172,7 @@ Authrouter.post("/sync-user", async (req, res) => {
                 }
             });
             console.log('✅ User created in database:', newUser.id);
+            await subscriptionService.createFreeSubscriptionForNewUser(newUser.id);
             return res.status(201).json({
                 success: true,
                 message: 'User registered successfully',

@@ -12,12 +12,12 @@ export declare const getSubmissionById: (id: string) => Promise<SubmissionWithDe
  * Update submission status
  */
 export declare const updateSubmissionStatus: (id: string, status: SubmissionStatus) => Promise<{
+    status: import(".prisma/client").$Enums.SubmissionStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     assignmentId: string;
-    status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
     submittedAt: Date | null;
 } | null>;
@@ -46,19 +46,19 @@ export declare const getUserSubmissionsByAssignmentId: (userId: string, assignme
         dueDate: Date | null;
     };
     submissionResult: {
+        status: import(".prisma/client").$Enums.EvaluationStatus;
         id: string;
         updatedAt: Date;
-        status: import(".prisma/client").$Enums.EvaluationStatus;
         feedback: string | null;
         grade: string | null;
     } | null;
 } & {
+    status: import(".prisma/client").$Enums.SubmissionStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     assignmentId: string;
-    status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
     submittedAt: Date | null;
 })[]>;
@@ -68,8 +68,8 @@ export declare const getUserSubmissionsByAssignmentId: (userId: string, assignme
 export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuffer: Buffer, fileName: string, fileType: string, title: string) => Promise<{
     user: {
         id: string;
-        email: string;
         name: string | null;
+        email: string;
     };
     document: {
         fileUrl: string;
@@ -83,12 +83,12 @@ export declare const resubmitAssignment: (data: ResubmitAssignmentData, fileBuff
         groupId: string;
     };
 } & {
+    status: import(".prisma/client").$Enums.SubmissionStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     assignmentId: string;
-    status: import(".prisma/client").$Enums.SubmissionStatus;
     documentId: string;
     submittedAt: Date | null;
 }>;
@@ -102,16 +102,16 @@ export declare const getSubmissionFeedback: (submissionId: string) => Promise<({
         role: import(".prisma/client").$Enums.UserRole;
     };
 } & {
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 })[]>;
 /**
  * Add feedback to a submission
@@ -123,16 +123,16 @@ export declare const addSubmissionFeedback: (data: SubmissionFeedbackData) => Pr
         role: import(".prisma/client").$Enums.UserRole;
     };
 } & {
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 }>;
 /**
  * Service function to handle final submission of an assignment
@@ -140,22 +140,22 @@ export declare const addSubmissionFeedback: (data: SubmissionFeedbackData) => Pr
  */
 export declare const finalSubmitAssignment: (submissionId: string, documentId: string, userId: string) => Promise<{
     submission: {
+        status: import(".prisma/client").$Enums.SubmissionStatus;
         id: string;
+        userId: string;
         createdAt: Date;
         updatedAt: Date;
-        userId: string;
         assignmentId: string;
-        status: import(".prisma/client").$Enums.SubmissionStatus;
         documentId: string;
         submittedAt: Date | null;
     };
     submissionResult: {
+        status: import(".prisma/client").$Enums.EvaluationStatus;
         id: string;
         createdAt: Date;
         updatedAt: Date;
         rootDocumentId: string | null;
         submissionId: string;
-        status: import(".prisma/client").$Enums.EvaluationStatus;
         feedback: string | null;
         documentId: string | null;
         teacherId: string;
@@ -167,12 +167,12 @@ export declare const finalSubmitAssignment: (submissionId: string, documentId: s
  * Updates submission result with feedback and status
  */
 export declare const evaluateSubmission: (submissionResultId: string, teacherId: string, evaluationData: SubmissionEvaluationData) => Promise<{
+    status: import(".prisma/client").$Enums.EvaluationStatus;
     id: string;
     createdAt: Date;
     updatedAt: Date;
     rootDocumentId: string | null;
     submissionId: string;
-    status: import(".prisma/client").$Enums.EvaluationStatus;
     feedback: string | null;
     documentId: string | null;
     teacherId: string;

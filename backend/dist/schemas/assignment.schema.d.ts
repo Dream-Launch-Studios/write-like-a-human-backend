@@ -22,8 +22,8 @@ export declare const createAssignmentSchema: z.ZodObject<{
         description: string;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
-        dueDate?: string | null | undefined;
         pastedContent?: string | null | undefined;
+        dueDate?: string | null | undefined;
     }>;
     params: z.ZodObject<{
         id: z.ZodString;
@@ -33,6 +33,9 @@ export declare const createAssignmentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         title: string;
         contentFormat: "HTML" | "TEXT";
@@ -41,20 +44,17 @@ export declare const createAssignmentSchema: z.ZodObject<{
         createdWith?: "PASTE" | "UPLOAD" | undefined;
         pastedContent?: string | null | undefined;
     };
+}, {
     params: {
         id: string;
     };
-}, {
     body: {
         title: string;
         description: string;
         createdWith?: "PASTE" | "UPLOAD" | undefined;
         contentFormat?: "HTML" | "TEXT" | undefined;
-        dueDate?: string | null | undefined;
         pastedContent?: string | null | undefined;
-    };
-    params: {
-        id: string;
+        dueDate?: string | null | undefined;
     };
 }>;
 /**
@@ -91,6 +91,9 @@ export declare const updateAssignmentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         dueDate: Date | null;
         title?: string | undefined;
@@ -99,10 +102,10 @@ export declare const updateAssignmentSchema: z.ZodObject<{
         documentName?: string | null | undefined;
         documentType?: string | null | undefined;
     };
+}, {
     params: {
         id: string;
     };
-}, {
     body: {
         title?: string | undefined;
         description?: string | undefined;
@@ -110,9 +113,6 @@ export declare const updateAssignmentSchema: z.ZodObject<{
         documentUrl?: string | null | undefined;
         documentName?: string | null | undefined;
         documentType?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 /**
@@ -174,18 +174,18 @@ export declare const submitAssignmentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        groupId: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        groupId: string;
     };
 }, {
-    body: {
-        groupId: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        groupId: string;
     };
 }>;
 /**
@@ -207,17 +207,17 @@ export declare const updateSubmissionStatusSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
-    };
     params: {
         id: string;
+    };
+    body: {
+        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
     };
 }, {
-    body: {
-        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
-    };
     params: {
         id: string;
+    };
+    body: {
+        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
     };
 }>;

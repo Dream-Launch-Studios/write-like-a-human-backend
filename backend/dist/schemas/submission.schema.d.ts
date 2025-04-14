@@ -55,18 +55,18 @@ export declare const updateSubmissionStatusSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
-    };
     params: {
         id: string;
+    };
+    body: {
+        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
     };
 }, {
-    body: {
-        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
-    };
     params: {
         id: string;
+    };
+    body: {
+        status: "DRAFT" | "SUBMITTED" | "GRADED" | "RETURNED";
     };
 }>;
 /**
@@ -88,18 +88,18 @@ export declare const resubmitAssignmentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        title: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        title: string;
     };
 }, {
-    body: {
-        title: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        title: string;
     };
 }>;
 export declare const finalSubmitAssignmentSchema: z.ZodObject<{
@@ -118,18 +118,18 @@ export declare const finalSubmitAssignmentSchema: z.ZodObject<{
         documentId: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        documentId: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        documentId: string;
     };
 }, {
-    body: {
-        documentId: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        documentId: string;
     };
 }>;
 export declare const evaluateSubmissionSchema: z.ZodObject<{
@@ -151,20 +151,20 @@ export declare const evaluateSubmissionSchema: z.ZodObject<{
         grade?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         feedback?: string | undefined;
         grade?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         feedback?: string | undefined;
         grade?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 /**
@@ -186,17 +186,17 @@ export declare const addSubmissionFeedbackSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        content: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        content: string;
     };
 }, {
-    body: {
-        content: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        content: string;
     };
 }>;

@@ -72,20 +72,20 @@ export declare const updateAnalysisStatusSchema: z.ZodObject<{
         status: z.ZodEnum<["PENDING", "COMPLETED", "FAILED"]>;
         message: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        status: "PENDING" | "COMPLETED" | "FAILED";
+        status: "FAILED" | "PENDING" | "COMPLETED";
         message?: string | undefined;
     }, {
-        status: "PENDING" | "COMPLETED" | "FAILED";
+        status: "FAILED" | "PENDING" | "COMPLETED";
         message?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
-        status: "PENDING" | "COMPLETED" | "FAILED";
+        status: "FAILED" | "PENDING" | "COMPLETED";
         message?: string | undefined;
     };
 }, {
     body: {
-        status: "PENDING" | "COMPLETED" | "FAILED";
+        status: "FAILED" | "PENDING" | "COMPLETED";
         message?: string | undefined;
     };
 }>;
@@ -108,20 +108,20 @@ export declare const submitAnalysisFeedbackSchema: z.ZodObject<{
         comments?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         isAccurate: boolean;
         comments?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         isAccurate: boolean;
         comments?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 export declare const reanalyzeDocumentSchema: z.ZodObject<{
@@ -140,17 +140,17 @@ export declare const reanalyzeDocumentSchema: z.ZodObject<{
         force?: boolean | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         force: boolean;
     };
+}, {
     params: {
         id: string;
     };
-}, {
     body: {
         force?: boolean | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;

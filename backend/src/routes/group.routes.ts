@@ -24,6 +24,7 @@ import {
     addGroupMemberSchema,
     removeGroupMemberSchema,
 } from "../schemas/group.schema";
+import {  checkGroupLimitMiddleware, incrementGroupCountMiddleware } from "../middleware/subscription.middleware";
 
 const router = express.Router();
 
@@ -33,6 +34,8 @@ router.post(
     "/",
     validate(createGroupSchema),
     teacherMiddleware,
+    checkGroupLimitMiddleware,
+    incrementGroupCountMiddleware,
     createGroupController
 );
 

@@ -63,39 +63,39 @@ export declare const updateFeedbackSchema: z.ZodObject<{
         status: z.ZodOptional<z.ZodEnum<["PENDING", "ANALYZED", "REVIEWED"]>>;
         response: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }>, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }, {
-        content?: string | undefined;
         status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
         response?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        content?: string | undefined;
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
-        response?: string | undefined;
-    };
     params: {
         id: string;
+    };
+    body: {
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
+        response?: string | undefined;
     };
 }, {
-    body: {
-        content?: string | undefined;
-        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
-        response?: string | undefined;
-    };
     params: {
         id: string;
+    };
+    body: {
+        status?: "PENDING" | "ANALYZED" | "REVIEWED" | undefined;
+        content?: string | undefined;
+        response?: string | undefined;
     };
 }>;
 export declare const deleteFeedbackSchema: z.ZodObject<{

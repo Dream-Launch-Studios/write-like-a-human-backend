@@ -12,6 +12,7 @@ import {
     createVersionSchema,
     listVersionsSchema
 } from '../schemas/document.schema';
+import { incrementDocumentCountMiddleware } from '../middleware/subscription.middleware';
 
 const router = express.Router();
 
@@ -22,6 +23,7 @@ router.post(
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
     validate(createDocumentSchema),
+    incrementDocumentCountMiddleware,
     documentController.createDocument
 );
 
@@ -29,6 +31,7 @@ router.post(
     '/convert-document-to-html',
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
+    incrementDocumentCountMiddleware,
     documentController.convertDocumentToHtml
 );
 
@@ -37,6 +40,7 @@ router.post(
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
     validate(createDocumentSchema),
+    incrementDocumentCountMiddleware,
     documentController.createDocumentFromHtml
 );
 

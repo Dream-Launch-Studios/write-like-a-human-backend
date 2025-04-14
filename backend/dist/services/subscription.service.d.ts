@@ -1,5 +1,7 @@
-import { Subscription, SubscriptionTier, User } from "@prisma/client";
+import { Payment, Subscription, SubscriptionTier, User } from "@prisma/client";
+import Stripe from "stripe";
 import { CreateSubscriptionInput, UpdateSubscriptionInput, CancelSubscriptionInput, SubscriptionLimits } from "../types/subscription.types";
+export declare const stripe: Stripe;
 export declare const SUBSCRIPTION_LIMITS: Record<SubscriptionTier, SubscriptionLimits>;
 export declare class SubscriptionService {
     /**
@@ -25,7 +27,9 @@ export declare class SubscriptionService {
     /**
      * Get a user's subscription with payment history
      */
-    getSubscriptionWithPayments(userId: string): Promise<Subscription | null>;
+    getSubscriptionWithPayments(userId: string): Promise<Subscription & {
+        paymentHistory: Payment[];
+    } | null>;
     /**
      * Check if a user has reached their limits based on their subscription tier
      */
@@ -38,6 +42,10 @@ export declare class SubscriptionService {
      * Create a checkout session for subscription payment
      */
     createCheckoutSession(userId: string, tier: SubscriptionTier): Promise<string>;
+    /**
+        * Reactivate a subscription that was set to cancel at period end
+    */
+    reactivateSubscription(userId: string): Promise<Subscription>;
     /**
      * Handle Stripe webhook events
      */
@@ -63,7 +71,16 @@ export declare class SubscriptionService {
      */
     private mapStripeStatusToDbStatus;
     /**
+ * Handle checkout session completed webhook
+ */
+    private handleCheckoutSessionCompleted;
+    /**
      * Determine subscription tier from Stripe price ID
      */
     private determineTierFromPrice;
+    /**
+     * Create a free subscription for a new user
+     * Call this method when a new user is created
+     */
+    createFreeSubscriptionForNewUser(userId: string): Promise<Subscription>;
 }

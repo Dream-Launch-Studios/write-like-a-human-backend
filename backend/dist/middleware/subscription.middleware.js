@@ -1,266 +1,224 @@
-import { Request, Response, NextFunction } from "express";
-import { SubscriptionService, SUBSCRIPTION_LIMITS } from "../services/subscription.service";
-import prisma from "../config/config";
-const subscriptionService = new SubscriptionService();
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.incrementSubmissionCountMiddleware = exports.incrementAssignmentCountMiddleware = exports.incrementGroupCountMiddleware = exports.incrementDocumentCountMiddleware = exports.checkAIAnalysisAccessMiddleware = exports.checkSubmissionLimitMiddleware = exports.checkAssignmentLimitMiddleware = exports.checkGroupLimitMiddleware = exports.checkDocumentLimitMiddleware = exports.checkDocumentVersionLimitMiddleware = void 0;
+const subscription_service_1 = require("../services/subscription.service");
+const config_1 = __importDefault(require("../config/config"));
+const subscriptionService = new subscription_service_1.SubscriptionService();
 /**
  * Middleware to check if a user has reached their document version limit
  */
-export const checkDocumentVersionLimitMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const checkDocumentVersionLimitMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const documentId = req.params.documentId || req.body.documentId;
-
         if (!userId || !documentId) {
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized or missing document ID",
             });
         }
-
-        const versionCount = await prisma.documentVersion.count({
+        const versionCount = await config_1.default.documentVersion.count({
             where: {
                 rootDocumentId: documentId,
             },
         });
-
-        const user = await prisma.user.findUnique({
+        const user = await config_1.default.user.findUnique({
             where: { id: userId },
         });
-
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: "User not found",
             });
         }
-
-        const limits = SUBSCRIPTION_LIMITS[user.subscriptionTier];
-
-
+        const limits = subscription_service_1.SUBSCRIPTION_LIMITS[user.subscriptionTier];
         if (versionCount >= limits.maxDocumentVersions) {
             return res.status(403).json({
                 success: false,
                 message: `You have reached your document version limit of ${limits.maxDocumentVersions}. Please upgrade your subscription to create more versions.`,
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking document version limit:", error);
         return res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check document version limit",
+            message: error.message || "Failed to check document version limit",
         });
     }
 };
-
-
+exports.checkDocumentVersionLimitMiddleware = checkDocumentVersionLimitMiddleware;
 /**
  * Middleware to check if a user has reached their document limit
  */
-export const checkDocumentLimitMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const checkDocumentLimitMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
-
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
-
         const canCreateDocument = await subscriptionService.checkUserLimits(userId, "maxDocuments");
-
         if (!canCreateDocument) {
             return res.status(403).json({
                 success: false,
                 message: "You have reached your document limit. Please upgrade your subscription to continue.",
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking document limit:", error);
         return res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check document limit",
+            message: error.message || "Failed to check document limit",
         });
     }
 };
-
+exports.checkDocumentLimitMiddleware = checkDocumentLimitMiddleware;
 /**
  * Middleware to check if a user has reached their group limit
  */
-export const checkGroupLimitMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+const checkGroupLimitMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
-
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
-
         const canCreateGroup = await subscriptionService.checkUserLimits(userId, "maxGroups");
-
         if (!canCreateGroup) {
             res.status(403).json({
                 success: false,
                 message: "You have reached your group limit. Please upgrade your subscription to continue.",
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking group limit:", error);
         res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check group limit",
+            message: error.message || "Failed to check group limit",
         });
     }
 };
-
+exports.checkGroupLimitMiddleware = checkGroupLimitMiddleware;
 /**
  * Middleware to check if a user has reached their assignment limit
  */
-export const checkAssignmentLimitMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+const checkAssignmentLimitMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
-
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
-
         const canCreateAssignment = await subscriptionService.checkUserLimits(userId, "maxAssignments");
-
         if (!canCreateAssignment) {
             res.status(403).json({
                 success: false,
                 message: "You have reached your assignment limit. Please upgrade your subscription to continue.",
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking assignment limit:", error);
         res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check assignment limit",
+            message: error.message || "Failed to check assignment limit",
         });
     }
 };
-
+exports.checkAssignmentLimitMiddleware = checkAssignmentLimitMiddleware;
 /**
  * Middleware to check if a user has reached their submission limit
  */
-export const checkSubmissionLimitMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-): Promise<void> => {
+const checkSubmissionLimitMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
-
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
-
         const canCreateSubmission = await subscriptionService.checkUserLimits(userId, "maxSubmissions");
-
         if (!canCreateSubmission) {
             res.status(403).json({
                 success: false,
                 message: "You have reached your submission limit. Please upgrade your subscription to continue.",
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking submission limit:", error);
         res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check submission limit",
+            message: error.message || "Failed to check submission limit",
         });
     }
 };
-
+exports.checkSubmissionLimitMiddleware = checkSubmissionLimitMiddleware;
 /**
  * Middleware to check if a user has access to AI analysis
  */
-export const checkAIAnalysisAccessMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const checkAIAnalysisAccessMiddleware = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.id;
-
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
-
         const hasAIAnalysisAccess = await subscriptionService.checkUserLimits(userId, "hasAIAnalysis");
-
         if (!hasAIAnalysisAccess) {
             return res.status(403).json({
                 success: false,
                 message: "AI analysis is only available with paid subscriptions. Please upgrade to continue.",
             });
         }
-
         next();
-    } catch (error) {
+    }
+    catch (error) {
         console.error("Error checking AI analysis access:", error);
         return res.status(500).json({
             success: false,
-            message: (error as Error).message || "Failed to check AI analysis access",
+            message: error.message || "Failed to check AI analysis access",
         });
     }
 };
-
+exports.checkAIAnalysisAccessMiddleware = checkAIAnalysisAccessMiddleware;
 /**
  * Middleware to increment document count when a new document is created
  */
-export const incrementDocumentCountMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const incrementDocumentCountMiddleware = async (req, res, next) => {
+    var _a;
     const originalEnd = res.end;
-    const userId = req.user?.id;
-
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     if (!userId) {
         return next();
     }
-
-    res.end = function (...args: any[]) {
+    res.end = function (...args) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
             // Only increment if the request is successful
             subscriptionService.incrementUserUsage(userId, "documentCount").catch(error => {
@@ -270,26 +228,20 @@ export const incrementDocumentCountMiddleware = async (
         // @ts-ignore
         return originalEnd.apply(res, args);
     };
-
     next();
 };
-
+exports.incrementDocumentCountMiddleware = incrementDocumentCountMiddleware;
 /**
  * Middleware to increment group count when a new group is created
  */
-export const incrementGroupCountMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const incrementGroupCountMiddleware = async (req, res, next) => {
+    var _a;
     const originalEnd = res.end;
-    const userId = req.user?.id;
-
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     if (!userId) {
         return next();
     }
-
-    res.end = function (...args: any[]) {
+    res.end = function (...args) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
             // Only increment if the request is successful
             subscriptionService.incrementUserUsage(userId, "groupCount").catch(error => {
@@ -299,26 +251,20 @@ export const incrementGroupCountMiddleware = async (
         // @ts-ignore
         return originalEnd.apply(res, args);
     };
-
     next();
 };
-
+exports.incrementGroupCountMiddleware = incrementGroupCountMiddleware;
 /**
  * Middleware to increment assignment count when a new assignment is created
  */
-export const incrementAssignmentCountMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const incrementAssignmentCountMiddleware = async (req, res, next) => {
+    var _a;
     const originalEnd = res.end;
-    const userId = req.user?.id;
-
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     if (!userId) {
         return next();
     }
-
-    res.end = function (...args: any[]) {
+    res.end = function (...args) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
             // Only increment if the request is successful
             subscriptionService.incrementUserUsage(userId, "assignmentCount").catch(error => {
@@ -328,26 +274,20 @@ export const incrementAssignmentCountMiddleware = async (
         // @ts-ignore
         return originalEnd.apply(res, args);
     };
-
     next();
 };
-
+exports.incrementAssignmentCountMiddleware = incrementAssignmentCountMiddleware;
 /**
  * Middleware to increment submission count when a new submission is created
  */
-export const incrementSubmissionCountMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+const incrementSubmissionCountMiddleware = async (req, res, next) => {
+    var _a;
     const originalEnd = res.end;
-    const userId = req.user?.id;
-
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     if (!userId) {
         return next();
     }
-
-    res.end = function (...args: any[]) {
+    res.end = function (...args) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
             // Only increment if the request is successful
             subscriptionService.incrementUserUsage(userId, "submissionCount").catch(error => {
@@ -357,6 +297,6 @@ export const incrementSubmissionCountMiddleware = async (
         // @ts-ignore
         return originalEnd.apply(res, args);
     };
-
     next();
 };
+exports.incrementSubmissionCountMiddleware = incrementSubmissionCountMiddleware;

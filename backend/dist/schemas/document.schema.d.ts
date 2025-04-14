@@ -115,20 +115,20 @@ export declare const updateDocumentSchema: z.ZodObject<{
         content?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         title?: string | undefined;
         content?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         title?: string | undefined;
         content?: string | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 export declare const deleteDocumentSchema: z.ZodObject<{
@@ -170,22 +170,22 @@ export declare const createVersionSchema: z.ZodObject<{
         submissionId?: string | null | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         content: string;
         title?: string | undefined;
         submissionId?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         content: string;
         title?: string | undefined;
         submissionId?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 export declare const listVersionsSchema: z.ZodObject<{

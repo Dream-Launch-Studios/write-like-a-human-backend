@@ -19,8 +19,18 @@ import { Request, Response, NextFunction } from "express";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
+app.post(
+  '/api/subscriptions/webhook',
+  express.raw({ type: 'application/json' }),
+  (req, res) => {
+    console.log(`🔷 Stripe webhook called`);
+    const subscriptionController = new SubscriptionController();
+    return subscriptionController.handleWebhook(req, res);
+  }
+);
+
+app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/documents', documentRoutes);
@@ -31,16 +41,6 @@ app.use("/api/word-suggestions", wordSuggestionRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/submissions", submissionRoutes);
-
-app.post(
-  '/api/subscriptions/webhook',
-  express.raw({ type: 'application/json' }),
-  (req, res) => {
-    const subscriptionController = new SubscriptionController();
-    return subscriptionController.handleWebhook(req, res);
-  }
-);
-
 app.use('/api/subscriptions', subscriptionRoutes);
 
 app.get("/", (req, res) => {

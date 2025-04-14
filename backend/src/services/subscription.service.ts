@@ -11,9 +11,9 @@ import {
     getInvoiceCurrency,
     getInvoiceReceiptUrl
 } from "../types/stripe.types";
+import prisma from "../config/config";
 
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
     apiVersion: "2025-03-31.basil", // Using the specified API version
 });
 
@@ -314,12 +314,13 @@ export class SubscriptionService {
 
         // If it's a free tier subscription, nothing to cancel in Stripe
         if (user.subscription.stripeSubscriptionId === "free_tier") {
+            console.log(`it's a free tier subscription, nothing to cancel in Stripe`)
             return user.subscription;
         }
 
         try {
             if (input.cancelAtPeriodEnd) {
-                // Cancel at period end
+                console.log(`🚑 Cancelling at period end`)
                 await stripe.subscriptions.update(user.subscription.stripeSubscriptionId, {
                     cancel_at_period_end: true,
                 });
@@ -333,10 +334,10 @@ export class SubscriptionService {
 
                 return updatedSubscription;
             } else {
-                // Cancel immediately
+                console.log(`🚑 Cancelling immediately`)
                 await stripe.subscriptions.cancel(user.subscription.stripeSubscriptionId);
 
-                // Update subscription status in our database
+
                 const updatedSubscription = await prisma.subscription.update({
                     where: { id: user.subscription.id },
                     data: {
@@ -345,7 +346,7 @@ export class SubscriptionService {
                     },
                 });
 
-                // Update user's subscription status
+
                 await prisma.user.update({
                     where: { id: userId },
                     data: {
@@ -467,9 +468,54 @@ export class SubscriptionService {
     }
 
     /**
+        * Reactivate a subscription that was set to cancel at period end
+    */
+    async reactivateSubscription(userId: string): Promise<Subscription> {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { subscription: true },
+        });
+
+        if (!user || !user.subscription) {
+            throw new Error("User or subscription not found");
+        }
+
+        // Can only reactivate subscriptions that are set to cancel at period end
+        // and haven't actually expired yet
+        if (!user.subscription.cancelAtPeriodEnd) {
+            throw new Error("Subscription is not set to cancel at period end");
+        }
+
+        if (user?.subscription.status === "CANCELED") {
+            throw new Error("Subscription has already been canceled");
+        }
+
+        try {
+            await stripe.subscriptions.update(user.subscription.stripeSubscriptionId, {
+                cancel_at_period_end: false,
+            });
+
+            const updatedSubscription = await prisma.subscription.update({
+                where: { id: user.subscription.id },
+                data: {
+                    cancelAtPeriodEnd: false,
+                },
+            });
+
+            return updatedSubscription;
+        } catch (error) {
+            console.error("Error reactivating subscription:", error);
+            throw new Error(`Failed to reactivate subscription: ${(error as Error).message}`);
+        }
+    }
+
+
+
+    /**
      * Handle Stripe webhook events
      */
     async handleWebhookEvent(event: any): Promise<void> {
+        console.log(`💙 Stripe webhook event - ${event.type}`);
         switch (event.type) {
             case "customer.subscription.created":
             case "customer.subscription.updated":
@@ -488,6 +534,11 @@ export class SubscriptionService {
                 await this.handleInvoicePaymentFailed(event.data.object);
                 break;
 
+            case "checkout.session.completed":
+                await this.handleCheckoutSessionCompleted(event.data.object);
+                break;
+
+
             default:
                 console.log(`Unhandled event type: ${event.type}`);
         }
@@ -497,7 +548,10 @@ export class SubscriptionService {
      * Handle subscription updated webhook
      */
     private async handleSubscriptionUpdated(subscription: Stripe.Subscription): Promise<void> {
+        console.log(`💙 Stripe webhook event handler - handleSubscriptionUpdated`);
+        console.log(`💙 subscription (from args): ${JSON.stringify(subscription)}`);
         const customerId = subscription.customer as string;
+        console.log(`customerId: ${customerId}`);
 
         const user = await prisma.user.findFirst({
             where: { stripeCustomerId: customerId },
@@ -508,29 +562,43 @@ export class SubscriptionService {
             return;
         }
 
-        // Map the Stripe status to our status
         const status = this.mapStripeStatusToDbStatus(subscription.status);
+        const tier = this.determineTierFromPrice(subscription);
+        console.log(`💘 status: ${status}`);
+        console.log(`tier -> ${tier}`)
 
-        // Check if subscription exists in our database
         const existingSubscription = await prisma.subscription.findFirst({
-            where: { stripeSubscriptionId: subscription.id },
+            where: { userId: user.id },
         });
+        console.log(`💘 existingSubscription: ${JSON.stringify(existingSubscription)}`)
 
         if (existingSubscription) {
-            // Update existing subscription
+            console.log("🍎 existingSubscription found")
+            const currentPeriodStart = getSubscriptionPeriodStart(subscription)
+            const currentPeriodEnd = getSubscriptionPeriodEnd(subscription)
+            const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscription)
+            console.log(`🍎 currentPeriodStart - ${currentPeriodStart}`)
+            console.log(`🍎 currentPeriodEnd - ${currentPeriodEnd}`)
+            console.log(`🍎 cancelAtPeriodEnd - ${cancelAtPeriodEnd}`)
             await prisma.subscription.update({
                 where: { id: existingSubscription.id },
                 data: {
+                    stripeSubscriptionId: subscription.id,
+                    stripeCustomerId: customerId,
                     status,
-                    currentPeriodStart: getSubscriptionPeriodStart(subscription),
-                    currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-                    cancelAtPeriodEnd: getSubscriptionCancelAtPeriodEnd(subscription),
+                    tier,
+                    currentPeriodStart,
+                    currentPeriodEnd,
+                    cancelAtPeriodEnd,
                 },
             });
         } else {
-            // Create new subscription
+            console.log("🍎 NO existingSubscription found, creating new subscription")
             const tier = this.determineTierFromPrice(subscription);
-
+            console.log(`tier - ${tier}`)
+            const currentPeriodStart = getSubscriptionPeriodStart(subscription)
+            const currentPeriodEnd = getSubscriptionPeriodEnd(subscription)
+            const cancelAtPeriodEnd = getSubscriptionCancelAtPeriodEnd(subscription)
             await prisma.subscription.create({
                 data: {
                     userId: user.id,
@@ -538,18 +606,20 @@ export class SubscriptionService {
                     stripeSubscriptionId: subscription.id,
                     status,
                     tier,
-                    currentPeriodStart: getSubscriptionPeriodStart(subscription),
-                    currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
-                    cancelAtPeriodEnd: getSubscriptionCancelAtPeriodEnd(subscription),
+                    currentPeriodStart,
+                    currentPeriodEnd,
+                    cancelAtPeriodEnd,
                 },
             });
         }
 
         // Update user's subscription status and end date
+        console.log(`Update user's subscription status and end date -> ${getSubscriptionPeriodEnd(subscription)}`)
         await prisma.user.update({
             where: { id: user.id },
             data: {
                 subscriptionStatus: status,
+                subscriptionTier: tier,
                 currentPeriodEnd: getSubscriptionPeriodEnd(subscription),
             },
         });
@@ -559,7 +629,9 @@ export class SubscriptionService {
      * Handle subscription deleted webhook
      */
     private async handleSubscriptionDeleted(subscription: Stripe.Subscription): Promise<void> {
+        console.log(`🍎 handleSubscriptionDelete webhook`)
         const customerId = subscription.customer as string;
+        console.log(`customerId - ${customerId}`)
 
         const user = await prisma.user.findFirst({
             where: { stripeCustomerId: customerId },
@@ -570,12 +642,14 @@ export class SubscriptionService {
             return;
         }
 
-        // Update the subscription in our database
         const existingSubscription = await prisma.subscription.findFirst({
             where: { stripeSubscriptionId: subscription.id },
         });
 
+        console.log(`🍎 existingSubscription - ${JSON.stringify(existingSubscription)}}`)
+
         if (existingSubscription) {
+            console.log(`🍎 existingSubscription found`)
             await prisma.subscription.update({
                 where: { id: existingSubscription.id },
                 data: {
@@ -584,12 +658,12 @@ export class SubscriptionService {
             });
         }
 
-        // Update user's subscription status
+        console.log(`Update user's subscription status`)
         await prisma.user.update({
             where: { id: user.id },
             data: {
                 subscriptionStatus: "CANCELED",
-                subscriptionTier: "FREE", // Revert to free tier when subscription is canceled
+                subscriptionTier: "FREE",
             },
         });
     }
@@ -598,11 +672,17 @@ export class SubscriptionService {
      * Handle invoice payment succeeded webhook
      */
     private async handleInvoicePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
+        console.log(`🍎 handleInvoicePaymentSucceeded run`)
+        console.log(`🍎 invoice (from params) 👇`)
+        console.log(invoice)
         const customerId = invoice.customer as string;
+        console.log(`customerId - ${customerId}`)
 
         const user = await prisma.user.findFirst({
             where: { stripeCustomerId: customerId },
         });
+
+        console.log(`user -> ${JSON.stringify(user)}`)
 
         if (!user) {
             console.error(`No user found for Stripe customer ID: ${customerId}`);
@@ -613,26 +693,33 @@ export class SubscriptionService {
             where: { userId: user.id },
         });
 
+        console.log(`subscription -> ${JSON.stringify(subscription)}`)
         if (!subscription) {
             console.error(`No subscription found for user ID: ${user.id}`);
             return;
         }
 
-        // Get payment intent ID safely
+
         const paymentIntentId = getInvoicePaymentIntent(invoice);
         const amount = getInvoiceAmount(invoice);
         const currency = getInvoiceCurrency(invoice);
         const receiptUrl = getInvoiceReceiptUrl(invoice);
+
+        console.log(`paymentIntentId -> ${paymentIntentId}`)
+        console.log(`amount -> ${amount}`)
+        console.log(`amount / 100 -> ${amount / 100}`)
+        console.log(`currency -> ${currency}`)
+        console.log(`receiptUrl -> ${receiptUrl}`)
 
         // Record the payment
         await prisma.payment.create({
             data: {
                 subscriptionId: subscription.id,
                 stripePaymentId: invoice.id || '',
-                amount: amount / 100, // Convert from cents to dollars
+                amount: amount / 100,
                 currency: currency,
                 status: "SUCCEEDED",
-                paymentMethod: paymentIntentId, // Using payment_intent id as a reference
+                paymentMethod: paymentIntentId,
                 receiptUrl: receiptUrl,
             },
         });
@@ -642,11 +729,17 @@ export class SubscriptionService {
      * Handle invoice payment failed webhook
      */
     private async handleInvoicePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+        console.log(`🍎 handleInvoicePaymentFailed run`)
+        console.log(`🍎 invoice (from params) 👇`)
+        console.log(invoice)
         const customerId = invoice.customer as string;
+        console.log(`customerId - ${customerId}`)
 
         const user = await prisma.user.findFirst({
             where: { stripeCustomerId: customerId },
         });
+
+        console.log(`user - ${user}`)
 
         if (!user) {
             console.error(`No user found for Stripe customer ID: ${customerId}`);
@@ -656,6 +749,8 @@ export class SubscriptionService {
         const subscription = await prisma.subscription.findFirst({
             where: { userId: user.id },
         });
+
+        console.log(`🍎 subscription -> ${subscription}`)
 
         if (!subscription) {
             console.error(`No subscription found for user ID: ${user.id}`);
@@ -667,19 +762,22 @@ export class SubscriptionService {
         const amount = getInvoiceAmount(invoice);
         const currency = getInvoiceCurrency(invoice);
 
-        // Record the failed payment
+        console.log(`paymentIntentId - ${paymentIntentId}`)
+        console.log(`amount - ${amount}`)
+        console.log(`amount / 100 - ${amount / 100}`)
+        console.log(`currency - ${currency}`)
+
         await prisma.payment.create({
             data: {
                 subscriptionId: subscription.id,
                 stripePaymentId: invoice.id || '',
-                amount: amount / 100, // Convert from cents to dollars
+                amount: amount / 100,
                 currency: currency,
                 status: "FAILED",
-                paymentMethod: paymentIntentId, // Using payment_intent id as a reference
+                paymentMethod: paymentIntentId,
             },
         });
 
-        // Update subscription status
         await prisma.subscription.update({
             where: { id: subscription.id },
             data: {
@@ -687,7 +785,6 @@ export class SubscriptionService {
             },
         });
 
-        // Update user subscription status
         await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -715,6 +812,41 @@ export class SubscriptionService {
                 return "FREE";
         }
     }
+
+
+    /**
+ * Handle checkout session completed webhook
+ */
+    private async handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<void> {
+        console.log(`🍎 handleCheckoutSessionCompleted run`);
+
+        // Extract the user ID from the metadata
+        const userId = session.metadata?.userId;
+        const tier = session.metadata?.tier as SubscriptionTier;
+        console.log(`🍎 tier - ${tier}`);
+
+        if (!userId) {
+            console.error('No userId found in session metadata');
+            return;
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+
+        if (!user) {
+            console.error(`User not found for ID: ${userId}`);
+            return;
+        }
+
+        // The subscription should be updated through the subscription.created event
+        // This is just a backup to ensure the user's subscription tier is updated
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                subscriptionTier: tier || "PREMIUM",
+            },
+        });
+    }
+
 
     /**
      * Determine subscription tier from Stripe price ID

@@ -6,11 +6,11 @@ import { UserFilter } from '../types/user.type';
 export declare const getUsers: ({ page, limit, role }: UserFilter) => Promise<{
     users: {
         id: string;
-        email: string;
         name: string | null;
+        createdAt: Date;
+        email: string;
         role: import(".prisma/client").$Enums.UserRole;
         isEmailVerified: boolean;
-        createdAt: Date;
     }[];
     pagination: {
         total: number;
@@ -24,20 +24,20 @@ export declare const getUsers: ({ page, limit, role }: UserFilter) => Promise<{
  */
 export declare const getUserById: (id: string) => Promise<{
     id: string;
-    email: string;
     name: string | null;
-    role: import(".prisma/client").$Enums.UserRole;
-    isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
+    email: string;
+    role: import(".prisma/client").$Enums.UserRole;
+    isEmailVerified: boolean;
 } | null>;
 /**
  * Update a user's role
  */
 export declare const updateUserRole: (id: string, role: UserRole) => Promise<{
     id: string;
-    email: string;
     name: string | null;
+    email: string;
     role: import(".prisma/client").$Enums.UserRole;
     isEmailVerified: boolean;
 } | null>;

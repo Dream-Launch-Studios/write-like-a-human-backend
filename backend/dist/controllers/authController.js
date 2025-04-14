@@ -9,8 +9,10 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const config_1 = __importDefault(require("../config/config"));
 const supabase_1 = require("../utils/supabase");
+const subscription_service_1 = require("../services/subscription.service");
 dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
+const subscriptionService = new subscription_service_1.SubscriptionService();
 const register = async (req, res) => {
     try {
         const { email, password, name, role } = req.body;
@@ -34,9 +36,12 @@ const register = async (req, res) => {
                 name,
                 password: hashedPassword,
                 role: userRole,
-                isEmailVerified: false
+                isEmailVerified: false,
+                subscriptionStatus: "FREE",
+                subscriptionTier: "FREE",
             },
         });
+        await subscriptionService.createFreeSubscriptionForNewUser(user.id);
         res.status(201).json({
             message: "User registered successfully",
             user: {

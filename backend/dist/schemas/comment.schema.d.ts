@@ -21,20 +21,20 @@ export declare const createDocumentCommentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         content: string;
         feedbackId?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         content: string;
         feedbackId?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 /**
@@ -56,18 +56,18 @@ export declare const updateCommentSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        content: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        content: string;
     };
 }, {
-    body: {
-        content: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        content: string;
     };
 }>;
 /**

@@ -73,15 +73,15 @@ export declare const webhookEventSchema: z.ZodObject<{
         object?: any;
     }>;
 }, "strip", z.ZodTypeAny, {
-    type: string;
-    id: string;
     data: {
         object?: any;
     };
+    type: string;
+    id: string;
 }, {
-    type: string;
-    id: string;
     data: {
         object?: any;
     };
+    type: string;
+    id: string;
 }>;

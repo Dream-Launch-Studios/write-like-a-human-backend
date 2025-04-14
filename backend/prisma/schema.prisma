@@ -26,7 +26,7 @@ model User {
     createdAt          DateTime           @default(now())
     updatedAt          DateTime           @updatedAt
     evaluations        SubmissionResult[]
-    
+
     // Subscription fields
     stripeCustomerId   String?            @unique
     subscriptionId     String?
@@ -34,12 +34,12 @@ model User {
     subscriptionTier   SubscriptionTier   @default(FREE)
     currentPeriodEnd   DateTime?
     subscription       Subscription?
-    
+
     // Usage tracking
-    documentCount      Int                @default(0) // Number of documents uploaded
-    groupCount         Int                @default(0) // Number of groups created (for teachers)
-    assignmentCount    Int                @default(0) // Number of assignments created (for teachers)
-    submissionCount    Int                @default(0) // Number of submissions made (for students)
+    documentCount   Int @default(0) // Number of documents uploaded
+    groupCount      Int @default(0) // Number of groups created (for teachers)
+    assignmentCount Int @default(0) // Number of assignments created (for teachers)
+    submissionCount Int @default(0) // Number of submissions made (for students)
 }
 
 enum SubscriptionStatus {
@@ -57,33 +57,33 @@ enum SubscriptionTier {
 }
 
 model Subscription {
-    id                String            @id @default(cuid())
-    userId            String            @unique
-    user              User              @relation(fields: [userId], references: [id])
-    stripeCustomerId  String
+    id                   String             @id @default(cuid())
+    userId               String             @unique
+    user                 User               @relation(fields: [userId], references: [id])
+    stripeCustomerId     String
     stripeSubscriptionId String
-    status            SubscriptionStatus
-    tier              SubscriptionTier
-    currentPeriodStart DateTime
-    currentPeriodEnd   DateTime
-    cancelAtPeriodEnd  Boolean          @default(false)
-    createdAt         DateTime          @default(now())
-    updatedAt         DateTime          @updatedAt
-    paymentHistory    Payment[]
+    status               SubscriptionStatus
+    tier                 SubscriptionTier
+    currentPeriodStart   DateTime
+    currentPeriodEnd     DateTime
+    cancelAtPeriodEnd    Boolean            @default(false)
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt
+    paymentHistory       Payment[]
 }
 
 model Payment {
-    id              String           @id @default(cuid())
+    id              String        @id @default(cuid())
     subscriptionId  String
-    subscription    Subscription     @relation(fields: [subscriptionId], references: [id])
+    subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
     stripePaymentId String
     amount          Float
-    currency        String           @default("usd")
+    currency        String        @default("usd")
     status          PaymentStatus
     paymentMethod   String?
     receiptUrl      String?
-    createdAt       DateTime         @default(now())
-    updatedAt       DateTime         @updatedAt
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
 }
 
 enum PaymentStatus {
@@ -160,9 +160,9 @@ model Document {
     // Optional: if you want to track which assignment this document was created for
     assignmentId String?
     assignment   Assignment? @relation(fields: [assignmentId], references: [id])
-    
+
     // Track version count for subscription limits
-    versionCount Int         @default(1)
+    versionCount Int @default(1)
 }
 
 model DocumentVersion {

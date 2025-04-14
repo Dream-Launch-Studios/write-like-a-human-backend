@@ -46,20 +46,20 @@ export declare const updateGroupSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
+    params: {
+        id: string;
+    };
     body: {
         name?: string | undefined;
         description?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }, {
+    params: {
+        id: string;
+    };
     body: {
         name?: string | undefined;
         description?: string | null | undefined;
-    };
-    params: {
-        id: string;
     };
 }>;
 /**
@@ -121,18 +121,18 @@ export declare const addGroupMemberSchema: z.ZodObject<{
         id: string;
     }>;
 }, "strip", z.ZodTypeAny, {
-    body: {
-        email: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        email: string;
     };
 }, {
-    body: {
-        email: string;
-    };
     params: {
         id: string;
+    };
+    body: {
+        email: string;
     };
 }>;
 /**

@@ -3,16 +3,16 @@ import { CreateFeedbackData, UpdateFeedbackData } from '../types/feedback.types'
  * Create feedback for a document
  */
 export declare const createFeedback: (data: CreateFeedbackData) => Promise<{
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 }>;
 /**
  * Get all feedback for a document
@@ -23,16 +23,16 @@ export declare const getDocumentFeedback: (documentId: string) => Promise<({
         name: string | null;
     };
 } & {
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 })[]>;
 /**
  * Get feedback by ID
@@ -48,31 +48,31 @@ export declare const getFeedbackById: (id: string) => Promise<({
         title: string;
     } | null;
 } & {
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 }) | null>;
 /**
  * Update feedback
  */
 export declare const updateFeedback: (id: string, data: UpdateFeedbackData) => Promise<{
+    status: import(".prisma/client").$Enums.FeedbackStatus;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     groupId: string | null;
-    status: import(".prisma/client").$Enums.FeedbackStatus;
-    aiScore: number | null;
-    response: string | null;
     documentId: string | null;
+    response: string | null;
+    aiScore: number | null;
 } | null>;
 /**
  * Delete feedback

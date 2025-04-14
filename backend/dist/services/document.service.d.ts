@@ -5,9 +5,9 @@ import { DocumentFilter, CreateDocumentData, UpdateDocumentData, CreateVersionDa
 export declare const createDocument: (data: CreateDocumentData) => Promise<{
     fileUrl: string;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
@@ -22,6 +22,7 @@ export declare const createDocument: (data: CreateDocumentData) => Promise<{
     rootDocumentId: string | null;
     submissionId: string | null;
     assignmentId: string | null;
+    versionCount: number;
 }>;
 /**
  * List documents with pagination and filtering
@@ -29,13 +30,13 @@ export declare const createDocument: (data: CreateDocumentData) => Promise<{
 export declare const listDocuments: ({ userId, page, limit, groupId, search }: DocumentFilter) => Promise<{
     documents: {
         fileUrl: string;
+        id: string;
+        userId: string;
+        createdAt: Date;
         user: {
             id: string;
             name: string | null;
         };
-        id: string;
-        createdAt: Date;
-        userId: string;
         title: string;
         versionNumber: number;
         isLatest: boolean;
@@ -76,9 +77,9 @@ export declare const getDocumentById: (id: string) => Promise<({
 } & {
     fileUrl: string;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
@@ -93,6 +94,7 @@ export declare const getDocumentById: (id: string) => Promise<({
     rootDocumentId: string | null;
     submissionId: string | null;
     assignmentId: string | null;
+    versionCount: number;
 }) | null>;
 /**
  * Update a document
@@ -100,9 +102,9 @@ export declare const getDocumentById: (id: string) => Promise<({
 export declare const updateDocument: (id: string, data: UpdateDocumentData) => Promise<{
     fileUrl: string;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
@@ -117,6 +119,7 @@ export declare const updateDocument: (id: string, data: UpdateDocumentData) => P
     rootDocumentId: string | null;
     submissionId: string | null;
     assignmentId: string | null;
+    versionCount: number;
 }>;
 export declare const deleteDocument: (id: string) => Promise<boolean>;
 /**
@@ -125,9 +128,9 @@ export declare const deleteDocument: (id: string) => Promise<boolean>;
 export declare const createDocumentVersion: (data: CreateVersionData) => Promise<{
     fileUrl: string;
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
@@ -142,6 +145,7 @@ export declare const createDocumentVersion: (data: CreateVersionData) => Promise
     rootDocumentId: string | null;
     submissionId: string | null;
     assignmentId: string | null;
+    versionCount: number;
 }>;
 /**
  * Get all versions of a document
@@ -155,8 +159,8 @@ export declare const getDocumentVersions: (documentId: string) => Promise<{
     userId: string;
     user: {
         id: string;
-        email: string;
         name: string | null;
+        email: string;
     };
 }[]>;
 /**

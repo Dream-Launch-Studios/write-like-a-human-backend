@@ -25,7 +25,7 @@ export interface StripeWebhookEvent {
     id: string;
     type: string;
     data: {
-        object: any;
+        object: unknown;
     };
 }
 export interface SubscriptionLimits {
@@ -33,6 +33,7 @@ export interface SubscriptionLimits {
     maxGroups: number;
     maxAssignments: number;
     maxSubmissions: number;
+    maxDocumentVersions: number;
     hasAIAnalysis: boolean;
     hasPremiumSupport: boolean;
 }

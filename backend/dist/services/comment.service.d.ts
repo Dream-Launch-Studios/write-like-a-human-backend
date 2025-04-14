@@ -9,9 +9,9 @@ export declare const createComment: (data: CreateCommentData) => Promise<{
     };
 } & {
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     documentId: string;
     feedbackId: string | null;
@@ -22,14 +22,14 @@ export declare const createComment: (data: CreateCommentData) => Promise<{
 export declare const getDocumentComments: (documentId: string) => Promise<({
     user: {
         id: string;
-        email: string;
         name: string | null;
+        email: string;
     };
 } & {
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     documentId: string;
     feedbackId: string | null;
@@ -44,9 +44,9 @@ export declare const getCommentById: (id: string) => Promise<({
     };
 } & {
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     documentId: string;
     feedbackId: string | null;
@@ -56,9 +56,9 @@ export declare const getCommentById: (id: string) => Promise<({
  */
 export declare const updateComment: (id: string, data: UpdateCommentData) => Promise<{
     id: string;
+    userId: string;
     createdAt: Date;
     updatedAt: Date;
-    userId: string;
     content: string;
     documentId: string;
     feedbackId: string | null;
