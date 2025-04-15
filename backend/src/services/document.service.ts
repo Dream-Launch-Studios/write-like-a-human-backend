@@ -358,7 +358,7 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
 
         // Build the document data conditionally
         let documentData: any = {
-            title: data.title,
+            title: `${data.title} - version ${nextVersionNumber} `,
             content: data.content,
             fileName: data.fileName,
             fileUrl: data.fileUrl,

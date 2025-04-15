@@ -5,12 +5,12 @@ import { UserFilter } from '../types/user.type';
  */
 export declare const getUsers: ({ page, limit, role }: UserFilter) => Promise<{
     users: {
-        id: string;
-        name: string | null;
-        createdAt: Date;
-        email: string;
         role: import(".prisma/client").$Enums.UserRole;
+        id: string;
+        email: string;
+        name: string | null;
         isEmailVerified: boolean;
+        createdAt: Date;
     }[];
     pagination: {
         total: number;
@@ -23,22 +23,22 @@ export declare const getUsers: ({ page, limit, role }: UserFilter) => Promise<{
  * Get a specific user by ID
  */
 export declare const getUserById: (id: string) => Promise<{
+    role: import(".prisma/client").$Enums.UserRole;
     id: string;
+    email: string;
     name: string | null;
+    isEmailVerified: boolean;
     createdAt: Date;
     updatedAt: Date;
-    email: string;
-    role: import(".prisma/client").$Enums.UserRole;
-    isEmailVerified: boolean;
 } | null>;
 /**
  * Update a user's role
  */
 export declare const updateUserRole: (id: string, role: UserRole) => Promise<{
-    id: string;
-    name: string | null;
-    email: string;
     role: import(".prisma/client").$Enums.UserRole;
+    id: string;
+    email: string;
+    name: string | null;
     isEmailVerified: boolean;
 } | null>;
 interface DashboardStats {

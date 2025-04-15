@@ -9,36 +9,36 @@ export declare const createDocumentSchema: z.ZodObject<{
         contentFormat: z.ZodOptional<z.ZodDefault<z.ZodEnum<["HTML", "TEXT"]>>>;
     }, "strip", z.ZodTypeAny, {
         title?: string | undefined;
-        createdWith?: "PASTE" | "UPLOAD" | undefined;
-        groupId?: string | undefined;
-        contentFormat?: "HTML" | "TEXT" | undefined;
-        submissionId?: string | undefined;
         pastedContent?: string | undefined;
+        groupId?: string | undefined;
+        submissionId?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
     }, {
         title?: string | undefined;
-        createdWith?: "PASTE" | "UPLOAD" | undefined;
-        groupId?: string | undefined;
-        contentFormat?: "HTML" | "TEXT" | undefined;
-        submissionId?: string | undefined;
         pastedContent?: string | undefined;
+        groupId?: string | undefined;
+        submissionId?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     body: {
         title?: string | undefined;
-        createdWith?: "PASTE" | "UPLOAD" | undefined;
-        groupId?: string | undefined;
-        contentFormat?: "HTML" | "TEXT" | undefined;
-        submissionId?: string | undefined;
         pastedContent?: string | undefined;
+        groupId?: string | undefined;
+        submissionId?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
     };
 }, {
     body: {
         title?: string | undefined;
-        createdWith?: "PASTE" | "UPLOAD" | undefined;
-        groupId?: string | undefined;
-        contentFormat?: "HTML" | "TEXT" | undefined;
-        submissionId?: string | undefined;
         pastedContent?: string | undefined;
+        groupId?: string | undefined;
+        submissionId?: string | undefined;
+        createdWith?: "PASTE" | "UPLOAD" | undefined;
+        contentFormat?: "HTML" | "TEXT" | undefined;
     };
 }>;
 export declare const listDocumentsSchema: z.ZodObject<{
@@ -50,27 +50,27 @@ export declare const listDocumentsSchema: z.ZodObject<{
     }, "strip", z.ZodTypeAny, {
         page: number;
         limit: number;
-        search?: string | undefined;
         groupId?: string | undefined;
-    }, {
         search?: string | undefined;
+    }, {
+        groupId?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
-        groupId?: string | undefined;
+        search?: string | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
     query: {
         page: number;
         limit: number;
-        search?: string | undefined;
         groupId?: string | undefined;
+        search?: string | undefined;
     };
 }, {
     query: {
-        search?: string | undefined;
+        groupId?: string | undefined;
         page?: string | undefined;
         limit?: string | undefined;
-        groupId?: string | undefined;
+        search?: string | undefined;
     };
 }>;
 export declare const getDocumentSchema: z.ZodObject<{

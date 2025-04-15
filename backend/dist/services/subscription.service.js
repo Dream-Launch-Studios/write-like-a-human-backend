@@ -19,7 +19,7 @@ exports.SUBSCRIPTION_LIMITS = {
     FREE: {
         maxDocuments: 5,
         maxGroups: 1,
-        maxAssignments: 2,
+        maxAssignments: 5,
         maxSubmissions: 5,
         maxDocumentVersions: 2,
         hasAIAnalysis: true,
@@ -28,7 +28,7 @@ exports.SUBSCRIPTION_LIMITS = {
     PREMIUM: {
         maxDocuments: 25,
         maxGroups: 5,
-        maxAssignments: 10,
+        maxAssignments: 25,
         maxSubmissions: 25,
         maxDocumentVersions: 10,
         hasAIAnalysis: true,
@@ -349,6 +349,12 @@ class SubscriptionService {
             throw new Error("User not found");
         }
         const limits = exports.SUBSCRIPTION_LIMITS[user.subscriptionTier];
+        console.log(`----------------------------------------------`);
+        console.log(`checking user ${userId} for limit ${limitType}`);
+        console.log(`subscription tier is ${user.subscriptionTier}`);
+        console.log(`limits are 👇`);
+        console.log(limits);
+        console.log(`----------------------------------------------`);
         switch (limitType) {
             case "maxDocuments":
                 return user.documentCount < limits.maxDocuments;

@@ -14,12 +14,13 @@ const checkDocumentVersionLimitMiddleware = async (req, res, next) => {
     var _a;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const documentId = req.params.documentId || req.body.documentId;
+        const documentId = req.params.id;
         if (!userId || !documentId) {
-            return res.status(401).json({
+            res.status(401).json({
                 success: false,
                 message: "Unauthorized or missing document ID",
             });
+            return;
         }
         const versionCount = await config_1.default.documentVersion.count({
             where: {
@@ -30,26 +31,29 @@ const checkDocumentVersionLimitMiddleware = async (req, res, next) => {
             where: { id: userId },
         });
         if (!user) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: "User not found",
             });
+            return;
         }
         const limits = subscription_service_1.SUBSCRIPTION_LIMITS[user.subscriptionTier];
         if (versionCount >= limits.maxDocumentVersions) {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 message: `You have reached your document version limit of ${limits.maxDocumentVersions}. Please upgrade your subscription to create more versions.`,
             });
+            return;
         }
         next();
     }
     catch (error) {
         console.error("Error checking document version limit:", error);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
             message: error.message || "Failed to check document version limit",
         });
+        return;
     }
 };
 exports.checkDocumentVersionLimitMiddleware = checkDocumentVersionLimitMiddleware;
@@ -61,26 +65,28 @@ const checkDocumentLimitMiddleware = async (req, res, next) => {
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
-            return res.status(401).json({
+            res.status(401).json({
                 success: false,
                 message: "Unauthorized",
             });
         }
         const canCreateDocument = await subscriptionService.checkUserLimits(userId, "maxDocuments");
         if (!canCreateDocument) {
-            return res.status(403).json({
+            res.status(403).json({
                 success: false,
                 message: "You have reached your document limit. Please upgrade your subscription to continue.",
             });
+            return;
         }
         next();
     }
     catch (error) {
         console.error("Error checking document limit:", error);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
             message: error.message || "Failed to check document limit",
         });
+        return;
     }
 };
 exports.checkDocumentLimitMiddleware = checkDocumentLimitMiddleware;
@@ -96,6 +102,7 @@ const checkGroupLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "Unauthorized",
             });
+            return;
         }
         const canCreateGroup = await subscriptionService.checkUserLimits(userId, "maxGroups");
         if (!canCreateGroup) {
@@ -103,6 +110,7 @@ const checkGroupLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "You have reached your group limit. Please upgrade your subscription to continue.",
             });
+            return;
         }
         next();
     }
@@ -112,6 +120,7 @@ const checkGroupLimitMiddleware = async (req, res, next) => {
             success: false,
             message: error.message || "Failed to check group limit",
         });
+        return;
     }
 };
 exports.checkGroupLimitMiddleware = checkGroupLimitMiddleware;
@@ -127,6 +136,7 @@ const checkAssignmentLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "Unauthorized",
             });
+            return;
         }
         const canCreateAssignment = await subscriptionService.checkUserLimits(userId, "maxAssignments");
         if (!canCreateAssignment) {
@@ -134,6 +144,7 @@ const checkAssignmentLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "You have reached your assignment limit. Please upgrade your subscription to continue.",
             });
+            return;
         }
         next();
     }
@@ -143,6 +154,7 @@ const checkAssignmentLimitMiddleware = async (req, res, next) => {
             success: false,
             message: error.message || "Failed to check assignment limit",
         });
+        return;
     }
 };
 exports.checkAssignmentLimitMiddleware = checkAssignmentLimitMiddleware;
@@ -158,6 +170,7 @@ const checkSubmissionLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "Unauthorized",
             });
+            return;
         }
         const canCreateSubmission = await subscriptionService.checkUserLimits(userId, "maxSubmissions");
         if (!canCreateSubmission) {
@@ -165,6 +178,7 @@ const checkSubmissionLimitMiddleware = async (req, res, next) => {
                 success: false,
                 message: "You have reached your submission limit. Please upgrade your subscription to continue.",
             });
+            return;
         }
         next();
     }
@@ -174,6 +188,7 @@ const checkSubmissionLimitMiddleware = async (req, res, next) => {
             success: false,
             message: error.message || "Failed to check submission limit",
         });
+        return;
     }
 };
 exports.checkSubmissionLimitMiddleware = checkSubmissionLimitMiddleware;

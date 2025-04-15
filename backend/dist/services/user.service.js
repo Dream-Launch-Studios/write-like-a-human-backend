@@ -104,9 +104,7 @@ const getDashboardStats = async (userId) => {
     const totalSubmissions = await prisma.submission.count({
         where: { userId }
     });
-    // Get recent documents created by the user with distinct titles
-    // First get all documents
-    const allUserDocuments = await prisma.document.findMany({
+    const recentDocuments = await prisma.document.findMany({
         where: { userId },
         select: {
             id: true,
@@ -125,20 +123,9 @@ const getDashboardStats = async (userId) => {
         },
         orderBy: {
             createdAt: 'desc'
-        }
+        },
+        take: 5
     });
-    // Then filter for unique titles by using a Map to track seen titles
-    const uniqueDocTitles = new Map();
-    const recentDocuments = allUserDocuments
-        .filter(doc => {
-        // If we haven't seen this title before, add it to our map and keep this document
-        if (!uniqueDocTitles.has(doc.title)) {
-            uniqueDocTitles.set(doc.title, true);
-            return true;
-        }
-        return false;
-    })
-        .slice(0, 5); // Take only the first 5 after filtering
     // Get recent groups joined by the user
     const recentGroups = await prisma.groupMember.findMany({
         where: { userId },

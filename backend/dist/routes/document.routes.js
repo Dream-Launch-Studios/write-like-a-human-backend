@@ -45,13 +45,15 @@ const document_schema_1 = require("../schemas/document.schema");
 const subscription_middleware_1 = require("../middleware/subscription.middleware");
 const router = express_1.default.Router();
 router.use(auth_middleware_1.authMiddleware);
-router.post('/', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), subscription_middleware_1.incrementDocumentCountMiddleware, documentController.createDocument);
-router.post('/convert-document-to-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, subscription_middleware_1.incrementDocumentCountMiddleware, documentController.convertDocumentToHtml);
-router.post('/from-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), subscription_middleware_1.incrementDocumentCountMiddleware, documentController.createDocumentFromHtml);
+// NOT IN USE
+router.post('/', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), documentController.createDocument);
+// NOT IN USE
+router.post('/convert-document-to-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, documentController.convertDocumentToHtml);
+router.post('/from-html', upload_middleware_1.uploadMiddleware.single('file'), upload_middleware_1.validateDocumentMiddleware, (0, validate_middleware_1.validate)(document_schema_1.createDocumentSchema), subscription_middleware_1.checkDocumentLimitMiddleware, subscription_middleware_1.incrementDocumentCountMiddleware, documentController.createDocumentFromHtml);
 router.get('/', (0, validate_middleware_1.validate)(document_schema_1.listDocumentsSchema), documentController.listDocuments);
 router.get('/:id', (0, validate_middleware_1.validate)(document_schema_1.getDocumentSchema), documentController.getDocument);
 router.patch('/:id', (0, validate_middleware_1.validate)(document_schema_1.updateDocumentSchema), documentController.updateDocument);
 router.delete('/:id', (0, validate_middleware_1.validate)(document_schema_1.deleteDocumentSchema), documentController.deleteDocument);
-router.post('/:id/versions', (0, validate_middleware_1.validate)(document_schema_1.createVersionSchema), documentController.createVersion);
+router.post('/:id/versions', (0, validate_middleware_1.validate)(document_schema_1.createVersionSchema), subscription_middleware_1.checkDocumentVersionLimitMiddleware, documentController.createVersion);
 router.get('/:id/versions', (0, validate_middleware_1.validate)(document_schema_1.listVersionsSchema), documentController.listVersions);
 exports.default = router;

@@ -70,7 +70,6 @@ export const createVersionSchema = z.object({
         content: z.string(),
 
     })
-    // Note: file validation is handled by uploadMiddleware
 });
 
 // Schema for listing document versions

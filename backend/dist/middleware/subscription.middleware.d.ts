@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from "express";
 /**
  * Middleware to check if a user has reached their document version limit
  */
-export declare const checkDocumentVersionLimitMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const checkDocumentVersionLimitMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 /**
  * Middleware to check if a user has reached their document limit
  */
-export declare const checkDocumentLimitMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const checkDocumentLimitMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 /**
  * Middleware to check if a user has reached their group limit
  */

@@ -66,7 +66,6 @@ exports.createVersionSchema = zod_1.z.object({
         submissionId: zod_1.z.string().cuid({ message: 'Invalid submission ID' }).optional().nullable(),
         content: zod_1.z.string(),
     })
-    // Note: file validation is handled by uploadMiddleware
 });
 // Schema for listing document versions
 exports.listVersionsSchema = zod_1.z.object({

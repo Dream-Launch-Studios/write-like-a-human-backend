@@ -75,7 +75,7 @@ model Subscription {
 model Payment {
     id              String        @id @default(cuid())
     subscriptionId  String
-    subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
+    subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
     stripePaymentId String
     amount          Float
     currency        String        @default("usd")

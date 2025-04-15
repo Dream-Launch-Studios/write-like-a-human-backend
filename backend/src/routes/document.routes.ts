@@ -12,26 +12,26 @@ import {
     createVersionSchema,
     listVersionsSchema
 } from '../schemas/document.schema';
-import { incrementDocumentCountMiddleware } from '../middleware/subscription.middleware';
+import { checkDocumentLimitMiddleware, checkDocumentVersionLimitMiddleware, incrementDocumentCountMiddleware } from '../middleware/subscription.middleware';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
+// NOT IN USE
 router.post(
     '/',
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
     validate(createDocumentSchema),
-    incrementDocumentCountMiddleware,
     documentController.createDocument
 );
 
+// NOT IN USE
 router.post(
     '/convert-document-to-html',
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
-    incrementDocumentCountMiddleware,
     documentController.convertDocumentToHtml
 );
 
@@ -40,6 +40,7 @@ router.post(
     uploadMiddleware.single('file'),
     validateDocumentMiddleware,
     validate(createDocumentSchema),
+    checkDocumentLimitMiddleware,
     incrementDocumentCountMiddleware,
     documentController.createDocumentFromHtml
 );
@@ -71,6 +72,7 @@ router.delete(
 router.post(
     '/:id/versions',
     validate(createVersionSchema),
+    checkDocumentVersionLimitMiddleware,
     documentController.createVersion
 );
 
