@@ -17,7 +17,7 @@ import prisma from "./config/config";
 import { SubscriptionController } from "./controllers/subscription.controller";
 import { Request, Response, NextFunction } from "express";
 import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config'
 
 const app = express();
 app.use(cors());
