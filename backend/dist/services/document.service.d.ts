@@ -3,24 +3,24 @@ import { DocumentFilter, CreateDocumentData, UpdateDocumentData, CreateVersionDa
  * Create a new document
  */
 export declare const createDocument: (data: CreateDocumentData) => Promise<{
+    fileUrl: string;
     id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
-    userId: string;
     contentFormat: import(".prisma/client").$Enums.ContentFormat;
     feedbackMetricsId: string | null;
     rootDocumentId: string | null;
     submissionId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
     assignmentId: string | null;
     versionCount: number;
 }>;
@@ -29,31 +29,31 @@ export declare const createDocument: (data: CreateDocumentData) => Promise<{
  */
 export declare const listDocuments: ({ userId, page, limit, groupId, search }: DocumentFilter) => Promise<{
     documents: {
+        fileUrl: string;
+        id: string;
+        userId: string;
+        createdAt: Date;
         user: {
             id: string;
             name: string | null;
         };
-        group: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            name: string;
-            description: string | null;
-            joinToken: string;
-            adminId: string;
-        } | null;
-        id: string;
         title: string;
         versionNumber: number;
         isLatest: boolean;
         fileName: string;
-        fileUrl: string;
         fileType: string;
         fileSize: number;
         groupId: string | null;
-        userId: string;
         rootDocumentId: string | null;
-        createdAt: Date;
+        group: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            description: string | null;
+            joinToken: string;
+            adminId: string;
+        } | null;
     }[];
     pagination: {
         total: number;
@@ -75,24 +75,24 @@ export declare const getDocumentById: (id: string) => Promise<({
         name: string;
     } | null;
 } & {
+    fileUrl: string;
     id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
-    userId: string;
     contentFormat: import(".prisma/client").$Enums.ContentFormat;
     feedbackMetricsId: string | null;
     rootDocumentId: string | null;
     submissionId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
     assignmentId: string | null;
     versionCount: number;
 }) | null>;
@@ -100,24 +100,24 @@ export declare const getDocumentById: (id: string) => Promise<({
  * Update a document
  */
 export declare const updateDocument: (id: string, data: UpdateDocumentData) => Promise<{
+    fileUrl: string;
     id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
-    userId: string;
     contentFormat: import(".prisma/client").$Enums.ContentFormat;
     feedbackMetricsId: string | null;
     rootDocumentId: string | null;
     submissionId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
     assignmentId: string | null;
     versionCount: number;
 }>;
@@ -126,24 +126,24 @@ export declare const deleteDocument: (id: string) => Promise<boolean>;
  * Create a new version of a document
  */
 export declare const createDocumentVersion: (data: CreateVersionData) => Promise<{
+    fileUrl: string;
     id: string;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
     title: string;
     content: string;
     createdWith: import(".prisma/client").$Enums.DocumentCreatedWith;
     versionNumber: number;
     isLatest: boolean;
     fileName: string;
-    fileUrl: string;
     fileType: string;
     fileSize: number;
     groupId: string | null;
-    userId: string;
     contentFormat: import(".prisma/client").$Enums.ContentFormat;
     feedbackMetricsId: string | null;
     rootDocumentId: string | null;
     submissionId: string | null;
-    createdAt: Date;
-    updatedAt: Date;
     assignmentId: string | null;
     versionCount: number;
 }>;
