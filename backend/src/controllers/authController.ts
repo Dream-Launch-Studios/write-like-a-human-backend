@@ -2,12 +2,10 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
 import prisma from "../config/config";
 import { supabaseAdmin } from "../utils/supabase";
 import { SubscriptionService } from "../services/subscription.service";
 
-dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const subscriptionService = new SubscriptionService();
