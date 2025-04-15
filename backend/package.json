@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "NODE_OPTIONS=--max-old-space-size=4096 rimraf dist && tsc",
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 rimraf dist && tsc",
     "prestart": "npm run build",
     "start": "node dist/index.js",
     "preserve": "npm run build",
