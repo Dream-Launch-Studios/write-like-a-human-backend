@@ -8,19 +8,94 @@ datasource db {
 }
 
 model User {
-    id              String           @id @default(cuid())
-    email           String           @unique
-    name            String?
-    password        String
-    role            UserRole         @default(STUDENT)
-    feedbacks       Feedback[]
-    comments        Comment[]
-    documents       Document[]
-    groups          GroupMember[]
-    ownedGroups     Group[]          @relation("GroupAdmin")
-    wordSuggestions WordSuggestion[]
-    createdAt       DateTime         @default(now())
-    updatedAt       DateTime         @updatedAt
+    id                 String             @id
+    email              String             @unique
+    name               String?
+    password           String?
+    role               UserRole           @default(STUDENT)
+    feedbacks          Feedback[]
+    comments           Comment[]
+    isEmailVerified    Boolean            @default(false)
+    accountCreatedWith AccountCreatedWith @default(EMAIL)
+    documents          Document[]
+    groups             GroupMember[]
+    ownedGroups        Group[]            @relation("GroupAdmin")
+    wordSuggestions    WordSuggestion[]
+    assignments        Assignment[]       @relation("AssignmentCreator")
+    submissions        Submission[]
+    createdAt          DateTime           @default(now())
+    updatedAt          DateTime           @updatedAt
+    evaluations        SubmissionResult[]
+
+    // Subscription fields
+    stripeCustomerId   String?            @unique
+    subscriptionId     String?
+    subscriptionStatus SubscriptionStatus @default(FREE)
+    subscriptionTier   SubscriptionTier   @default(FREE)
+    currentPeriodEnd   DateTime?
+    subscription       Subscription?
+
+    // Usage tracking
+    documentCount   Int @default(0) // Number of documents uploaded
+    groupCount      Int @default(0) // Number of groups created (for teachers)
+    assignmentCount Int @default(0) // Number of assignments created (for teachers)
+    submissionCount Int @default(0) // Number of submissions made (for students)
+}
+
+enum SubscriptionStatus {
+    FREE
+    ACTIVE
+    PAST_DUE
+    CANCELED
+    UNPAID
+    TRIAL
+}
+
+enum SubscriptionTier {
+    FREE
+    PREMIUM
+}
+
+model Subscription {
+    id                   String             @id @default(cuid())
+    userId               String             @unique
+    user                 User               @relation(fields: [userId], references: [id])
+    stripeCustomerId     String
+    stripeSubscriptionId String
+    status               SubscriptionStatus
+    tier                 SubscriptionTier
+    currentPeriodStart   DateTime
+    currentPeriodEnd     DateTime
+    cancelAtPeriodEnd    Boolean            @default(false)
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt
+    paymentHistory       Payment[]
+}
+
+model Payment {
+    id              String        @id @default(cuid())
+    subscriptionId  String
+    subscription    Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+    stripePaymentId String
+    amount          Float
+    currency        String        @default("usd")
+    status          PaymentStatus
+    paymentMethod   String?
+    receiptUrl      String?
+    createdAt       DateTime      @default(now())
+    updatedAt       DateTime      @updatedAt
+}
+
+enum PaymentStatus {
+    SUCCEEDED
+    FAILED
+    PENDING
+    REFUNDED
+}
+
+enum AccountCreatedWith {
+    EMAIL
+    GOOGLE
 }
 
 model Group {
@@ -33,6 +108,7 @@ model Group {
     members     GroupMember[]
     documents   Document[]
     feedbacks   Feedback[]
+    assignments Assignment[]
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
 }
@@ -49,45 +125,169 @@ model GroupMember {
 }
 
 model Document {
-    id               String   @id @default(cuid())
-    title            String
-    content          String   @default("")
-    parentDocumentId String?
-    versionNumber    Int      @default(1)
-    isLatest         Boolean  @default(true)
-    fileName         String
-    fileUrl          String
-    fileType         String
-    fileSize         Int
-    groupId          String?
-    userId           String
-    createdAt        DateTime @default(now())
-    updatedAt        DateTime @updatedAt
+    id                String              @id @default(cuid())
+    title             String
+    content           String              @default("")
+    createdWith       DocumentCreatedWith @default(UPLOAD)
+    versionNumber     Int                 @default(1)
+    isLatest          Boolean             @default(true)
+    fileName          String
+    fileUrl           String
+    fileType          String
+    fileSize          Int
+    groupId           String?
+    userId            String
+    contentFormat     ContentFormat       @default(HTML)
+    feedbackMetricsId String?
+    rootDocumentId    String?
+    submissionId      String? // The primary submission this document is associated with
+    createdAt         DateTime            @default(now())
+    updatedAt         DateTime            @updatedAt
 
-    parent          Document?        @relation("DocumentVersions", fields: [parentDocumentId], references: [id])
-    versions        Document[]       @relation("DocumentVersions")
-    group           Group?           @relation(fields: [groupId], references: [id])
-    user            User             @relation(fields: [userId], references: [id])
-    feedbacks       Feedback[]
-    comments        Comment[]
-    wordSuggestions WordSuggestion[]
+    asRootDocument      DocumentVersion[] @relation("RootDocument")
+    asVersionedDocument DocumentVersion[] @relation("VersionedDocument")
+
+    group             Group?             @relation(fields: [groupId], references: [id])
+    user              User               @relation(fields: [userId], references: [id])
+    feedbacks         Feedback[]
+    comments          Comment[]
+    wordSuggestions   WordSuggestion[]
+    aiAnalysis        AIAnalysis?
+    submissions       Submission[]       @relation("DocumentSubmissions")
+    submission        Submission?        @relation("DocumentPrimarySubmission", fields: [submissionId], references: [id])
+    submissionResults SubmissionResult[]
+
+    // Optional: if you want to track which assignment this document was created for
+    assignmentId String?
+    assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+
+    // Track version count for subscription limits
+    versionCount Int @default(1)
+}
+
+model DocumentVersion {
+    id             String   @id @default(cuid())
+    rootDocumentId String // The original document ID
+    versionedDocId String // The ID of a specific version
+    versionNumber  Int // The version number
+    createdAt      DateTime @default(now())
+
+    rootDocument Document @relation("RootDocument", fields: [rootDocumentId], references: [id])
+    versionedDoc Document @relation("VersionedDocument", fields: [versionedDocId], references: [id])
+
+    @@unique([rootDocumentId, versionNumber])
+    @@unique([rootDocumentId, versionedDocId])
+}
+
+enum DocumentCreatedWith {
+    PASTE
+    UPLOAD
+}
+
+model AIAnalysis {
+    id                  String            @id @default(cuid())
+    documentId          String            @unique
+    document            Document          @relation(fields: [documentId], references: [id])
+    overallAiScore      Float // 0-1 score indicating likelihood of AI generation
+    humanWrittenPercent Float
+    aiGeneratedPercent  Float
+    analysisDate        DateTime          @default(now())
+    sections            DocumentSection[]
+    textMetrics         TextMetrics?
+    updatedAt           DateTime          @updatedAt
+}
+
+model DocumentSection {
+    id            String     @id @default(cuid())
+    aiAnalysisId  String
+    aiAnalysis    AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+    startOffset   Int // Start position in the document
+    endOffset     Int // End position in the document
+    content       String // The text of this section
+    isAiGenerated Boolean // Whether this section is AI-generated
+    aiConfidence  Float // AI detection confidence (0-1)
+    suggestions   String? // Suggestions to improve authenticity
+    createdAt     DateTime   @default(now())
+    updatedAt     DateTime   @updatedAt
+}
+
+model Assignment {
+    id            String              @id @default(cuid())
+    title         String
+    description   String
+    dueDate       DateTime?
+    documentUrl   String?
+    documentName  String?
+    fileType      String?
+    pastedContent String?
+    createdWith   DocumentCreatedWith @default(UPLOAD)
+    creatorId     String
+    creator       User                @relation("AssignmentCreator", fields: [creatorId], references: [id])
+    groupId       String
+    group         Group               @relation(fields: [groupId], references: [id])
+    submissions   Submission[]
+    documents     Document[] // Documents created for this assignment
+    createdAt     DateTime            @default(now())
+    updatedAt     DateTime            @updatedAt
+}
+
+model Submission {
+    id               String            @id @default(cuid())
+    documentId       String
+    document         Document          @relation("DocumentSubmissions", fields: [documentId], references: [id])
+    assignmentId     String
+    assignment       Assignment        @relation(fields: [assignmentId], references: [id])
+    userId           String
+    user             User              @relation(fields: [userId], references: [id])
+    status           SubmissionStatus  @default(DRAFT)
+    submittedAt      DateTime?
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+    submissionResult SubmissionResult?
+
+    // Documents that have this as their primary submission
+    primaryDocuments Document[] @relation("DocumentPrimarySubmission")
+}
+
+model SubmissionResult {
+    id             String           @id @default(cuid())
+    submissionId   String           @unique
+    submission     Submission       @relation(fields: [submissionId], references: [id])
+    teacherId      String
+    teacher        User             @relation(fields: [teacherId], references: [id])
+    feedback       String?
+    grade          String?
+    status         EvaluationStatus @default(PENDING)
+    rootDocumentId String?
+    documentId     String?
+    document       Document?        @relation(fields: [documentId], references: [id])
+    createdAt      DateTime         @default(now())
+    updatedAt      DateTime         @updatedAt
+}
+
+enum EvaluationStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    REQUIRES_REVISION
 }
 
 model Feedback {
-    id         String         @id @default(cuid())
-    content    String
-    aiScore    Float? // AI confidence score
-    status     FeedbackStatus @default(PENDING)
-    response   String?
-    userId     String
-    user       User           @relation(fields: [userId], references: [id])
-    documentId String?
-    document   Document?      @relation(fields: [documentId], references: [id])
-    groupId    String?
-    group      Group?         @relation(fields: [groupId], references: [id])
-    createdAt  DateTime       @default(now())
-    updatedAt  DateTime       @updatedAt
-    Comment    Comment[]
+    id              String           @id @default(cuid())
+    content         String
+    aiScore         Float? // AI confidence score
+    status          FeedbackStatus   @default(PENDING)
+    response        String?
+    feedbackMetrics FeedbackMetrics?
+    userId          String
+    user            User             @relation(fields: [userId], references: [id])
+    documentId      String?
+    document        Document?        @relation(fields: [documentId], references: [id])
+    groupId         String?
+    group           Group?           @relation(fields: [groupId], references: [id])
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    comments        Comment[]
 }
 
 model Comment {
@@ -133,4 +333,93 @@ enum FeedbackStatus {
     PENDING
     ANALYZED
     REVIEWED
+}
+
+model TextMetrics {
+    id           String     @id @default(cuid())
+    aiAnalysisId String     @unique
+    aiAnalysis   AIAnalysis @relation(fields: [aiAnalysisId], references: [id])
+
+    // Word and Structure Metrics
+    totalWordCount        Int
+    sentenceCount         Int
+    averageSentenceLength Float
+    readabilityScore      Float? // Flesch-Kincaid or similar
+
+    // Vocabulary Metrics
+    lexicalDiversity      Float? // Type-Token Ratio or MTLD
+    uniqueWordCount       Int?
+    academicLanguageScore Float? // Measure of formal/academic language
+
+    // Style Metrics
+    passiveVoicePercentage Float?
+    firstPersonPercentage  Float?
+    thirdPersonPercentage  Float?
+
+    // Grammar & Mechanics
+    punctuationDensity Float? // Frequency of punctuation
+    grammarErrorCount  Int?
+    spellingErrorCount Int?
+
+    // Additional AI Detection Metrics
+    predictabilityScore Float? // How formulaic the writing is
+    nGramUniqueness     Float? // Uniqueness of phrase patterns
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model FeedbackMetrics {
+    id         String   @id @default(cuid())
+    feedbackId String   @unique
+    feedback   Feedback @relation(fields: [feedbackId], references: [id])
+
+    // Structural Comparison
+    sentenceLengthChange    Float? // % change in avg sentence length
+    paragraphStructureScore Float? // Assessment of paragraph organization
+    headingConsistencyScore Float? // Consistency in formatting
+
+    // Vocabulary Metrics
+    lexicalDiversityChange Float? // Change in vocabulary diversity
+    wordRepetitionScore    Float? // Assessment of word repetition
+    formalityShift         Float? // Change in formality level
+
+    // Style Metrics
+    readabilityChange        Float? // Change in readability scores
+    voiceConsistencyScore    Float? // Consistency in active/passive voice
+    perspectiveShift         Float? // Change in narrative perspective
+    descriptiveLanguageScore Float? // Quality of descriptive language
+
+    // Grammar & Mechanics
+    punctuationChangeScore Float? // Changes in punctuation patterns
+    grammarPatternScore    Float? // Consistency in grammar patterns
+    spellingVariationScore Float? // Consistency in spelling
+
+    // Topic & Thematic Elements
+    thematicConsistencyScore Float? // Consistency in themes
+    keywordFrequencyChange   Float? // Change in keyword usage
+    argumentDevelopmentScore Float? // Quality of argument development
+
+    // Similarity Metrics
+    nGramSimilarityScore   Float? // Similarity in phrase patterns
+    tfIdfSimilarityScore   Float? // Term frequency similarity
+    jaccardSimilarityScore Float? // Word overlap measure
+
+    // AI Detection
+    originalityShiftScore Float? // Changes in originality
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum SubmissionStatus {
+    DRAFT
+    SUBMITTED
+    GRADED
+    RETURNED
+}
+
+enum ContentFormat {
+    HTML
+    TEXT
 }
