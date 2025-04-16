@@ -40,3 +40,5 @@ Overall Text Length & Word Count
 • Total Word Count – Growth or reduction in writing length.
 • Sentence Count – Number of sentences compared across pieces.
 
+
+

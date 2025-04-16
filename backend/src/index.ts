@@ -28,6 +28,9 @@ app.post(
   express.raw({ type: 'application/json' }),
   (req, res) => {
     console.log(`🔷 Stripe webhook called`);
+    console.log(`🔷 Headers:`, JSON.stringify(req.headers));
+    console.log(`🔷 Body type:`, typeof req.body);
+    console.log(`🔷 Body length:`, req.body ? req.body.length : 0);
     const subscriptionController = new SubscriptionController();
     return subscriptionController.handleWebhook(req, res);
   }
