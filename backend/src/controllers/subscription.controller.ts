@@ -236,10 +236,14 @@ export class SubscriptionController {
             });
         }
 
+        
+        
         let event;
-
+        
         try {
-            event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+            const payload = req.body;
+            console.log(`🔷 Payload type: ${typeof payload}, is Buffer: ${Buffer.isBuffer(payload)}`);
+            event = stripe.webhooks.constructEvent(payload, sig, endpointSecret);
         } catch (error) {
             console.error("Error verifying webhook signature:", error);
             return res.status(400).json({

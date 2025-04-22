@@ -21,7 +21,7 @@ dotenv.config({ path: "./.env" });
 
 
 const app = express();
-app.use(cors());
+
 
 // app.post(
 //   '/api/subscriptions/webhook',
@@ -57,7 +57,9 @@ app.post(
   }
 );
 
+app.use(cors());
 app.use(express.json());
+
 app.use("/api/auth", authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/documents', documentRoutes);
