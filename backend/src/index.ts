@@ -17,20 +17,41 @@ import prisma from "./config/config";
 import { SubscriptionController } from "./controllers/subscription.controller";
 import { Request, Response, NextFunction } from "express";
 import dotenv from 'dotenv';
-dotenv.config({path: "./.env"});
+dotenv.config({ path: "./.env" });
 
 
 const app = express();
 app.use(cors());
 
+// app.post(
+//   '/api/subscriptions/webhook',
+//   express.raw({ type: 'application/json' }),
+//   (req, res) => {
+//     console.log(`🔷 Stripe webhook called`);
+//     console.log(`🔷 Headers:`, JSON.stringify(req.headers));
+//     console.log(`🔷 Body type:`, typeof req.body);
+//     console.log(`🔷 Body length:`, req.body ? req.body.length : 0);
+//     const subscriptionController = new SubscriptionController();
+//     return subscriptionController.handleWebhook(req, res);
+//   }
+// );
+
 app.post(
   '/api/subscriptions/webhook',
   express.raw({ type: 'application/json' }),
+  // @ts-ignore
   (req, res) => {
     console.log(`🔷 Stripe webhook called`);
-    console.log(`🔷 Headers:`, JSON.stringify(req.headers));
-    console.log(`🔷 Body type:`, typeof req.body);
-    console.log(`🔷 Body length:`, req.body ? req.body.length : 0);
+    const sig = req.headers['stripe-signature'];
+
+    if (!sig) {
+      console.log('No stripe signature found');
+      res.status(400).json({ error: 'No Stripe signature found' });
+      return
+    }
+
+    console.log(`🔷 Stripe sig - ${sig}`);
+
     const subscriptionController = new SubscriptionController();
     return subscriptionController.handleWebhook(req, res);
   }

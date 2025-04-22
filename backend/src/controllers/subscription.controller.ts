@@ -181,13 +181,55 @@ export class SubscriptionController {
     /**
      * Handle Stripe webhook
      */
-    async handleWebhook(req: Request, res: Response): Promise<any> {
+    // async handleWebhook(req: Request, res: Response): Promise<any> {
+    //     const sig = req.headers["stripe-signature"] as string;
+    //     console.log(`🔷 Stripe sig - ${sig}`);
+    //     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+
+    //     if (!sig || !endpointSecret) {
+
+    //         return res.status(400).json({
+    //             success: false,
+    //             message: "Missing Stripe signature or endpoint secret",
+    //         });
+    //     }
+
+    //     let event;
+
+    //     try {
+    //         const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+    //         event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    //         console.log(`🪕🪕🪕🪕 event -> ${event}`)
+    //         console.log(event)
+    //         console.log(`🪕🪕🪕🪕`)
+    //     } catch (error) {
+    //         console.error("Error verifying webhook signature:", error);
+    //         return res.status(400).json({
+    //             success: false,
+    //             message: `Webhook signature verification failed: ${(error as Error).message}`,
+    //         });
+    //     }
+
+    //     try {
+    //         await subscriptionService.handleWebhookEvent(event);
+    //         return res.status(200).json({ received: true });
+    //     } catch (error) {
+    //         console.error("Error handling webhook event:", error);
+    //         return res.status(500).json({
+    //             success: false,
+    //             message: (error as Error).message || "Failed to handle webhook event",
+    //         });
+    //     }
+    // }
+
+    async handleWebhook(req: Request, res: Response) {
         const sig = req.headers["stripe-signature"] as string;
-        console.log(`🔷 Stripe sig - ${sig}`);
         const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
         if (!sig || !endpointSecret) {
-
+            console.log(`sig - ${sig}`)
+            console.log(`endpointSecret - ${endpointSecret}`)
             return res.status(400).json({
                 success: false,
                 message: "Missing Stripe signature or endpoint secret",
@@ -197,11 +239,7 @@ export class SubscriptionController {
         let event;
 
         try {
-            const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
             event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-            console.log(`🪕🪕🪕🪕 event -> ${event}`)
-            console.log(event)
-            console.log(`🪕🪕🪕🪕`)
         } catch (error) {
             console.error("Error verifying webhook signature:", error);
             return res.status(400).json({
