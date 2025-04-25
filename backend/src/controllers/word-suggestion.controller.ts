@@ -63,7 +63,7 @@ export const generateWordSuggestionsController = async (req: Request, res: Respo
 
         const response: ApiResponse = {
             success: false,
-            message: 'Failed to generate word suggestions',
+            message: error instanceof Error ? error.message : 'Failed to generate word suggestions' ,
             error: error instanceof Error ? error.message : 'Unknown error',
         };
 
