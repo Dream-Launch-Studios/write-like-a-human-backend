@@ -501,7 +501,7 @@ export const submitAssignmentController = async (
             groupId: groupId
         });
 
-        const submission = await submitAssignment(assignmentId, userId, document.id);
+        const submission = await submitAssignment(assignmentId, userId, document.id, htmlContent);
 
         const response: ApiResponse = {
             success: true,
