@@ -3,6 +3,48 @@ import * as documentService from '../services/document.service';
 import * as pdfService from '../services/pdf.service';
 import { ApiResponse } from '../types/response';
 import { uploadFileToSupabase } from '../utils/supabase'; // Adjust the import path as needed
+import { DocumentSection, TextMetricsData } from '../types/analysis.types';
+import { AIWordSuggestion } from '../types/word-suggestion.types';
+import { openai } from '../lib/openai';
+import prisma from '../config/config';
+
+
+type FeedbackMetricsVersion2 = {
+    structuralComparison: {
+        sentenceLengthChange: number; // 0 - 100
+        paragraphStructureScore: number; // 0 - 100
+        headingConsistencyScore: number; // 0 - 100
+    };
+    vocabularyMetrics: {
+        lexicalDiversityChange: number; // 0 - 100
+        wordRepetitionScore: number; // 0 - 100
+        formalityShift: number; // 0 - 100
+    };
+    styleMetrics: {
+        readabilityChange: number; // 0 - 100
+        voiceConsistencyScore: number; // 0 - 100
+        perspectiveShift: number; // 0 - 100
+        descriptiveLanguageScore: number; // 0 - 100
+    };
+    grammarAndMechanics: {
+        punctuationChangeScore: number; // 0 - 100
+        grammarPatternScore: number; // 0 - 100
+        spellingVariationScore: number; // 0 - 100
+    };
+    topicThematicElements: {
+        thematicConsistencyScore: number; // 0 - 100
+        keywordFrequencyChange: number; // 0 - 100
+        argumentDevelopmentScore: number; // 0 - 100
+    };
+    similarityMetrics: {
+        nGramSimilarityScore: number; // 0 - 100
+        tfIdfSimilarityScore: number; // 0 - 100
+        jaccardSimilarityScore: number; // 0 - 100
+    };
+    aIDetection: {
+        originalityShiftScore: number; // 0 - 100
+    };
+};
 
 
 /**
@@ -152,114 +194,6 @@ export const convertPdfToHtml = async (req: Request, res: Response): Promise<voi
     }
 };
 
-/**
- * Create a document from a PDF converted to HTML
- * Combines PDF to HTML conversion with document creation
- */
-
-// export const createDocumentFromHtml = async (req: Request, res: Response): Promise<void> => {
-//     try {
-//         // Check if file was uploaded
-//         if (!req.file) {
-//             const response: ApiResponse = {
-//                 success: false,
-//                 message: 'No file uploaded'
-//             };
-//             res.status(400).json(response);
-//             return;
-//         }
-
-//         // Validate the PDF
-//         const pdfBuffer = req.file.buffer;
-//         const isValidPdf = await pdfService.validatePdf(pdfBuffer);
-
-//         if (!isValidPdf) {
-//             const response: ApiResponse = {
-//                 success: false,
-//                 message: 'Invalid PDF file'
-//             };
-//             res.status(422).json(response);
-//             return;
-//         }
-
-//         let htmlContent: string;
-//         try {
-//             // Convert PDF to HTML 
-//             htmlContent = await pdfService.extractHtmlFromPdf(pdfBuffer);
-//         } catch (conversionError) {
-//             console.error('PDF conversion error:', conversionError);
-//             const response: ApiResponse = {
-//                 success: false,
-//                 message: 'Error converting PDF to HTML',
-//                 error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
-//             };
-//             res.status(422).json(response);
-//             return;
-//         }
-
-//         // Upload file to Supabase storage
-//         const uploadResult = await uploadFileToSupabase(
-//             pdfBuffer,
-//             req.file.originalname,
-//             req.file.mimetype,
-//             req.user.id
-//         );
-
-//         // Handle upload failure
-//         if (!uploadResult.success) {
-//             const response: ApiResponse = {
-//                 success: false,
-//                 message: 'Failed to upload file to storage',
-//                 error: uploadResult.error
-//             };
-//             res.status(500).json(response);
-//             return;
-//         }
-
-//         // Get document data from validated request
-//         const title = req.body.title || req.file.originalname;
-//         const groupId = req.body.groupId;
-
-//         // Create document in the database with HTML content and file URL
-//         const document = await documentService.createDocument({
-//             title,
-//             content: htmlContent, // Store HTML content instead of plain text
-//             contentFormat: 'HTML', // Add this field to your document model
-//             fileName: req.file.originalname,
-//             fileUrl: uploadResult.fileUrl ?? "", // Now storing the file URL from Supabase
-//             fileType: req.file.mimetype,
-//             fileSize: req.file.size,
-//             userId: req.user.id,
-//             groupId: groupId || null
-//         });
-
-//         const response: ApiResponse = {
-//             success: true,
-//             message: 'Document created from PDF with HTML formatting',
-//             document: {
-//                 id: document.id,
-//                 title: document.title,
-//                 fileName: document.fileName,
-//                 fileUrl: document.fileUrl, // Include the file URL in the response
-//                 createdAt: document.createdAt,
-//                 contentFormat: 'html'
-//             }
-//         };
-
-//         res.status(201).json(response);
-//     } catch (error) {
-//         console.error('Error creating HTML document:', error);
-
-//         const response: ApiResponse = {
-//             success: false,
-//             message: 'Failed to create HTML document',
-//             error: error instanceof Error ? error.message : 'Unknown error'
-//         };
-
-//         res.status(500).json(response);
-//     }
-// };
-
 
 export const createDocumentFromHtml = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -386,11 +320,394 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
 };
 
 
-/**
- * Convert a document file to HTML
- * Supports PDF and DOCX formats
- * For use in rich text editors
- */
+
+export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response): Promise<void> => {
+    try {
+        if (!req.file) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'No file uploaded'
+            };
+            res.status(400).json(response);
+            return;
+        }
+
+        const fileBuffer = req.file.buffer;
+        const mimeType = req.file.mimetype;
+
+        let htmlContent: string;
+        try {
+            // Extract HTML using the appropriate method
+            htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
+        } catch (conversionError) {
+            console.error('Document conversion error:', conversionError);
+            const response: ApiResponse = {
+                success: false,
+                message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
+                error: conversionError instanceof Error ? conversionError.message : 'Unknown error'
+            };
+            res.status(422).json(response);
+            return;
+        }
+
+
+        // Upload file to Supabase storage
+        const uploadResult = await uploadFileToSupabase(
+            fileBuffer,
+            req.file.originalname,
+            mimeType,
+            req.user.id
+        );
+
+        // Handle upload failure
+        if (!uploadResult.success) {
+            const response: ApiResponse = {
+                success: false,
+                message: 'Failed to upload file to storage',
+                error: uploadResult.error
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        console.log(`htmlContent 👇`)
+        console.log(htmlContent)
+
+
+        const prompt = `
+    You have the analyze the document content, Return data in the following JSON:
+    {
+      "textMetrics": {
+        "totalWordCount": "number",
+        "sentenceCount": "number",
+        "averageSentenceLength": "number",
+        "readabilityScore": "number (0% - 100%)",
+        "lexicalDiversity": "number (0% - 1%)",
+        "uniqueWordCount": "number",
+        "academicLanguageScore": "number (0 - 1)",
+        "passiveVoicePercentage": "number (0% - 100%)",
+        "firstPersonPercentage": "number (0% - 100%)",
+        "thirdPersonPercentage": "number (0% - 100%)",
+        "punctuationDensity": "number (0 - 1)",
+        "grammarErrorCount": "number",
+        "spellingErrorCount": "number",
+        "predictabilityScore": "number (0 - 1)",
+        "nGramUniqueness": "number (0 - 1)"
+      },
+      "sections": [
+        {
+          "startOffset": "number",
+          "endOffset": "number",
+          "content": "string",
+          "isAiGenerated": "boolean",
+          "aiConfidence": "number (0% - 100%)",
+          "suggestions": "string"
+        },
+        ...
+      ],
+      "wordSuggestions": [
+        {
+          "originalWord": "string",
+          "suggestedWord": "string",
+          "position": "number",
+          "startOffset": "number",
+          "endOffset": "number",
+          "context": "string",
+          "aiConfidence": "number (0% - 100%)"
+        }
+      ],
+      "feedbackMetrics": {
+        "structuralComparison": {
+          "sentenceLengthChange": "number (0 - 100)",
+          "paragraphStructureScore": "number (0 - 100)",
+          "headingConsistencyScore": "number (0 - 100)"
+        },
+        "vocabularyMetrics": {
+          "lexicalDiversityChange": "number (0 - 100)",
+          "wordRepetitionScore": "number (0 - 100)" ,
+          "formalityShift": "number (0 - 100)"
+        },
+        "styleMetrics": {
+          "readabilityChange": "number (0 - 100)",
+          "voiceConsistencyScore": "number (0 - 100)",
+          "perspectiveShift": "number (0 - 100)",
+          "descriptiveLanguageScore": "number (0 - 100)"
+        },
+        "grammarAndMechanics": {
+          "punctuationChangeScore": "number (0 - 100)",
+          "grammarPatternScore": "number (0 - 100)",
+          "spellingVariationScore": "number (0 - 100)"
+        },
+        "topicThematicElements": {
+          "thematicConsistencyScore": "number (0 - 100)",
+          "keywordFrequencyChange": "number (0 - 100)",
+          "argumentDevelopmentScore": "number (0 - 100)"
+        },
+        "similarityMetrics": {
+          "nGramSimilarityScore": "number (0 - 100)",
+          "tfIdfSimilarityScore": "number (0 - 100)",
+          "jaccardSimilarityScore": "number (0 - 100)"
+        },
+        "aIDetection": {
+          "originalityShiftScore": "number (0 - 100)"
+        }
+      },
+      "overallAiScore": "number (0 - 100) (How much of the content is likely to be AI-generated)",
+      "humanWrittenPercent": "number (0% - 100%)",
+      "aiGeneratedPercent" : "number (0% - 100%)"
+    }
+
+    To generate the "wordSuggestions" identify words or phrases that could be improved to make the writing appear more human-like and less AI-generated Here is the document content:
+    ${htmlContent}
+    `
+
+        console.log(`prompt 👇`)
+        console.log(prompt)
+
+
+        let parsedResponse: {
+            textMetrics: TextMetricsData;
+            sections: Omit<DocumentSection, "id" | "aiAnalysisId">[];
+            wordSuggestions: AIWordSuggestion[];
+            feedbackMetrics: FeedbackMetricsVersion2;
+            overallAiScore: number;
+            humanWrittenPercent: number;
+            aiGeneratedPercent: number;
+        };
+
+        try {
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [{
+                    content: prompt,
+                    role: "system",
+                }],
+                response_format: { type: "json_object" },
+                temperature: 0.3,
+            });
+
+            const responseContent = response.choices[0].message.content || "{}";
+            parsedResponse = JSON.parse(responseContent);
+        } catch (aiError) {
+            console.error('Error with OpenAI API:', aiError);
+            res.status(500).json({
+                success: false,
+                message: 'Failed to analyze document content',
+                error: aiError instanceof Error ? aiError.message : 'Unknown error'
+            });
+            return;
+        }
+
+
+        try {
+            const result = await prisma.$transaction(async (tx) => {
+                const title = req.body.title || req?.file?.originalname;
+                // create document
+                const document = await tx.document.create({
+                    data: {
+                        title: title,
+                        content: htmlContent,
+                        fileName: req?.file?.originalname ?? title,
+                        fileUrl: uploadResult?.fileUrl ?? "",
+                        fileType: mimeType,
+                        fileSize: req?.file?.size ?? 0,
+                        userId: req.user.id,
+                        versionNumber: 1,
+                        createdWith: "PASTE",
+                        isLatest: true,
+                        contentFormat: "HTML"
+
+                    }
+                });
+                await tx.document.update({
+                    where: { id: document.id },
+                    data: {
+                        rootDocumentId: document.id
+                    }
+                })
+                await tx.documentVersion.create({
+                    data: {
+                        rootDocumentId: document.id,
+                        versionedDocId: document.id,
+                        versionNumber: 1,
+                    }
+                })
+
+                // create analysis
+                const analysis = await tx.aIAnalysis.create({
+                    data: {
+                        documentId: document.id,
+                        overallAiScore: parsedResponse.overallAiScore ?? 0,
+                        humanWrittenPercent: parsedResponse.humanWrittenPercent ?? 0,
+                        aiGeneratedPercent: parsedResponse.aiGeneratedPercent ?? 0,
+                        analysisDate: new Date()
+                    }
+                });
+
+                // create text metrics
+                await tx.textMetrics.create({
+                    data: {
+                        aiAnalysisId: analysis.id,
+                        totalWordCount: parsedResponse.textMetrics.totalWordCount,
+                        sentenceCount: parsedResponse.textMetrics.sentenceCount,
+                        averageSentenceLength: parsedResponse.textMetrics.averageSentenceLength,
+                        readabilityScore: parsedResponse.textMetrics.readabilityScore,
+                        lexicalDiversity: parsedResponse.textMetrics.lexicalDiversity,
+                        uniqueWordCount: parsedResponse.textMetrics.uniqueWordCount,
+                        academicLanguageScore: parsedResponse.textMetrics.academicLanguageScore,
+                        passiveVoicePercentage: parsedResponse.textMetrics.passiveVoicePercentage,
+                        firstPersonPercentage: parsedResponse.textMetrics.firstPersonPercentage,
+                        thirdPersonPercentage: parsedResponse.textMetrics.thirdPersonPercentage,
+                        punctuationDensity: parsedResponse.textMetrics.punctuationDensity,
+                        grammarErrorCount: parsedResponse.textMetrics.grammarErrorCount,
+                        spellingErrorCount: parsedResponse.textMetrics.spellingErrorCount,
+                        predictabilityScore: parsedResponse.textMetrics.predictabilityScore,
+                        nGramUniqueness: parsedResponse.textMetrics.nGramUniqueness
+                    }
+                });
+
+                // create sections
+                if (parsedResponse.sections.length > 0) {
+                    await Promise.all(parsedResponse.sections.map(section =>
+                        tx.documentSection.create({
+                            data: {
+                                aiAnalysisId: analysis.id,
+                                startOffset: section.startOffset,
+                                endOffset: section.endOffset,
+                                content: section.content,
+                                isAiGenerated: section.isAiGenerated,
+                                aiConfidence: section.aiConfidence,
+                                suggestions: section.suggestions
+                            }
+                        })
+                    ));
+                }
+
+                // create word suggestions
+                if (parsedResponse.wordSuggestions.length > 0) {
+                    await Promise.all(parsedResponse.wordSuggestions.map(suggestion =>
+                        tx.wordSuggestion.create({
+                            data: {
+                                originalWord: suggestion.originalWord,
+                                suggestedWord: suggestion.suggestedWord,
+                                position: suggestion.position,
+                                startOffset: suggestion.startOffset,
+                                endOffset: suggestion.endOffset,
+                                context: suggestion.context,
+                                aiConfidence: suggestion.aiConfidence,
+                                documentId: document.id,
+                                userId: req.user.id,
+                                highlighted: true,
+                            }
+                        })
+                    ));
+                }
+
+                // create feedback
+                const feedback = await tx.feedback.create({
+                    data: {
+                        content: "",
+                        status: 'PENDING',
+                        userId: req.user.id,
+                        documentId: document.id,
+                        // groupId: data.groupId
+                    }
+                });
+
+                // create feedback metrics
+                await tx.feedbackMetrics.create({
+                    data: {
+                        feedbackId: feedback.id,
+                        // Structure metrics
+                        sentenceLengthChange: parsedResponse.feedbackMetrics.structuralComparison.sentenceLengthChange,
+                        paragraphStructureScore: parsedResponse.feedbackMetrics.structuralComparison.paragraphStructureScore,
+                        headingConsistencyScore: parsedResponse.feedbackMetrics.structuralComparison.headingConsistencyScore,
+
+                        // Vocabulary metrics
+                        lexicalDiversityChange: parsedResponse.feedbackMetrics.vocabularyMetrics.lexicalDiversityChange,
+                        wordRepetitionScore: parsedResponse.feedbackMetrics.vocabularyMetrics.wordRepetitionScore,
+                        formalityShift: parsedResponse.feedbackMetrics.vocabularyMetrics.formalityShift,
+
+                        // Style metrics
+                        readabilityChange: parsedResponse.feedbackMetrics.styleMetrics.readabilityChange,
+                        voiceConsistencyScore: parsedResponse.feedbackMetrics.styleMetrics.voiceConsistencyScore,
+                        perspectiveShift: parsedResponse.feedbackMetrics.styleMetrics.perspectiveShift,
+                        descriptiveLanguageScore: parsedResponse.feedbackMetrics.styleMetrics.descriptiveLanguageScore,
+
+                        // Grammar metrics
+                        punctuationChangeScore: parsedResponse.feedbackMetrics.grammarAndMechanics.punctuationChangeScore,
+                        grammarPatternScore: parsedResponse.feedbackMetrics.grammarAndMechanics.grammarPatternScore,
+                        spellingVariationScore: parsedResponse.feedbackMetrics.grammarAndMechanics.spellingVariationScore,
+
+                        // Thematic metrics
+                        thematicConsistencyScore: parsedResponse.feedbackMetrics.topicThematicElements.thematicConsistencyScore,
+                        keywordFrequencyChange: parsedResponse.feedbackMetrics.topicThematicElements.keywordFrequencyChange,
+                        argumentDevelopmentScore: parsedResponse.feedbackMetrics.topicThematicElements.argumentDevelopmentScore,
+
+                        // Similarity metrics
+                        nGramSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.nGramSimilarityScore,
+                        tfIdfSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.tfIdfSimilarityScore,
+                        jaccardSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.jaccardSimilarityScore,
+
+                        // AI detection
+                        originalityShiftScore: parsedResponse.feedbackMetrics.aIDetection.originalityShiftScore
+                    }
+                });
+
+                // update feedback
+                await tx.feedback.update({
+                    where: { id: feedback.id },
+                    data: { status: "ANALYZED" }
+                })
+
+
+                // update document
+                await tx.document.update({
+                    where: { id: document.id },
+                    data: { feedbackMetricsId: feedback.id }
+                })
+
+                return {
+                    document,
+                    analysis
+                };
+
+            }, {
+                maxWait: 20000, // 20s max wait time
+                timeout: 120000 // 120s timeout
+            })
+
+            const response: ApiResponse = {
+                success: true,
+                message: `Document created from ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} with HTML formatting`,
+                document: {
+                    id: result.document.id,
+                    title: result.document.title,
+                    fileName: result.document.fileName,
+                    fileUrl: result.document.fileUrl,
+                    createdAt: result.document.createdAt,
+                    contentFormat: 'html'
+                }
+            }
+
+            res.status(201).json(response)
+
+        } catch (error) {
+            console.error('Error parsing OpenAI response:', error);
+            throw new Error('Failed to parse AI suggestions');
+        }
+
+    } catch (error) {
+        console.error('Unhandled error in createAndAnalyzeDocument:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+}
+
+
 export const convertDocumentToHtml = async (req: Request, res: Response): Promise<void> => {
     try {
         // Check if file was uploaded
@@ -482,9 +799,7 @@ export const convertDocumentToHtml = async (req: Request, res: Response): Promis
 };
 
 
-/**
- * List documents for the current user
- */
+
 export const listDocuments = async (req: Request, res: Response): Promise<void> => {
     try {
         const { page = 1, limit = 10, groupId, search } = req.query;
@@ -518,9 +833,7 @@ export const listDocuments = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-/**
- * Get a specific document
- */
+
 export const getDocument = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
@@ -588,9 +901,7 @@ export const getDocument = async (req: Request, res: Response): Promise<void> =>
     }
 };
 
-/**
- * Update a document
- */
+
 export const updateDocument = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
@@ -648,9 +959,7 @@ export const updateDocument = async (req: Request, res: Response): Promise<void>
     }
 };
 
-/**
- * Delete a document
- */
+
 export const deleteDocument = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
@@ -699,9 +1008,7 @@ export const deleteDocument = async (req: Request, res: Response): Promise<void>
     }
 };
 
-/**
- * Create a new version of a document
- */
+
 export const createVersion = async (req: Request, res: Response): Promise<void> => {
     try {
 
@@ -789,9 +1096,7 @@ export const createVersion = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-/**
- * List versions of a document
- */
+
 export const listVersions = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;

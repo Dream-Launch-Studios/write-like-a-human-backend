@@ -45,6 +45,17 @@ router.post(
     documentController.createDocumentFromHtml
 );
 
+
+router.post(
+    '/from-html-v2',
+    uploadMiddleware.single('file'),
+    validateDocumentMiddleware,
+    validate(createDocumentSchema),
+    checkDocumentLimitMiddleware,
+    incrementDocumentCountMiddleware,
+    documentController.createAndAnalyzeDocumentWithAI
+);
+
 router.get(
     '/',
     validate(listDocumentsSchema),

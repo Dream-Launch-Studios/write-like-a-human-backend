@@ -62,3 +62,14 @@ export interface AISuggestion {
     context: string;
     aiConfidence: number;
 }
+
+export interface AIWordSuggestion {
+    originalWord: string;
+    suggestedWord: string;
+    position: number;
+    startOffset: number;
+    endOffset: number;
+    context: string;
+    aiConfidence: number;
+}
+
