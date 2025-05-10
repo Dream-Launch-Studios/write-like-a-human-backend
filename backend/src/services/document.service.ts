@@ -5,6 +5,11 @@ import {
     UpdateDocumentData,
     CreateVersionData
 } from '../types/document.types';
+import { openai } from '../lib/openai';
+import { getAnalyzeDocumentPrompt } from '../utils/prompt';
+import { DocumentSection, TextMetricsData } from '../types/analysis.types';
+import { AIWordSuggestion } from '../types/word-suggestion.types';
+import { FeedbackMetricsVersion2 } from '../controllers/document.controller';
 
 const prisma = new PrismaClient();
 
@@ -340,6 +345,38 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
 
     const nextVersionNumber = highestVersion.versionNumber + 1;
 
+    const prompt = getAnalyzeDocumentPrompt({ content: data.content })
+
+    let parsedResponse: {
+        textMetrics: TextMetricsData;
+        sections: Omit<DocumentSection, "id" | "aiAnalysisId">[];
+        wordSuggestions: AIWordSuggestion[];
+        feedbackMetrics: FeedbackMetricsVersion2;
+        overallAiScore: number;
+        humanWrittenPercent: number;
+        aiGeneratedPercent: number;
+    };
+
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [{
+                content: prompt,
+                role: "system",
+            }],
+            response_format: { type: "json_object" },
+            temperature: 0.3,
+        });
+
+        const responseContent = response.choices[0].message.content || "{}";
+        parsedResponse = JSON.parse(responseContent);
+
+    } catch (aiError) {
+        throw new Error(aiError instanceof Error ? aiError.message : 'Failed to analyze document content with ai')
+    }
+
+
+
     return await prisma.$transaction(async (tx) => {
         // Set all existing versions to non-latest
         await tx.document.updateMany({
@@ -415,7 +452,145 @@ export const createDocumentVersion = async (data: CreateVersionData) => {
             }
         });
 
+        // create analysis
+        const analysis = await tx.aIAnalysis.create({
+            data: {
+                documentId: newVersion.id,
+                overallAiScore: parsedResponse.overallAiScore ?? 0,
+                humanWrittenPercent: parsedResponse.humanWrittenPercent ?? 0,
+                aiGeneratedPercent: parsedResponse.aiGeneratedPercent ?? 0,
+                analysisDate: new Date()
+            }
+        });
+
+        // create text metrics
+        await tx.textMetrics.create({
+            data: {
+                aiAnalysisId: analysis.id,
+                totalWordCount: parsedResponse.textMetrics.totalWordCount,
+                sentenceCount: parsedResponse.textMetrics.sentenceCount,
+                averageSentenceLength: parsedResponse.textMetrics.averageSentenceLength,
+                readabilityScore: parsedResponse.textMetrics.readabilityScore,
+                lexicalDiversity: parsedResponse.textMetrics.lexicalDiversity,
+                uniqueWordCount: parsedResponse.textMetrics.uniqueWordCount,
+                academicLanguageScore: parsedResponse.textMetrics.academicLanguageScore,
+                passiveVoicePercentage: parsedResponse.textMetrics.passiveVoicePercentage,
+                firstPersonPercentage: parsedResponse.textMetrics.firstPersonPercentage,
+                thirdPersonPercentage: parsedResponse.textMetrics.thirdPersonPercentage,
+                punctuationDensity: parsedResponse.textMetrics.punctuationDensity,
+                grammarErrorCount: parsedResponse.textMetrics.grammarErrorCount,
+                spellingErrorCount: parsedResponse.textMetrics.spellingErrorCount,
+                predictabilityScore: parsedResponse.textMetrics.predictabilityScore,
+                nGramUniqueness: parsedResponse.textMetrics.nGramUniqueness
+            }
+        });
+
+        // create document sections
+        if (parsedResponse.sections.length > 0) {
+            await Promise.all(parsedResponse.sections.map(section =>
+                tx.documentSection.create({
+                    data: {
+                        aiAnalysisId: analysis.id,
+                        startOffset: section.startOffset,
+                        endOffset: section.endOffset,
+                        content: section.content,
+                        isAiGenerated: section.isAiGenerated,
+                        aiConfidence: section.aiConfidence,
+                        suggestions: section.suggestions
+                    }
+                })
+            ));
+        }
+
+        // create word suggestions
+        if (parsedResponse.wordSuggestions.length > 0) {
+            await Promise.all(parsedResponse.wordSuggestions.map(suggestion =>
+                tx.wordSuggestion.create({
+                    data: {
+                        originalWord: suggestion.originalWord,
+                        suggestedWord: suggestion.suggestedWord,
+                        position: suggestion.position,
+                        startOffset: suggestion.startOffset,
+                        endOffset: suggestion.endOffset,
+                        context: suggestion.context,
+                        aiConfidence: suggestion.aiConfidence,
+                        documentId: newVersion.id,
+                        userId: data.userId,
+                        highlighted: true,
+                    }
+                })
+            ));
+        }
+
+        // create feedback
+        const feedback = await tx.feedback.create({
+            data: {
+                content: "",
+                status: 'PENDING',
+                userId: data.userId,
+                documentId: newVersion.id,
+                // groupId: data.groupId
+            }
+        });
+
+
+        // create feedback metrics
+        await tx.feedbackMetrics.create({
+            data: {
+                feedbackId: feedback.id,
+                // Structure metrics
+                sentenceLengthChange: parsedResponse.feedbackMetrics.structuralComparison.sentenceLengthChange,
+                paragraphStructureScore: parsedResponse.feedbackMetrics.structuralComparison.paragraphStructureScore,
+                headingConsistencyScore: parsedResponse.feedbackMetrics.structuralComparison.headingConsistencyScore,
+
+                // Vocabulary metrics
+                lexicalDiversityChange: parsedResponse.feedbackMetrics.vocabularyMetrics.lexicalDiversityChange,
+                wordRepetitionScore: parsedResponse.feedbackMetrics.vocabularyMetrics.wordRepetitionScore,
+                formalityShift: parsedResponse.feedbackMetrics.vocabularyMetrics.formalityShift,
+
+                // Style metrics
+                readabilityChange: parsedResponse.feedbackMetrics.styleMetrics.readabilityChange,
+                voiceConsistencyScore: parsedResponse.feedbackMetrics.styleMetrics.voiceConsistencyScore,
+                perspectiveShift: parsedResponse.feedbackMetrics.styleMetrics.perspectiveShift,
+                descriptiveLanguageScore: parsedResponse.feedbackMetrics.styleMetrics.descriptiveLanguageScore,
+
+                // Grammar metrics
+                punctuationChangeScore: parsedResponse.feedbackMetrics.grammarAndMechanics.punctuationChangeScore,
+                grammarPatternScore: parsedResponse.feedbackMetrics.grammarAndMechanics.grammarPatternScore,
+                spellingVariationScore: parsedResponse.feedbackMetrics.grammarAndMechanics.spellingVariationScore,
+
+                // Thematic metrics
+                thematicConsistencyScore: parsedResponse.feedbackMetrics.topicThematicElements.thematicConsistencyScore,
+                keywordFrequencyChange: parsedResponse.feedbackMetrics.topicThematicElements.keywordFrequencyChange,
+                argumentDevelopmentScore: parsedResponse.feedbackMetrics.topicThematicElements.argumentDevelopmentScore,
+
+                // Similarity metrics
+                nGramSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.nGramSimilarityScore,
+                tfIdfSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.tfIdfSimilarityScore,
+                jaccardSimilarityScore: parsedResponse.feedbackMetrics.similarityMetrics.jaccardSimilarityScore,
+
+                // AI detection
+                originalityShiftScore: parsedResponse.feedbackMetrics.aIDetection.originalityShiftScore
+            }
+        });
+
+        // update document with feedback metrics reference
+        await tx.document.update({
+            where: { id: newVersion.id },
+            data: { feedbackMetricsId: feedback.id }
+        });
+
+        // 10. Update feedback status
+        await tx.feedback.update({
+            where: { id: feedback.id },
+            data: { status: "ANALYZED" }
+        });
+
+
         return newVersion;
+    }, {
+        maxWait: 20000, // 20s max wait time
+        timeout: 120000 // 120s timeout
     });
 };
 
