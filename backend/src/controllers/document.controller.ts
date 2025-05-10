@@ -494,7 +494,8 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
       "aiGeneratedPercent" : "number (0% - 100%)"
     }
 
-   To generate the "wordSuggestions" identify words or phrases that could be improved to make the writing appear more human-like and less AI-generated. and to generate "sections" divide the given document content in parts and evaluate. Here is the document content:
+   To generate the "wordSuggestions" identify words or phrases that could be improved to make the writing appear more human-like and less AI-generated. and to generate "sections" divide the given document content in sections/parts and evaluate. Here is the document content:
+   
     ${htmlContent}
     `;
 
