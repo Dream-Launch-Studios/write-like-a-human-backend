@@ -7,7 +7,10 @@ import { DocumentSection, TextMetricsData } from '../types/analysis.types';
 import { AIWordSuggestion } from '../types/word-suggestion.types';
 import { openai } from '../lib/openai';
 import prisma from '../config/config';
+import { createLogger } from '../utils/logger';
 
+
+const logger = createLogger('DocumentController');
 
 type FeedbackMetricsVersion2 = {
     structuralComparison: {
@@ -322,8 +325,20 @@ export const createDocumentFromHtml = async (req: Request, res: Response): Promi
 
 
 export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response): Promise<void> => {
+    const processingTimer = logger.startTimer();
+    const requestId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    logger.info(`Starting document processing`, {
+        requestId,
+        fileSize: req.file?.size,
+        fileType: req.file?.mimetype,
+        userId: req.user?.id
+    });
+
     try {
+        // Step 1: Validate request and extract file
         if (!req.file) {
+            logger.warn(`No file uploaded`, { requestId });
             const response: ApiResponse = {
                 success: false,
                 message: 'No file uploaded'
@@ -335,12 +350,26 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
         const fileBuffer = req.file.buffer;
         const mimeType = req.file.mimetype;
 
+        logger.info(`File received for processing`, {
+            requestId,
+            fileSize: fileBuffer.length,
+            mimeType,
+            fileName: req.file.originalname
+        });
+
+        // Step 2: Extract HTML content from the document
+        logger.info(`Starting HTML extraction`, { requestId });
+        const htmlExtractionTimer = logger.startTimer();
         let htmlContent: string;
         try {
             // Extract HTML using the appropriate method
             htmlContent = await pdfService.extractHtmlFromDocument(fileBuffer, mimeType);
+            logger.logTimed('info', `HTML extraction completed`, htmlExtractionTimer(), {
+                requestId,
+                contentLength: htmlContent.length
+            });
         } catch (conversionError) {
-            console.error('Document conversion error:', conversionError);
+            logger.error('Document conversion failed', conversionError as Error, { requestId });
             const response: ApiResponse = {
                 success: false,
                 message: `Error converting ${mimeType === 'application/pdf' ? 'PDF' : 'DOCX'} to HTML`,
@@ -350,8 +379,9 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
             return;
         }
 
-
-        // Upload file to Supabase storage
+        // Step 3: Upload file to Supabase storage
+        logger.info(`Starting file upload to storage`, { requestId });
+        const uploadTimer = logger.startTimer();
         const uploadResult = await uploadFileToSupabase(
             fileBuffer,
             req.file.originalname,
@@ -359,8 +389,15 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
             req.user.id
         );
 
+        logger.logTimed('info', `File upload completed`, uploadTimer(), {
+            requestId,
+            success: uploadResult.success,
+            fileUrl: uploadResult.fileUrl
+        });
+
         // Handle upload failure
         if (!uploadResult.success) {
+            logger.error('File upload failed', new Error(uploadResult.error || 'Unknown upload error'), { requestId });
             const response: ApiResponse = {
                 success: false,
                 message: 'Failed to upload file to storage',
@@ -370,9 +407,9 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
             return;
         }
 
-        console.log(`htmlContent 👇`)
-        console.log(htmlContent)
-
+        // Step 4: Call OpenAI API to analyze the document
+        logger.info(`Starting OpenAI analysis`, { requestId });
+        const aiAnalysisTimer = logger.startTimer();
 
         const prompt = `
     You have the analyze the document content, Return data in the following JSON:
@@ -459,11 +496,7 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
 
     To generate the "wordSuggestions" identify words or phrases that could be improved to make the writing appear more human-like and less AI-generated Here is the document content:
     ${htmlContent}
-    `
-
-        console.log(`prompt 👇`)
-        console.log(prompt)
-
+    `;
 
         let parsedResponse: {
             textMetrics: TextMetricsData;
@@ -488,8 +521,16 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
 
             const responseContent = response.choices[0].message.content || "{}";
             parsedResponse = JSON.parse(responseContent);
+
+            logger.logTimed('info', `OpenAI analysis completed`, aiAnalysisTimer(), {
+                requestId,
+                overallAiScore: parsedResponse.overallAiScore,
+                wordCount: parsedResponse.textMetrics.totalWordCount,
+                sectionCount: parsedResponse.sections.length,
+                suggestionCount: parsedResponse.wordSuggestions.length
+            });
         } catch (aiError) {
-            console.error('Error with OpenAI API:', aiError);
+            logger.error('OpenAI analysis failed', aiError as Error, { requestId });
             res.status(500).json({
                 success: false,
                 message: 'Failed to analyze document content',
@@ -498,11 +539,14 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
             return;
         }
 
-
+        // Step 5: Create all database records in a transaction
+        logger.info(`Starting database transaction`, { requestId });
+        const dbTimer = logger.startTimer();
         try {
             const result = await prisma.$transaction(async (tx) => {
+                // 1. Create document
                 const title = req.body.title || req?.file?.originalname;
-                // create document
+                logger.debug(`Creating document record`, { requestId, title });
                 const document = await tx.document.create({
                     data: {
                         title: title,
@@ -516,24 +560,28 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                         createdWith: "PASTE",
                         isLatest: true,
                         contentFormat: "HTML"
-
                     }
                 });
+
+                // 2. Set document as its own root
+                logger.debug(`Setting document root reference`, { requestId, documentId: document.id });
                 await tx.document.update({
                     where: { id: document.id },
-                    data: {
-                        rootDocumentId: document.id
-                    }
-                })
+                    data: { rootDocumentId: document.id }
+                });
+
+                // 3. Create document version
+                logger.debug(`Creating document version record`, { requestId, documentId: document.id });
                 await tx.documentVersion.create({
                     data: {
                         rootDocumentId: document.id,
                         versionedDocId: document.id,
                         versionNumber: 1,
                     }
-                })
+                });
 
-                // create analysis
+                // 4. Create AI analysis
+                logger.debug(`Creating AI analysis record`, { requestId, documentId: document.id });
                 const analysis = await tx.aIAnalysis.create({
                     data: {
                         documentId: document.id,
@@ -544,7 +592,8 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     }
                 });
 
-                // create text metrics
+                // 5. Create text metrics
+                logger.debug(`Creating text metrics`, { requestId, documentId: document.id });
                 await tx.textMetrics.create({
                     data: {
                         aiAnalysisId: analysis.id,
@@ -566,8 +615,9 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     }
                 });
 
-                // create sections
+                // 6. Create document sections
                 if (parsedResponse.sections.length > 0) {
+                    logger.debug(`Creating ${parsedResponse.sections.length} document sections`, { requestId });
                     await Promise.all(parsedResponse.sections.map(section =>
                         tx.documentSection.create({
                             data: {
@@ -583,8 +633,9 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     ));
                 }
 
-                // create word suggestions
+                // 7. Create word suggestions
                 if (parsedResponse.wordSuggestions.length > 0) {
+                    logger.debug(`Creating ${parsedResponse.wordSuggestions.length} word suggestions`, { requestId });
                     await Promise.all(parsedResponse.wordSuggestions.map(suggestion =>
                         tx.wordSuggestion.create({
                             data: {
@@ -603,7 +654,8 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     ));
                 }
 
-                // create feedback
+                // 8. Create feedback
+                logger.debug(`Creating feedback record`, { requestId });
                 const feedback = await tx.feedback.create({
                     data: {
                         content: "",
@@ -614,7 +666,8 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     }
                 });
 
-                // create feedback metrics
+                // 9. Create feedback metrics
+                logger.debug(`Creating feedback metrics`, { requestId });
                 await tx.feedbackMetrics.create({
                     data: {
                         feedbackId: feedback.id,
@@ -654,28 +707,41 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     }
                 });
 
-                // update feedback
+                // 10. Update feedback status
+                logger.debug(`Updating feedback status`, { requestId });
                 await tx.feedback.update({
                     where: { id: feedback.id },
                     data: { status: "ANALYZED" }
-                })
+                });
 
-
-                // update document
+                // 11. Update document with feedback metrics reference
+                logger.debug(`Updating document with feedback metrics reference`, { requestId });
                 await tx.document.update({
                     where: { id: document.id },
                     data: { feedbackMetricsId: feedback.id }
-                })
+                });
 
+                // Return the document and analysis for response
                 return {
                     document,
                     analysis
                 };
-
             }, {
                 maxWait: 20000, // 20s max wait time
                 timeout: 120000 // 120s timeout
-            })
+            });
+
+            logger.logTimed('info', `Database transaction completed`, dbTimer(), {
+                requestId,
+                documentId: result.document.id,
+                analysisId: result.analysis.id
+            });
+
+            // Step 6: Return success response
+            logger.logTimed('info', `Document processing completed successfully`, processingTimer(), {
+                requestId,
+                documentId: result.document.id
+            });
 
             const response: ApiResponse = {
                 success: true,
@@ -688,24 +754,34 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
                     createdAt: result.document.createdAt,
                     contentFormat: 'html'
                 }
-            }
+            };
 
-            res.status(201).json(response)
+            res.status(201).json(response);
 
-        } catch (error) {
-            console.error('Error parsing OpenAI response:', error);
-            throw new Error('Failed to parse AI suggestions');
+        } catch (dbError) {
+            logger.error('Database transaction failed', dbError as Error, { requestId });
+
+            res.status(500).json({
+                success: false,
+                message: 'Failed to save document analysis',
+                error: dbError instanceof Error ? dbError.message : 'Unknown error'
+            });
         }
 
     } catch (error) {
-        console.error('Unhandled error in createAndAnalyzeDocument:', error);
+        const totalTime = processingTimer();
+        logger.error('Unhandled error in document processing', error as Error, {
+            requestId,
+            totalProcessingTimeMs: totalTime
+        });
+
         res.status(500).json({
             success: false,
             message: 'Server error',
             error: error instanceof Error ? error.message : 'Unknown error'
         });
     }
-}
+};
 
 
 export const convertDocumentToHtml = async (req: Request, res: Response): Promise<void> => {
