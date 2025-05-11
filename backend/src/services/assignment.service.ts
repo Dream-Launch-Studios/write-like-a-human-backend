@@ -260,7 +260,7 @@ export const submitAssignment = async (
     try {
         const prompt = getAnalyzeDocumentPrompt({ content })
         const response = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages: [{
                 content: prompt,
                 role: "system",

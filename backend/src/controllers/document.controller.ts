@@ -426,7 +426,7 @@ export const createAndAnalyzeDocumentWithAI = async (req: Request, res: Response
 
         try {
             const response = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: "gpt-4o",
                 messages: [{
                     content: prompt,
                     role: "system",

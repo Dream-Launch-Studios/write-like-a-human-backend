@@ -263,7 +263,7 @@ const analyzeSection = async (text: string): Promise<{ isAiGenerated: boolean; c
     `;
 
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini-2024-07-18',
+            model: 'gpt-4o',
             messages: [
                 { role: 'system', content: 'You are an AI detector assistant that analyzes text to determine if it was AI-generated or human-written.' },
                 { role: 'user', content: prompt }

@@ -67,7 +67,7 @@ Format your response as a JSON array of suggestions, with each suggestion contai
 
     // Call OpenAI API
     const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini-2024-07-18",
+        model: "gpt-4o",
         messages: [prompt as any],
         response_format: { type: "json_object" },
         temperature: 0.3,
