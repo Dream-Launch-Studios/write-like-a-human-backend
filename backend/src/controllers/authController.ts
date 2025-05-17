@@ -59,6 +59,7 @@ export const register = async (req: Request, res: Response): Promise<any> => {
     }
 };
 
+
 export const login = async (req: Request, res: Response): Promise<any> => {
     try {
         const { email, password } = req.body;
@@ -72,6 +73,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         if (!validPassword) {
             return res.status(400).json({ error: "Invalid credentials" });
         }
+
+        await subscriptionService.createOrUpdateStripeCustomer(user.id)
 
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
@@ -90,7 +93,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
             },
         });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error?.message });
     }
 };
 
