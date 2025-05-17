@@ -57,6 +57,7 @@ export class SubscriptionService {
 
         // If user already has a Stripe customer ID, return the user
         if (user.stripeCustomerId) {
+            console.log(`user.stripeCustomerId -> ${user.stripeCustomerId}`)
             return user;
         }
 
@@ -68,6 +69,9 @@ export class SubscriptionService {
                 userId: user.id,
             },
         });
+
+        console.log(`customer created in stripe`)
+        console.log(customer)
 
         // Update user with Stripe customer ID
         return prisma.user.update({
