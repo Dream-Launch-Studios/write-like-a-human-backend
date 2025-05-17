@@ -198,6 +198,9 @@ Authrouter.post("/sync-user", async (req: Request, res: Response): Promise<any> 
                 }
             });
             console.log('✅ User created in database:', newUser.id);
+            
+            
+            await subscriptionService.createOrUpdateStripeCustomer(newUser.id)
             await subscriptionService.createFreeSubscriptionForNewUser(newUser.id);
             return res.status(201).json({
                 success: true,

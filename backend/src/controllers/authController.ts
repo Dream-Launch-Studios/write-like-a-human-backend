@@ -73,8 +73,8 @@ export const login = async (req: Request, res: Response): Promise<any> => {
         if (!validPassword) {
             return res.status(400).json({ error: "Invalid credentials" });
         }
-
-        await subscriptionService.createOrUpdateStripeCustomer(user.id)
+        
+        
 
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
